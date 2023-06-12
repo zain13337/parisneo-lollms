@@ -90,6 +90,7 @@ class APScript:
             module_spec.loader.exec_module(module)
             if hasattr(module, "Install"):
                 module.Install(self.personality,force_reinstall=force_reinstall)    
+                
     def add_file(self, path):
         self.files.append(path)
         return True
