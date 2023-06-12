@@ -19,10 +19,21 @@ class MainMenu:
 
     def show_logo(self):
         print(f"{ASCIIColors.color_bright_yellow}")
-        print("█          █        █       █▄ ▄█▄ ▄█       ")
-        print("█     ▄▀▀▄ █        █       █ ▀   ▀ █  ▄▀▀▄ ")
-        print("█     █  █ █        █       █       █  ▀▄▄  ")
-        print("█▄▄▄▄ ▀▄▄▀ █▄▄▄▄▄   █▄▄▄▄   █       █  ▄▄▄▀ ")
+        print("      ___       ___           ___       ___       ___           ___      ")
+        print("     /\__\     /\  \         /\__\     /\__\     /\__\         /\  \     ")
+        print("    /:/  /    /::\  \       /:/  /    /:/  /    /::|  |       /::\  \    ")
+        print("   /:/  /    /:/\:\  \     /:/  /    /:/  /    /:|:|  |      /:/\ \  \   ")
+        print("  /:/  /    /:/  \:\  \   /:/  /    /:/  /    /:/|:|__|__   _\:\~\ \  \  ")
+        print(" /:/__/    /:/__/ \:\__\ /:/__/    /:/__/    /:/ |::::\__\ /\ \:\ \ \__\ ")
+        print(" \:\  \    \:\  \ /:/  / \:\  \    \:\  \    \/__/~~/:/  / \:\ \:\ \/__/ ")
+        print("  \:\  \    \:\  /:/  /   \:\  \    \:\  \         /:/  /   \:\ \:\__\   ")
+        print("   \:\  \    \:\/:/  /     \:\  \    \:\  \       /:/  /     \:\/:/  /   ")
+        print("    \:\__\    \::/  /       \:\__\    \:\__\     /:/  /       \::/  /    ")
+        print("     \/__/     \/__/         \/__/     \/__/     \/__/         \/__/     ")
+
+
+
+
         print(f"{ASCIIColors.color_reset}")
         print(f"{ASCIIColors.color_red}Version: {ASCIIColors.color_green}{pkg_resources.get_distribution('lollms').version}")
         print(f"{ASCIIColors.color_red}By : {ASCIIColors.color_green}ParisNeo")

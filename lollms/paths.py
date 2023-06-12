@@ -48,7 +48,6 @@ class LollmsPaths:
         if not local_config_path.exists():
             shutil.copy(self.default_cfg_path, str(local_config_path))
 
-
     @staticmethod
     def find_paths(force_local=False, custom_default_cfg_path=None):
         lollms_path = Path(__file__).parent
