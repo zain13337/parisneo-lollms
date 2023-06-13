@@ -8,6 +8,7 @@ __license__ = "Apache 2.0"
 
 from lollms.binding import LLMBinding, LOLLMSConfig
 from lollms.personality import AIPersonality, MSG_TYPE
+from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
 #from lollms.binding import  LLMBinding
 import importlib
@@ -17,11 +18,14 @@ from pathlib import Path
 from pathlib import Path
 
 def reset_all_installs():
+    ASCIIColors.info("Removeing .install files to force reinstall")
     folder_path = Path(__file__).parent
     path = Path(folder_path)
-    for file_path in path.rglob("*.install"):
+    
+    ASCIIColors.info(f"Searching files from {path}")
+    for file_path in path.rglob("*.installed"):
         file_path.unlink()
-        print(f"Deleted file: {file_path}")
+        ASCIIColors.info(f"Deleted file: {file_path}")
 
 
 
