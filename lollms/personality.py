@@ -98,21 +98,52 @@ class APScript:
     def remove_file(self, path):
         self.files.remove(path)
 
-    def load_config_file(self, path):
+    def load_config_file(self, path, default_config=None):
         """
         Load the content of local_config.yaml file.
 
         The function reads the content of the local_config.yaml file and returns it as a Python dictionary.
+        If a default_config is provided, it fills any missing entries in the loaded dictionary.
+        If at least one field from default configuration was not present in the loaded configuration, the updated
+        configuration is saved.
 
         Args:
-            None
+            path (str): The path to the local_config.yaml file.
+            default_config (dict, optional): A dictionary with default values to fill missing entries.
 
         Returns:
-            dict: A dictionary containing the loaded data from the local_config.yaml file.
-        """     
+            dict: A dictionary containing the loaded data from the local_config.yaml file, with missing entries filled
+            by default_config if provided.
+        """
         with open(path, 'r') as file:
             data = yaml.safe_load(file)
+
+        if default_config:
+            updated = False
+            for key, value in default_config.items():
+                if key not in data:
+                    data[key] = value
+                    updated = True
+            
+            if updated:
+                self.save_config_file(path, data)
+
         return data
+
+    def save_config_file(self, path, data):
+        """
+        Save the configuration data to a local_config.yaml file.
+
+        Args:
+            path (str): The path to save the local_config.yaml file.
+            data (dict): The configuration data to be saved.
+
+        Returns:
+            None
+        """
+        with open(path, 'w') as file:
+            yaml.dump(data, file)
+
 
     def remove_text_from_string(self, string, text_to_find):
         """
