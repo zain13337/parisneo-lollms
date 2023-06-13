@@ -8,6 +8,7 @@ from lollms.console import MainMenu
 from lollms.paths import LollmsPaths
 from lollms.console import MainMenu
 from lollms import BindingBuilder, ModelBuilder, PersonalityBuilder
+from lollms import reset_all_installs
 from typing import List, Tuple
 import importlib
 from pathlib import Path
@@ -407,11 +408,31 @@ class LoLLMsServer:
                             help='Model name')
         parser.add_argument('--personality_full_name', '-p', default="personality",
                             help='Personality path relative to the personalities folder (language/category/name)')
+        
+        parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
+        parser.add_argument('--reset_config', action='store_true', help='Reset the configurations')
+        parser.add_argument('--reset_installs', action='store_true', help='Reset all installation status')
+
 
         args = parser.parse_args()
 
+        if args.reset_installs:
+            reset_all_installs()
+
+        if args.reset_personal_path:
+            LollmsPaths.reset_configs()
+
+        if args.reset_config:
+            cfg_path = LollmsPaths.find_paths().personal_configuration_path / "local_config.yaml"
+            try:
+                cfg_path.unlink()
+                ASCIIColors.success("LOLLMS configuration reset successfully")
+            except:
+                ASCIIColors.success("Couldn't reset LOLLMS configuration")
+
         # Configuration loading part
         self.config = LOLLMSConfig.autoload(self.lollms_paths, args.config)
+
 
         if args.binding_name:
             self.config.binding_name = args.binding_name

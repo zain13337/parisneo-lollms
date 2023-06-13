@@ -2,6 +2,7 @@ from lollms.personality import AIPersonality,  MSG_TYPE
 from lollms.binding import LOLLMSConfig, LLMBinding
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
+from lollms import reset_all_installs
 import shutil
 import yaml
 from pathlib import Path
@@ -554,10 +555,14 @@ def main():
 
     parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
     parser.add_argument('--reset_config', action='store_true', help='Reset the configurations')
+    parser.add_argument('--reset_installs', action='store_true', help='Reset all installation status')
 
     # Parse the command-line arguments
     args = parser.parse_args()
 
+    if args.reset_installs:
+        reset_all_installs()
+        
     if args.reset_personal_path:
         LollmsPaths.reset_configs()
     
