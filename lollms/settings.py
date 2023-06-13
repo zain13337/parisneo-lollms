@@ -69,29 +69,23 @@ class Settings:
             self.menu.show_commands_list()
             
         if show_personality_infos:
-            print()
-            print(f"{ASCIIColors.color_green}Current personality : {ASCIIColors.color_reset}{self.personality}")
-            print(f"{ASCIIColors.color_green}Version : {ASCIIColors.color_reset}{self.personality.version}")
-            print(f"{ASCIIColors.color_green}Author : {ASCIIColors.color_reset}{self.personality.author}")
-            print(f"{ASCIIColors.color_green}Description : {ASCIIColors.color_reset}{self.personality.personality_description}")
-            print()
-
+            try:
+                print()
+                print(f"{ASCIIColors.color_green}Current personality : {ASCIIColors.color_reset}{self.personality}")
+                print(f"{ASCIIColors.color_green}Version : {ASCIIColors.color_reset}{self.personality.version}")
+                print(f"{ASCIIColors.color_green}Author : {ASCIIColors.color_reset}{self.personality.author}")
+                print(f"{ASCIIColors.color_green}Description : {ASCIIColors.color_reset}{self.personality.personality_description}")
+                print()
+            except:
+                pass
         if show_model_infos:
-            print()
-            print(f"{ASCIIColors.color_green}Current binding : {ASCIIColors.color_reset}{self.config['binding_name']}")
-            print(f"{ASCIIColors.color_green}Current model : {ASCIIColors.color_reset}{self.config['model_name']}")
-            print()
-
-
-        # If there is a disclaimer, show it
-        if self.personality.disclaimer != "":
-            print(f"\n{ASCIIColors.color_red}Disclaimer")
-            print(self.personality.disclaimer)
-            print(f"{ASCIIColors.color_reset}")
-
-        if show_welcome_message and self.personality.welcome_message:
-            print(self.personality.name+": ", end="")
-            print(self.personality.welcome_message)
+            try:
+                print()
+                print(f"{ASCIIColors.color_green}Current binding : {ASCIIColors.color_reset}{self.config['binding_name']}")
+                print(f"{ASCIIColors.color_green}Current model : {ASCIIColors.color_reset}{self.config['model_name']}")
+                print()
+            except:
+                pass
 
         self.menu.main_menu()
             
@@ -180,9 +174,6 @@ Participating personalities:
             ASCIIColors.error(f"Binding returned this exception : {ex}")
             ASCIIColors.error(f"{self.config.get_personality_path_infos()}")
             print("Please select a valid model or install a new one from a url")
-            self.menu.select_personality()
-        self.cond_tk = self.personality.model.tokenize(self.personality.personality_conditioning)
-        self.n_cond_tk = len(self.cond_tk)
 
     def reset_context(self):
         if self.personality.include_welcome_message_in_disucssion:
