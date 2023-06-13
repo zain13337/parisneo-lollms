@@ -14,6 +14,19 @@ import importlib
 from pathlib import Path
 
 
+from pathlib import Path
+
+def reset_all_installs():
+    folder_path = Path(__file__).parent
+    path = Path(folder_path)
+    for file_path in path.rglob("*.install"):
+        file_path.unlink()
+        print(f"Deleted file: {file_path}")
+
+
+
+
+
 class BindingBuilder:
     def build_binding(self, bindings_path: Path, cfg: LOLLMSConfig, force_reinstall=False)->LLMBinding:
         binding_path = Path(bindings_path) / cfg["binding_name"]

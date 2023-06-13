@@ -199,9 +199,11 @@ class MainMenu:
             print(f"{ASCIIColors.color_green}1 -{ASCIIColors.color_reset} Select Binding")
             print(f"{ASCIIColors.color_green}2 -{ASCIIColors.color_reset} Select Model")
             print(f"{ASCIIColors.color_green}3 -{ASCIIColors.color_reset} Select Personality")
-            print(f"{ASCIIColors.color_green}4 -{ASCIIColors.color_reset} Reinstall Binding")
-            print(f"{ASCIIColors.color_green}5 -{ASCIIColors.color_reset} Reinstall Personality")
-            print(f"{ASCIIColors.color_green}0 -{ASCIIColors.color_reset} Exit")
+            print(f"{ASCIIColors.color_green}4 -{ASCIIColors.color_reset} Reinstall current Binding")
+            print(f"{ASCIIColors.color_green}5 -{ASCIIColors.color_reset} Reinstall current Personality")
+            print(f"{ASCIIColors.color_green}6 -{ASCIIColors.color_reset} Reset all installs")        
+            print(f"{ASCIIColors.color_green}0 -{ASCIIColors.color_reset} Back to app")
+            print(f"{ASCIIColors.color_green}-1 -{ASCIIColors.color_reset} Exit app")
             choice = input("Enter your choice: ").strip()
             if choice == "1":
                 self.select_binding()
@@ -213,8 +215,15 @@ class MainMenu:
                 self.reinstall_binding()
             elif choice == "5":
                 self.reinstall_personality()
+            elif choice == "6":
+                self.reset_all_installs()
+                
             elif choice == "0":
                 print("Back to main app...")
+                break
+            elif choice == "-1":
+                sys.exit(0)
+                print("Bye")
                 break
             else:
                 print("Invalid choice! Try again.")
