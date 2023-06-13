@@ -217,7 +217,7 @@ class MainMenu:
             elif choice == "5":
                 self.reinstall_personality()
             elif choice == "6":
-                self.reset_all_installs()
+                reset_all_installs()
                 
             elif choice == "0":
                 print("Back to main app...")
@@ -562,7 +562,7 @@ def main():
 
     if args.reset_installs:
         reset_all_installs()
-        
+
     if args.reset_personal_path:
         LollmsPaths.reset_configs()
     
