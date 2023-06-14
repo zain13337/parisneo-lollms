@@ -150,14 +150,16 @@ class MainMenu:
         if 1 <= choice <= len(personality_languages)-1:
             language = personality_languages[choice - 1]
             print(f"You selected language: {ASCIIColors.color_green}{language}{ASCIIColors.color_reset}")
-            personality_categories = [p.stem for p in (self.conversation.lollms_paths.personalities_zoo_path/language).iterdir() if p.is_dir()]+["Back"]
+            personality_categories = [p.stem for p in (self.conversation.lollms_paths.personalities_zoo_path/language).iterdir() if p.is_dir()]+["Custom","Back"]
             print("Select category")
             choice = self.show_menu(personality_categories)
-            if 1 <= choice <= len(personality_categories):
+            if 1 <= choice <= len(personality_categories)-1:
                 category = personality_categories[choice - 1]
                 print(f"You selected category: {ASCIIColors.color_green}{category}{ASCIIColors.color_reset}")
-
-                personality_names = [p.stem for p in (self.conversation.lollms_paths.personalities_zoo_path/language/category).iterdir() if p.is_dir()]+["Back"]
+                if category=="Custom":
+                    personality_names = [p.stem for p in self.conversation.lollms_paths.personal_personalities_path.iterdir() if p.is_dir()]+["Back"]
+                else:
+                    personality_names = [p.stem for p in (self.conversation.lollms_paths.personalities_zoo_path/language/category).iterdir() if p.is_dir()]+["Back"]
                 print("Select personality")
                 choice = self.show_menu(personality_names)
                 if 1 <= choice <= len(personality_names)-1:

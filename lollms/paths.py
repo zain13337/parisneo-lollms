@@ -33,6 +33,8 @@ class LollmsPaths:
         self.personal_data_path = personal_path / "data"
         self.personal_databases_path = personal_path / "databases"
         self.personal_models_path = personal_path / "models"
+        self.personal_personalities_path = lollms_path / "personalities"
+
 
         self.create_directories()
         self.copy_default_config()
@@ -46,6 +48,7 @@ class LollmsPaths:
         self.personal_models_path.mkdir(parents=True, exist_ok=True)
         self.personal_data_path.mkdir(parents=True, exist_ok=True)
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
+        self.personal_personalities_path.mkdir(parents=True, exist_ok=True)
 
 
     def copy_default_config(self):
