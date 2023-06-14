@@ -17,6 +17,9 @@ from pathlib import Path
 
 from pathlib import Path
 
+
+
+
 def reset_all_installs():
     ASCIIColors.info("Removeing .install files to force reinstall")
     folder_path = Path(__file__).parent
