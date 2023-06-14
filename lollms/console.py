@@ -210,7 +210,8 @@ class MainMenu:
             print(f"{ASCIIColors.color_green}5 -{ASCIIColors.color_reset} Reinstall current Personality")
             print(f"{ASCIIColors.color_green}6 -{ASCIIColors.color_reset} Reset all installs")        
             print(f"{ASCIIColors.color_green}0 -{ASCIIColors.color_reset} Back to app")
-            print(f"{ASCIIColors.color_green}-1 -{ASCIIColors.color_reset} Exit app")
+            print(f"{ASCIIColors.color_green}-1 -{ASCIIColors.color_reset} Help")
+            print(f"{ASCIIColors.color_green}-2 -{ASCIIColors.color_reset} Exit app")
             choice = input("Enter your choice: ").strip()
             if choice == "1":
                 self.select_binding()
@@ -229,9 +230,10 @@ class MainMenu:
                 print("Back to main app...")
                 break
             elif choice == "-1":
-                sys.exit(0)
+                self.show_commands_list()
+            elif choice == "-2":
                 print("Bye")
-                break
+                sys.exit(0)
             else:
                 print("Invalid choice! Try again.")
 
