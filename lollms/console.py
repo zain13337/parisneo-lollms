@@ -52,6 +52,12 @@ class MainMenu:
         print(f"   {ASCIIColors.color_red}├{ASCIIColors.color_reset} stop_log: stops logging the discussion to a text file")
         print(f"   {ASCIIColors.color_red}├{ASCIIColors.color_reset} send_file: uploads a file to the AI")
         print(f"   {ASCIIColors.color_red}└{ASCIIColors.color_reset} exit: exists the console")
+        
+        if self.conversation.personality.help !="":
+            print(f"Personality help:")
+            print(f"{self.conversation.personality.help}")
+            
+        
 
     def show_menu(self, options):
         print("Menu:")
@@ -301,7 +307,7 @@ class Conversation:
             print(f"{ASCIIColors.color_reset}")
 
         if show_welcome_message and self.personality.welcome_message:
-            print(self.personality.name+": ", end="")
+            ASCIIColors.red(self.personality.name+": ", end="")
             print(self.personality.welcome_message)
             
     def ask_override_file(self):
