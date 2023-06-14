@@ -329,7 +329,7 @@ Date: {{date}}
 
         # Disclaimer
         self._disclaimer: str = ""
-
+        self._help: str = ""
         
         # Default model parameters
         self._model_temperature: float = 0.8 # higher: more creative, lower more deterministic
@@ -421,6 +421,7 @@ Date: {{date}}
         self._anti_prompts = config.get("anti_prompts", self._anti_prompts)
         self._dependencies = config.get("dependencies", self._dependencies)
         self._disclaimer = config.get("disclaimer", self._disclaimer)
+        self._help = config.get("help", self._help)
         self._model_temperature = config.get("model_temperature", self._model_temperature)
         self._model_n_predicts = config.get("model_n_predicts", self._model_n_predicts)
         self._model_top_k = config.get("model_top_k", self._model_top_k)
@@ -529,6 +530,7 @@ Date: {{date}}
             "anti_prompts": self._anti_prompts,
             "dependencies": self._dependencies,
             "disclaimer": self._disclaimer,
+            "help": self._help,
             "model_temperature": self._model_temperature,
             "model_n_predicts": self._model_n_predicts,
             "model_top_k": self._model_top_k,
@@ -567,6 +569,7 @@ Date: {{date}}
             "anti_prompts": self._anti_prompts,
             "dependencies": self._dependencies,
             "disclaimer": self._disclaimer,
+            "help": self._help,
             "model_temperature": self._model_temperature,
             "model_n_predicts": self._model_n_predicts,
             "model_top_k": self._model_top_k,
@@ -845,6 +848,25 @@ Date: {{date}}
             disclaimer (str): The disclaimer text.
         """
         self._disclaimer = disclaimer
+
+    @property
+    def help(self) -> str:
+        """Getter method for the help attribute.
+
+        Returns:
+            str: The help text.
+        """
+        return self._help
+
+    @help.setter
+    def help(self, help: str):
+        """Setter method for the help attribute.
+
+        Args:
+            help (str): The help text.
+        """
+        self._help = help
+
 
     @property
     def model_temperature(self) -> float:

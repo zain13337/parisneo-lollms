@@ -52,6 +52,12 @@ class MainMenu:
         print(f"   {ASCIIColors.color_red}├{ASCIIColors.color_reset} stop_log: stops logging the discussion to a text file")
         print(f"   {ASCIIColors.color_red}├{ASCIIColors.color_reset} send_file: uploads a file to the AI")
         print(f"   {ASCIIColors.color_red}└{ASCIIColors.color_reset} exit: exists the console")
+        
+        if self.conversation.personality.help !="":
+            print(f"Personality help:")
+            print(f"{self.conversation.personality.help}")
+            
+        
 
     def show_menu(self, options):
         print("Menu:")
@@ -204,7 +210,8 @@ class MainMenu:
             print(f"{ASCIIColors.color_green}5 -{ASCIIColors.color_reset} Reinstall current Personality")
             print(f"{ASCIIColors.color_green}6 -{ASCIIColors.color_reset} Reset all installs")        
             print(f"{ASCIIColors.color_green}0 -{ASCIIColors.color_reset} Back to app")
-            print(f"{ASCIIColors.color_green}-1 -{ASCIIColors.color_reset} Exit app")
+            print(f"{ASCIIColors.color_green}-1 -{ASCIIColors.color_reset} Help")
+            print(f"{ASCIIColors.color_green}-2 -{ASCIIColors.color_reset} Exit app")
             choice = input("Enter your choice: ").strip()
             if choice == "1":
                 self.select_binding()
@@ -223,9 +230,10 @@ class MainMenu:
                 print("Back to main app...")
                 break
             elif choice == "-1":
-                sys.exit(0)
+                self.show_commands_list()
+            elif choice == "-2":
                 print("Bye")
-                break
+                sys.exit(0)
             else:
                 print("Invalid choice! Try again.")
 
@@ -301,7 +309,7 @@ class Conversation:
             print(f"{ASCIIColors.color_reset}")
 
         if show_welcome_message and self.personality.welcome_message:
-            print(self.personality.name+": ", end="")
+            ASCIIColors.red(self.personality.name+": ", end="")
             print(self.personality.welcome_message)
             
     def ask_override_file(self):
