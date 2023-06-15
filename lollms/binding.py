@@ -79,6 +79,7 @@ class LOLLMSConfig(BaseConfig):
             self.lollms_paths = LollmsPaths()
         else:
             self.lollms_paths = lollms_paths
+        
 
     @staticmethod
     def autoload(lollms_paths, config_path:str=None):
@@ -103,6 +104,7 @@ class LOLLMSConfig(BaseConfig):
                 config.save_config(cfg_path)
         else:
             config = LOLLMSConfig()
+        
         return config
             
     def sync_cfg(self, default_config):

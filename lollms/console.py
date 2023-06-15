@@ -265,6 +265,9 @@ class Conversation:
 
         # Configuration loading part
         self.config = LOLLMSConfig.autoload(self.lollms_paths, configuration_path)
+        
+        if self.config.model_name is None:
+            self.menu.select_model(self)
 
 
         # load binding
@@ -332,7 +335,7 @@ class Conversation:
         if Path(file_name).is_absolute():
             self.log_file_path = Path(file_name)
         else:
-            home_dir = Path.home()/"Documents/lollms/logs"
+            home_dir = self.lollms_paths.personal_log_path
             home_dir.mkdir(parents=True, exist_ok=True)
             self.log_file_path = home_dir/file_name
             if self.log_file_path.exists():
