@@ -34,6 +34,7 @@ class LollmsPaths:
         self.personal_databases_path = personal_path / "databases"
         self.personal_models_path = personal_path / "models"
         self.personal_personalities_path = lollms_path / "personalities"
+        self.personal_log_path = lollms_path / "logs"
 
 
         self.create_directories()
@@ -49,7 +50,7 @@ class LollmsPaths:
         self.personal_data_path.mkdir(parents=True, exist_ok=True)
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
         self.personal_personalities_path.mkdir(parents=True, exist_ok=True)
-
+        self.personal_log_path.mkdir(parents=True, exist_ok=True)
 
     def copy_default_config(self):
         local_config_path = self.personal_configuration_path / "local_config.yaml"
@@ -100,30 +101,33 @@ class LollmsPaths:
                 print(f"To make it clear where your data are stored, we now give the user the choice where to put its data.")
                 print(f"This allows you to mutualize models which are heavy, between multiple lollms compatible apps.")
                 print(f"You can change this at any tome using the lollms-update_path script or by simply change the content of the global_paths_cfg.yaml file.")
-                print(f"Please provide a folder to store your configurations files, your models and your personal data (database, custom personalities etc).")
-                cfg = BaseConfig(config={
-                    "lollms_path":str(Path(__file__).parent),
-                    "lollms_personal_path":str(Path.home()/"Documents/lollms")
-                })
+                found = False
+                while not found:
+                    print(f"Please provide a folder to store your configurations files, your models and your personal data (database, custom personalities etc).")
+                    cfg = BaseConfig(config={
+                        "lollms_path":str(Path(__file__).parent),
+                        "lollms_personal_path":str(Path.home()/"Documents/lollms")
+                    })
 
-                cfg.lollms_personal_path = input(f"Folder path: ({cfg.lollms_personal_path}):")
-                if cfg.lollms_personal_path=="":
-                    cfg.lollms_personal_path = str(Path.home()/"Documents/lollms")
+                    cfg.lollms_personal_path = input(f"Folder path: ({cfg.lollms_personal_path}):")
+                    if cfg.lollms_personal_path=="":
+                        cfg.lollms_personal_path = str(Path.home()/"Documents/lollms")
 
-                print(f"Selected: {cfg.lollms_personal_path}")
-                pp= Path(cfg.lollms_personal_path)
-                if not pp.exists():
-                    try:
-                        pp.mkdir(parents=True)
-                    except:
-                        print(f"{ASCIIColors.color_red}It seams there is an error in the path you rovided{ASCIIColors.color_reset}")
-                        return None
-                if force_local:
-                    global_paths_cfg = Path("./global_paths_cfg.yaml")
-                else:
-                    global_paths_cfg = lollms_path/"global_paths_cfg.yaml"
-                cfg.save_config(global_paths_cfg)
-                    
+                    print(f"Selected: {cfg.lollms_personal_path}")
+                    pp= Path(cfg.lollms_personal_path)
+                    if not pp.exists():
+                        try:
+                            pp.mkdir(parents=True)
+                        except:
+                            print(f"{ASCIIColors.color_red}It seams there is an error in the path you rovided{ASCIIColors.color_reset}")
+                            continue
+                    if force_local:
+                        global_paths_cfg = Path("./global_paths_cfg.yaml")
+                    else:
+                        global_paths_cfg = lollms_path/"global_paths_cfg.yaml"
+                    cfg.save_config(global_paths_cfg)
+                    found = True
+                
                 return LollmsPaths(cfg.lollms_path, cfg.lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path)
             
             
