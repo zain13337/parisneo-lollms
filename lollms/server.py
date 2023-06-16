@@ -58,6 +58,8 @@ class LoLLMsServer:
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.config.file_path} or use the next menu to select a valid binding")
+                print(f"Trying to reinstall binding")
+                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
                 self.menu.select_binding()
 
     def load_model(self):

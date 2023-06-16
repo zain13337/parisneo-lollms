@@ -19,6 +19,7 @@ from tqdm import tqdm
 import urllib.request
 import importlib
 import shutil
+import subprocess
 
 
 __author__ = "parisneo"
@@ -202,6 +203,16 @@ class LOLLMSConfig(BaseConfig):
 class BindingInstaller:
     def __init__(self, config: LOLLMSConfig) -> None:
         self.config = config
+
+    def reinstall_pytorch_with_cuda(self):
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu117"])
+        if result.returncode != 0:
+            ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
+            result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+            if result.returncode != 0:
+                ASCIIColors.error("Couldn't install pytorch !!")
+            else:
+                ASCIIColors.error("Pytorch installed successfully!!")
 
 
 class LLMBinding:
