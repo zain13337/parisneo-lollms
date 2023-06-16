@@ -257,7 +257,6 @@ def install_package(package_name):
         
         print(f"{package_name} has been successfully installed.")
 
-
 class AIPersonality:
 
     # Extra 
@@ -1041,3 +1040,6 @@ Date: {{date}}
         output_string = re.sub(pattern, replace, input_string)
         return output_string
 
+class AIPersonalityInstaller:
+    def __init__(self, personality:AIPersonality) -> None:
+        self.personality = personality
