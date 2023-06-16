@@ -267,7 +267,7 @@ class Conversation:
         self.config = LOLLMSConfig.autoload(self.lollms_paths, configuration_path)
         
         if self.config.model_name is None:
-            self.menu.select_model(self)
+            self.menu.select_model()
 
 
         # load binding
