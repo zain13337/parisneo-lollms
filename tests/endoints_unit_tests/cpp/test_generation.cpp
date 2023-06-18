@@ -5,6 +5,8 @@
 #include <thread>
 #include <chrono>
 
+// Don't forget to download these libraries
+// git clone https://github.com/socketio/socket.io-client-cpp.git
 #include <cxxopts.hpp>
 #include <sio_client.h>
 
