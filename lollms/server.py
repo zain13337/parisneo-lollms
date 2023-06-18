@@ -29,6 +29,8 @@ class LoLLMsServer:
         self.current_model = None
         self.personalities = []
         self.answer = ['']
+        self.is_ready = True
+
 
 
 
@@ -88,7 +90,12 @@ class LoLLMsServer:
         @self.socketio.on('connect')
         def handle_connect():
             client_id = request.sid
-            self.clients[client_id] = {"namespace": request.namespace, "full_discussion_blocks": []}
+            self.clients[client_id] = {
+                    "namespace": request.namespace,
+                    "full_discussion_blocks": [],
+                    "is_generating":False,
+                    "requested_stop":False
+                }
             ASCIIColors.success(f'Client connected with session ID: {client_id}')
 
         @self.socketio.on('disconnect')
@@ -301,71 +308,116 @@ class LoLLMsServer:
             else:
                 emit('personality_add_failed', {'success':False, 'error': "Personality ID not valid"}, room=request.sid)
 
+        @self.socketio.on('tokenize')
+        def tokenize(data):
+            prompt = data['prompt']
+            tk = self.current_model.tokenize(prompt)
+            emit("tokenized", {"tokens":tk})
+
+        @self.socketio.on('detokenize')
+        def detokenize(data):
+            prompt = data['prompt']
+            txt = self.current_model.detokenize(prompt)
+            emit("detokenized", {"text":txt})
+
         @self.socketio.on('generate_text')
         def handle_generate_text(data):
+            if not self.is_ready:
+                emit("buzzy", {"message":"I am buzzy. Come back later."})
+                return
             model = self.current_model
             client_id = request.sid
+            self.clients[client_id]["is_generating"]=True
+            self.clients[client_id]["requested_stop"]=False
             prompt = data['prompt']
-            personality: AIPersonality = self.personalities[data['personality']]
-            personality.model = model
-            cond_tk = personality.model.tokenize(personality.personality_conditioning)
-            n_cond_tk = len(cond_tk)
-            # Placeholder code for text generation
-            # Replace this with your actual text generation logic
-            print(f"Text generation requested by client: {client_id}")
+            personality_id = data['personality']
+            n_predicts = data["n_predicts"]
+            if personality_id==-1:
+                # Raw text generation
+                print(f"Text generation requested by client: {client_id}")
+                self.answer[0] = ''
+                def callback(text, message_type: MSG_TYPE):
+                    if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
+                        self.answer[0] = self.answer[0] + text
+                        emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
+                    if self.clients[client_id]["requested_stop"]:
+                        return False
+                    else:
+                        return True
 
-            self.answer[0] = ''
-            full_discussion_blocks = self.clients[client_id]["full_discussion_blocks"]
+                tk = model.tokenize(prompt)
+                n_tokens = len(tk)
+                fd = model.detokenize(tk[-min(self.config.ctx_size,n_tokens):])
 
-            if prompt != '':
-                if personality.processor is not None and personality.processor_cfg["process_model_input"]:
-                    preprocessed_prompt = personality.processor.process_model_input(prompt)
-                else:
-                    preprocessed_prompt = prompt
+                print("generating...", end="", flush=True)
+                generated_text = model.generate(fd, n_predict=n_predicts, callback=callback)
+                ASCIIColors.success(f"ok")
+
+                # Emit the generated text to the client
+                emit('text_generated', {'text': generated_text}, room=client_id)                
+            else:
+                personality: AIPersonality = self.personalities[personality_id]
+                personality.model = model
+                cond_tk = personality.model.tokenize(personality.personality_conditioning)
+                n_cond_tk = len(cond_tk)
+                # Placeholder code for text generation
+                # Replace this with your actual text generation logic
+                print(f"Text generation requested by client: {client_id}")
+
+                self.answer[0] = ''
+                full_discussion_blocks = self.clients[client_id]["full_discussion_blocks"]
+
+                if prompt != '':
+                    if personality.processor is not None and personality.processor_cfg["process_model_input"]:
+                        preprocessed_prompt = personality.processor.process_model_input(prompt)
+                    else:
+                        preprocessed_prompt = prompt
+                    
+                    if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
+                        full_discussion_blocks.append(personality.user_message_prefix)
+                        full_discussion_blocks.append(preprocessed_prompt)
+                
+                    else:
+
+                        full_discussion_blocks.append(personality.user_message_prefix)
+                        full_discussion_blocks.append(preprocessed_prompt)
+                        full_discussion_blocks.append(personality.link_text)
+                        full_discussion_blocks.append(personality.ai_message_prefix)
+
+                full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
+
+                def callback(text, message_type: MSG_TYPE):
+                    if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
+                        self.answer[0] = self.answer[0] + text
+                        emit('text_chunk', {'chunk': text}, room=client_id)
+                    try:
+                        if self.clients[client_id]["requested_stop"]:
+                            return False
+                        else:
+                            return True
+                    except: # If the client is disconnected then we stop talking to it
+                        return False
+
+                tk = personality.model.tokenize(full_discussion)
+                n_tokens = len(tk)
+                fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk,n_tokens):])
                 
                 if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                    full_discussion_blocks.append(personality.user_message_prefix)
-                    full_discussion_blocks.append(preprocessed_prompt)
-            
+                    print("processing...", end="", flush=True)
+                    generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
+                    print(generated_text)
                 else:
+                    print("generating...", end="", flush=True)
+                    generated_text = personality.model.generate(personality.personality_conditioning+fd, n_predict=personality.model_n_predicts, callback=callback)
 
-                    full_discussion_blocks.append(personality.user_message_prefix)
-                    full_discussion_blocks.append(preprocessed_prompt)
-                    full_discussion_blocks.append(personality.link_text)
-                    full_discussion_blocks.append(personality.ai_message_prefix)
+                if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
+                    generated_text = personality.processor.process_model_output(generated_text)
 
-            else:
-                print(output.strip(),end="",flush=True)
+                full_discussion_blocks.append(generated_text.strip())
+                print(f"{ASCIIColors.color_green}ok{ASCIIColors.color_reset}", end="", flush=True)
 
-            full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
-
-            def callback(text, message_type: MSG_TYPE):
-                if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
-                    self.answer[0] = self.answer[0] + text
-                    emit('text_chunk', {'chunk': text}, room=client_id)
-                return True
-
-
-            tk = personality.model.tokenize(full_discussion)
-            n_tokens = len(tk)
-            fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk,n_tokens):])
-            
-            if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                print("processing...", end="", flush=True)
-                generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
-                print(generated_text)
-            else:
-                print("generating...", end="", flush=True)
-                generated_text = personality.model.generate(personality.personality_conditioning+fd, n_predict=personality.model_n_predicts, callback=callback)
-
-            if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
-                generated_text = personality.processor.process_model_output(generated_text)
-
-            full_discussion_blocks.append(generated_text.strip())
-            print(f"{ASCIIColors.color_green}ok{ASCIIColors.color_reset}", end="", flush=True)
-
-            # Emit the generated text to the client
-            emit('text_generated', {'text': generated_text}, room=client_id)
+                # Emit the generated text to the client
+                emit('text_generated', {'text': generated_text}, room=client_id)
 
     def build_binding(self, bindings_path: Path, cfg: LOLLMSConfig)->LLMBinding:
         binding_path = Path(bindings_path) / cfg["binding_name"]

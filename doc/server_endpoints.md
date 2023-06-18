@@ -288,7 +288,7 @@ Generated Events:
 - Parameters:
   - `data`: A dictionary containing the following fields:
     - `prompt` (string): The text prompt for text generation.
-    - `personality` (integer): The index of the selected personality for conditioning the text generation.
+    - `personality` (integer): The index of the selected personality for conditioning the text generation. If it is -1 then no personality is used and the text is assumed to be raw.
 - Actions:
   - Retrieves the selected model and client ID from the server.
   - Extracts the prompt and selected personality index from the request data.
@@ -305,5 +305,6 @@ Generated Events:
   - Emits the generated text to the client through the `'text_generated'` event.
 
 Events generated:
-- `'text_chunk'`: Generated text chunks are emitted to the client through this event during the text generation process.
-- `'text_generated'`: Once the text generation process is complete, the final generated text is emitted to the client through this event.
+- `'buzzy'`: when the server is buzzy and can't process the request, it sends this event and returns. This event have parameter `message` containing a string.
+- `'text_chunk'`: Generated text chunks are emitted to the client through this event during the text generation process. The event has two parameters `chunk` and `type`.
+- `'text_generated'`: Once the text generation process is complete, the final generated text is emitted to the client through this event. The event has one parameter `text` containing the full generated text.

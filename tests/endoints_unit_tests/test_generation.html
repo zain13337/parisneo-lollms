@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Endpoint Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hover\:bg-blue-600:hover {
+            background-color: #2563eb;
+        }
+
+        .active\:bg-blue-700:active {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto mt-8">
+        <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
+            <h1 class="text-2xl font-bold mb-4">Socket.IO Endpoint Test</h1>
+            <div id="connection-section">
+                <div class="mb-4">
+                    <label for="host" class="block text-sm font-medium text-gray-700">Host:</label>
+                    <input id="host" type="text" class="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                        value="localhost" />
+                </div>
+                <div class="mb-4">
+                    <label for="port" class="block text-sm font-medium text-gray-700">Port:</label>
+                    <input id="port" type="number" class="mt-1 p-2 border border-gray-300 rounded-md w-full" value="9600" />
+                </div>
+                <button id="connect-btn"
+                    class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 rounded">Connect</button>
+            </div>
+            <div id="generation-section" class="hidden">
+                <div class="mb-4">
+                    <label for="prompt" class="block text-sm font-medium text-gray-700">Enter Prompt:</label>
+                    <input id="prompt" type="text" class="mt-1 p-2 border border-gray-300 rounded-md w-full" />
+                </div>
+                <button id="generate-btn"
+                    class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 rounded">Generate
+                    Text</button>
+                <div id="output" class="mt-4 p-2 border border-gray-300 rounded-md h-64 overflow-y-scroll"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const connectButton = document.getElementById('connect-btn');
+        const generateButton = document.getElementById('generate-btn');
+        const connectionSection = document.getElementById('connection-section');
+        const generationSection = document.getElementById('generation-section');
+
+        // Append the received chunks to the output div
+        function appendToOutput(chunk) {
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML += chunk;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        // Event handler for receiving generated text chunks
+        socket.on('text_chunk', data => {
+            console.log('Received chunk:', data.chunk);
+            appendToOutput(data.chunk);
+        });
+
+        // Event handler for successful connection
+        socket.on('connect', () => {
+            console.log('Connected to Socket.IO server');
+            connectButton.disabled = true;
+            connectionSection.classList.add('hidden');
+            generationSection.classList.remove('hidden');
+        });
+
+        // Event handler for error during text generation
+        socket.on('text_generated_error', error => {
+            console.error('Text generation error:', error);
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML += `<p class="text-red-500">Error: ${error.message}</p>`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        });
+
+        // Triggered when the "Connect" button is clicked
+        connectButton.addEventListener('click', () => {
+            const hostInput = document.getElementById('host');
+            const portInput = document.getElementById('port');
+            const host = hostInput.value.trim();
+            const port = parseInt(portInput.value);
+
+            if (host && port) {
+                socket.io.uri = `http://${host}:${port}`;
+                socket.connect();
+                connectButton.disabled = true;
+                connectionSection.classList.add('hidden');
+                generationSection.classList.remove('hidden');
+            }
+        });
+
+        // Triggered when the "Generate Text" button is clicked
+        generateButton.addEventListener('click', () => {
+            const promptInput = document.getElementById('prompt');
+            const prompt = promptInput.value.trim();
+
+            if (prompt) {
+                // Clear output div
+                document.getElementById('output').innerHTML = '';
+
+                // Trigger the 'generate_text' event with the prompt
+                socket.emit('generate_text', { prompt, personality: -1, n_predicts: 1024 });
+                promptInput.value = '';
+            }
+        });
+    </script>
+</body>
+
+</html>
