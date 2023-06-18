@@ -324,6 +324,8 @@ class LoLLMsServer:
         def cancel_generation(data):
             client_id = request.sid
             self.clients[client_id]["requested_stop"]=False
+            print(f"Client {client_id} requested canceling generation")
+            emit("generation_canceled", {"message":"Generation is canceled."})
 
 
         @self.socketio.on('generate_text')
@@ -335,9 +337,9 @@ class LoLLMsServer:
             client_id = request.sid
             self.clients[client_id]["is_generating"]=True
             self.clients[client_id]["requested_stop"]=False
-            prompt = data['prompt']
-            personality_id = data['personality']
-            n_predicts = data["n_predicts"]
+            prompt          = data['prompt']
+            personality_id  = data['personality']
+            n_predicts      = data["n_predicts"]
             if personality_id==-1:
                 # Raw text generation
                 print(f"Text generation requested by client: {client_id}")

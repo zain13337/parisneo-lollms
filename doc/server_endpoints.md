@@ -308,3 +308,4 @@ Events generated:
 - `'buzzy'`: when the server is buzzy and can't process the request, it sends this event and returns. This event have parameter `message` containing a string.
 - `'text_chunk'`: Generated text chunks are emitted to the client through this event during the text generation process. The event has two parameters `chunk` and `type`.
 - `'text_generated'`: Once the text generation process is complete, the final generated text is emitted to the client through this event. The event has one parameter `text` containing the full generated text.
+- `'generation_canceled'`: Answer to `cancel_generation` endpoint call
