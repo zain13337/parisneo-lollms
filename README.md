@@ -22,6 +22,8 @@ Lord of Large Language Models (LoLLMs) Server is a text generation server based 
 - RESTful API for listing personalities and adding new personalities.
 - Easy integration with various applications and frameworks.
 - Possibility to send files to personalities
+- Possibility to run on multiple nodes and provide a generation service to many outputs at once.
+- Data stays local even in the remote version. Only generations are sent to the host node. The logs, data and discussion history are kept in your local disucssion folder.
 
 ## Installation
 
@@ -38,11 +40,14 @@ pip install --upgrade git+https://github.com/ParisNeo/lollms.git
 ```
 
 
-To simply configure your environment run the console app:
+To simply configure your environment run the settings app:
 
 ```bash
-lollms-console
+lollms-settings
 ```
+
+The tool is intuitive and will guide you through configuration process.
+
 
 The first time you will be prompted to select a binding.
 ![image](https://github.com/ParisNeo/lollms/assets/827993/2d7f58fe-089d-4d3e-a21a-0609f8e27969)

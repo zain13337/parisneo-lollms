@@ -329,6 +329,7 @@ Date: {{date}}
         # Disclaimer
         self._disclaimer: str = ""
         self._help: str = ""
+        self._commands: list = []
         
         # Default model parameters
         self._model_temperature: float = 0.8 # higher: more creative, lower more deterministic
@@ -421,6 +422,7 @@ Date: {{date}}
         self._dependencies = config.get("dependencies", self._dependencies)
         self._disclaimer = config.get("disclaimer", self._disclaimer)
         self._help = config.get("help", self._help)
+        self._commands = config.get("commands", self._commands)
         self._model_temperature = config.get("model_temperature", self._model_temperature)
         self._model_n_predicts = config.get("model_n_predicts", self._model_n_predicts)
         self._model_top_k = config.get("model_top_k", self._model_top_k)
@@ -530,6 +532,7 @@ Date: {{date}}
             "dependencies": self._dependencies,
             "disclaimer": self._disclaimer,
             "help": self._help,
+            "commands": self._commands,
             "model_temperature": self._model_temperature,
             "model_n_predicts": self._model_n_predicts,
             "model_top_k": self._model_top_k,
@@ -569,6 +572,7 @@ Date: {{date}}
             "dependencies": self._dependencies,
             "disclaimer": self._disclaimer,
             "help": self._help,
+            "commands": self._commands,
             "model_temperature": self._model_temperature,
             "model_n_predicts": self._model_n_predicts,
             "model_top_k": self._model_top_k,
@@ -865,6 +869,26 @@ Date: {{date}}
             help (str): The help text.
         """
         self._help = help
+
+
+
+    @property
+    def commands(self) -> str:
+        """Getter method for the commands attribute.
+
+        Returns:
+            str: The commands text.
+        """
+        return self._commands
+
+    @commands.setter
+    def commands(self, commands: str):
+        """Setter method for the commands attribute.
+
+        Args:
+            commands (str): The commands text.
+        """
+        self._commands = commands
 
 
     @property
