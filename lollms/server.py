@@ -320,6 +320,12 @@ class LoLLMsServer:
             txt = self.current_model.detokenize(prompt)
             emit("detokenized", {"text":txt})
 
+        @self.socketio.on('cancel_generation')
+        def cancel_generation(data):
+            client_id = request.sid
+            self.clients[client_id]["requested_stop"]=False
+
+
         @self.socketio.on('generate_text')
         def handle_generate_text(data):
             if not self.is_ready:
@@ -516,6 +522,8 @@ class LoLLMsServer:
             personality = AIPersonality(self.lollms_paths, self.config.lollms_paths.personalities_zoo_path/p, self.current_model)
             self.personalities.append(personality)
 
+        if self.config.active_personality_id>len(self.personalities):
+            self.config.active_personality_id = 0
         self.active_personality = self.personalities[self.config.active_personality_id]
 
         self.menu.show_logo()

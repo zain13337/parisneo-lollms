@@ -79,6 +79,9 @@ class PersonalityBuilder:
 
 
     def build_personality(self, force_reinstall=False):
+        if self.config["active_personality_id"]>=len(self.config["personalities"]):
+            ASCIIColors.warning("Personality ID was out of range. Resetting to 0.")
+            self.config["active_personality_id"]=0
         if len(self.config["personalities"][self.config["active_personality_id"]].split("/"))==3:
             self.personality = AIPersonality(self.lollms_paths, self.lollms_paths.personalities_zoo_path / self.config["personalities"][self.config["active_personality_id"]], self.model, force_reinstall= force_reinstall)
         else:

@@ -65,8 +65,6 @@ class Settings:
 
         if show_logo:
             self.menu.show_logo()
-        if show_commands_list:
-            self.menu.show_commands_list()
             
         if show_personality_infos:
             try:
