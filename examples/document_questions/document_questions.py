@@ -93,6 +93,7 @@ def test_generate_text(host, port, lollms_paths:LollmsPaths):
     outputs=lollms_paths.personal_data_path/"outputs.txt"
 
     if not docs.exists():
+        ASCIIColors.error(f"Documents file {docs} does not exist")
         sys.exit(0)
 
     if not questions_path.exists():
@@ -126,7 +127,7 @@ def test_generate_text(host, port, lollms_paths:LollmsPaths):
                 print(f"Question:{question}")
                 useful_chunks=[]
                 for chunk in file_chunks:
-                    prompt="Document:\n"+chunk+"\n"+question
+                    prompt="Read text chunk, then answer question by yes or no\nText Chunk:\n"+chunk+"\nQ: "+question+"\nA:"
                     # Trigger the 'generate_text' event with the prompt
                     infos["is_ready"]=False
                     print(f"Sending prompt:{prompt}")
@@ -148,8 +149,6 @@ def test_generate_text(host, port, lollms_paths:LollmsPaths):
 
         @sio.event
         def text_generated(data):
-            print("text_generated_ok")
-            print(data["text"])
             infos["answer"]=data["text"]
             infos["is_ready"]=True
 

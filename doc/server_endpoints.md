@@ -155,7 +155,7 @@ Actions:
 - Creates a deep copy of the `self.config` dictionary and assigns it to `self.cp_config` variable.
 - Updates the `"binding_name"` value in `self.cp_config` with the selected binding name obtained from `data['binding_name']`.
 - Attempts to build a binding instance using the `self.bindings_path` and `self.cp_config`.
-- If successful, updates `self.binding_class` with the created binding instance and updates `self.config` with `self.cp_config`.
+- If successful, updates `self.binding` with the created binding instance and updates `self.config` with `self.cp_config`.
 - Sends a response to the client indicating the success of the binding selection along with the selected binding name.
 - If an exception occurs during the binding creation process, the exception is printed and a response is sent to the client indicating the failure of the binding selection along with the selected binding name and the error message.
 
@@ -174,12 +174,12 @@ Events generated:
   - `data['model_name']` (string): The name of the model to select.
 - Actions:
   - Extracts the model name from the request data.
-  - Checks if a binding class is available (`self.binding_class`).
+  - Checks if a binding class is available (`self.binding`).
     - If no binding class is available, emits a `'select_model'` event with a failure response, indicating that a binding needs to be selected first.
     - Returns and exits the function.
   - Creates a deep copy of the configuration (`self.config`) and assigns it to `self.cp_config`.
   - Sets the `"model_name"` property of `self.cp_config` to the selected model name.
-  - Tries to create an instance of the binding class (`self.binding_class`) with `self.cp_config`.
+  - Tries to create an instance of the binding class (`self.binding`) with `self.cp_config`.
     - If successful, assigns the created binding instance to `self.current_model`.
     - Emits a `'select_model'` event with a success response, indicating that the model selection was successful.
     - Returns and exits the function.

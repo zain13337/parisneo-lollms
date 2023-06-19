@@ -91,12 +91,12 @@ class LoLLMsServer:
         if self.config.binding_name is None:
             self.menu.select_binding()
         else:
-            self.binding_class = self.build_binding(self.bindings_path, self.config)
+            self.binding = self.build_binding(self.bindings_path, self.config)
         if self.config.model_name is None:
             self.menu.select_model()
         else:
             try:
-                self.current_model = self.binding_class(self.config)
+                self.current_model = self.binding(self.config)
             except Exception as ex:
                 print(f"{ASCIIColors.color_red}Couldn't load model Please select a valid model{ASCIIColors.color_reset}")
                 print(f"{ASCIIColors.color_red}{ex}{ASCIIColors.color_reset}")
@@ -137,17 +137,17 @@ class LoLLMsServer:
             # cfg.download_model(url)
         else:
             try:
-                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
+                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.config.file_path} or use the next menu to select a valid binding")
                 print(f"Trying to reinstall binding")
-                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
+                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
                 self.menu.select_binding()
 
     def load_model(self):
         try:
-            self.model = ModelBuilder(self.binding_class, self.config).get_model()
+            self.model = ModelBuilder(self.binding, self.config).get_model()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model.")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
@@ -264,9 +264,9 @@ class LoLLMsServer:
             Returns:
                 _type_: _description_
             """
-            if self.binding_class is None:
+            if self.binding is None:
                emit('available_models_list', {'success':False, 'error': "No binding selected"}, room=request.sid)
-            model_list = self.binding_class.get_available_models()
+            model_list = self.binding.get_available_models()
 
             models = []
             for model in model_list:
@@ -337,7 +337,7 @@ class LoLLMsServer:
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["binding_name"] = data['binding_name']
             try:
-                self.binding_class = self.build_binding(self.bindings_path, self.cp_config)
+                self.binding = self.build_binding(self.bindings_path, self.cp_config)
                 self.config = self.cp_config
                 emit('select_binding', {'success':True, 'binding_name': self.cp_config["binding_name"]}, room=request.sid)
             except Exception as ex:
@@ -347,13 +347,13 @@ class LoLLMsServer:
         @self.socketio.on('select_model')
         def handle_select_model(data):
             model_name = data['model_name']
-            if self.binding_class is None:
+            if self.binding is None:
                 emit('select_model', {'success':False, 'model_name':  model_name, 'error':f"Please select a binding first"}, room=request.sid)
                 return
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["model_name"] = data['model_name']
             try:
-                self.current_model = self.binding_class(self.cp_config)
+                self.current_model = self.binding(self.cp_config)
                 emit('select_model', {'success':True, 'model_name':  model_name}, room=request.sid)
             except Exception as ex:
                 print(ex)
@@ -427,6 +427,15 @@ class LoLLMsServer:
                 prompt          = data['prompt']
                 personality_id  = data['personality']
                 n_predicts      = data["n_predicts"]
+                parameters      = data.get("parameters",{
+                    "temperature":self.config["temperature"],
+                    "top_k":self.config["top_k"],
+                    "top_p":self.config["top_p"],
+                    "repeat_penalty":self.config["repeat_penalty"],
+                    "repeat_last_n":self.config["repeat_last_n"],
+                    "seed":self.config["seed"]
+                })
+
                 if personality_id==-1:
                     # Raw text generation
                     self.answer = {"full_text":""}
@@ -449,7 +458,14 @@ class LoLLMsServer:
                     fd = model.detokenize(tk[-min(self.config.ctx_size,n_tokens):])
 
                     ASCIIColors.print("warm up", ASCIIColors.color_bright_cyan)
-                    generated_text = model.generate(fd, n_predict=n_predicts, callback=callback)
+                    generated_text = model.generate(fd, n_predict=n_predicts, callback=callback,
+                                                    temperature = parameters["temperature"],
+                                                    top_k = parameters["top_k"],
+                                                    top_p = parameters["top_p"],
+                                                    repeat_penalty = parameters["repeat_penalty"],
+                                                    repeat_last_n = parameters["repeat_last_n"],
+                                                    seed = parameters["seed"]                                                
+                                                    )
                     ASCIIColors.success(f"\ndone")
                     if client_id in self.clients:
                         if not self.clients[client_id]["requested_stop"]:
@@ -510,7 +526,10 @@ class LoLLMsServer:
                         generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
                     else:
                         ASCIIColors.info("generating...", end="", flush=True)
-                        generated_text = personality.model.generate(personality.personality_conditioning+fd, n_predict=personality.model_n_predicts, callback=callback)
+                        generated_text = personality.model.generate(
+                                                                    personality.personality_conditioning+fd, 
+                                                                    n_predict=personality.model_n_predicts, 
+                                                                    callback=callback)
 
                     if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
                         generated_text = personality.processor.process_model_output(generated_text)
@@ -545,8 +564,8 @@ class LoLLMsServer:
         # use importlib to load the module from the file path
         loader = importlib.machinery.SourceFileLoader(module_name, str(absolute_path / "__init__.py"))
         binding_module = loader.load_module()
-        binding_class = getattr(binding_module, binding_module.binding_name)
-        return binding_class
+        binding = getattr(binding_module, binding_module.binding_name)
+        return binding
 
 
     def run(self, host="localhost", port="9601"):

@@ -106,8 +106,8 @@ class MainMenu:
         if 1 <= choice <= len(models_list)-3:
             print(f"You selected model: {ASCIIColors.color_green}{models_list[choice - 1]}{ASCIIColors.color_reset}")
             self.conversation.config['model_name']=models_list[choice - 1]
-            self.conversation.load_model()
             self.conversation.config.save_config()
+            self.conversation.load_model()
         elif choice <= len(models_list)-2:
             self.install_model()
         elif choice <= len(models_list)-1:
@@ -129,7 +129,7 @@ class MainMenu:
 
             # Usage example
             with tqdm(total=100, unit="%", desc="Download Progress", ncols=80) as tqdm_bar:
-                self.conversation.config.download_model(url,self.conversation.binding_class, progress_callback)
+                self.conversation.config.download_model(url,self.conversation.binding, progress_callback)
             self.select_model()
         elif choice <= len(models_list)-1:
             path = Path(input("Give a path to the model to be used on your PC:"))
@@ -185,7 +185,7 @@ class MainMenu:
     def reinstall_binding(self):
         conversation = self.conversation
         try:
-            conversation.binding_class = BindingBuilder().build_binding(conversation.lollms_paths.bindings_zoo_path, conversation.config, force_reinstall=True)
+            conversation.binding = BindingBuilder().build_binding(conversation.lollms_paths.bindings_zoo_path, conversation.config, force_reinstall=True)
         except Exception as ex:
             print(ex)
             print(f"Couldn't find binding. Please verify your configuration file at {conversation.config.file_path} or use the next menu to select a valid binding")
@@ -377,17 +377,17 @@ Participating personalities:
             # cfg.download_model(url)
         else:
             try:
-                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
+                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid binding")
                 print(f"Trying to reinstall binding")
-                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
+                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
                 self.menu.select_binding()
 
     def load_model(self):
         try:
-            self.model = ModelBuilder(self.binding_class, self.config).get_model()
+            self.model = ModelBuilder(self.binding, self.config).get_model()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")

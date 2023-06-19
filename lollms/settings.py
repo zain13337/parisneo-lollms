@@ -147,17 +147,17 @@ Participating personalities:
             # cfg.download_model(url)
         else:
             try:
-                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
+                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.cfg_path} or use the next menu to select a valid binding")
                 print(f"Trying to reinstall binding")
-                self.binding_class = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
+                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
                 self.menu.select_binding()
 
     def load_model(self):
         try:
-            self.model = ModelBuilder(self.binding_class, self.config).get_model()
+            self.model = ModelBuilder(self.binding, self.config).get_model()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.cfg_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
