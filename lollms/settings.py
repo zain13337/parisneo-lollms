@@ -47,7 +47,7 @@ class Settings:
             shutil.copy(original, local)
         self.cfg_path = local
 
-        self.config = LOLLMSConfig(self.cfg_path)
+        self.config = LOLLMSConfig(self.cfg_path, self.lollms_paths)
         # load binding
         self.load_binding()
 
@@ -105,7 +105,7 @@ class Settings:
         if Path(file_name).is_absolute():
             self.log_file_path = Path(file_name)
         else:
-            home_dir = Path.home()/"Documents/lollms/logs"
+            home_dir = self.lollms_paths.personal_path/"logs"
             home_dir.mkdir(parents=True, exist_ok=True)
             self.log_file_path = home_dir/file_name
             if self.log_file_path.exists():

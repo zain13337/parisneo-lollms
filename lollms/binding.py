@@ -95,8 +95,8 @@ class LOLLMSConfig(BaseConfig):
             cfg_path = config_path
 
         if cfg_path.exists():
-            original_config = LOLLMSConfig(original_cfg_path,lollms_paths)
-            config = LOLLMSConfig(cfg_path,lollms_paths)
+            original_config = LOLLMSConfig(original_cfg_path, lollms_paths)
+            config = LOLLMSConfig(cfg_path, lollms_paths)
             if "version" not in config or int(config["version"])<int(original_config["version"]):
                 #Upgrade old configuration files to new format
                 ASCIIColors.error("Configuration file is very old.\nReplacing with default configuration")
@@ -104,7 +104,7 @@ class LOLLMSConfig(BaseConfig):
                 print(f"Added entries : {added}, removed entries:{removed}")
                 config.save_config(cfg_path)
         else:
-            config = LOLLMSConfig()
+            config = LOLLMSConfig(lollms_paths=lollms_paths)
         
         return config
             
