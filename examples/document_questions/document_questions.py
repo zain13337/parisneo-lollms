@@ -3,6 +3,7 @@ import socketio
 from pathlib import Path
 from lollms import MSG_TYPE
 from lollms.helpers import ASCIIColors
+from lollms.paths import LollmsPaths
 import time 
 import json
 from pathlib import Path
@@ -12,6 +13,7 @@ from bs4 import BeautifulSoup
 import json
 import csv
 from pptx import Presentation
+import sys
 
 # Connect to the Socket.IO server
 sio = socketio.Client()
@@ -85,10 +87,17 @@ def chunk(input_text, word_count):
 def text_generated(data):
     print('Generated text:', data)
 
-def test_generate_text(host, port):
-    docs=Path(__file__).parent/"docs.txt"
-    questions_path = Path(__file__).parent/"questions.txt"
-    outputs=Path(__file__).parent/"outputs.txt"
+def test_generate_text(host, port, lollms_paths:LollmsPaths):
+    docs=lollms_paths.personal_data_path/"docs.txt"
+    questions_path = lollms_paths.personal_data_path/"questions.txt"
+    outputs=lollms_paths.personal_data_path/"outputs.txt"
+
+    if not docs.exists():
+        sys.exit(0)
+
+    if not questions_path.exists():
+        sys.exit(0)
+
     files = []
     # Read the text file and split by multiple newlines
     print("Loading files")
@@ -158,6 +167,6 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=9601, help='Socket.IO server port')
     parser.add_argument('--text-file', type=str, default=str(Path(__file__).parent/"example_text_gen.txt"),help='Path to the text file')
     args = parser.parse_args()
-
+    lollms_paths = LollmsPaths.find_paths(force_local=False)
     # Run the test with provided arguments
-    test_generate_text(args.host, args.port)
+    test_generate_text(args.host, args.port, lollms_paths)
