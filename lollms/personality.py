@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import yaml
 from enum import Enum
+from lollms.helpers import ASCIIColors
 
 class MSG_TYPE(Enum):
     MSG_TYPE_CHUNK=0
@@ -168,7 +169,7 @@ class APScript:
         antiprompt = self.personality.detect_antiprompt(bot_says)
         if antiprompt:
             self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
-            print("Detected hallucination")
+            ASCIIColors.warning("Detected hallucination")
             return False
         else:
             self.bot_says = bot_says
