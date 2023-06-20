@@ -126,7 +126,7 @@ class LoLLMsServer:
         self.socketio_log.addHandler(logging.StreamHandler())
 
         self.initialize_routes()
-        self.run()
+        self.run(args.host, args.port)
 
 
     def load_binding(self):
