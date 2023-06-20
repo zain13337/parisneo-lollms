@@ -1,6 +1,3 @@
-from pathlib import Path
-import yaml
-
 
 
 class ASCIIColors:
@@ -74,61 +71,3 @@ class ASCIIColors:
 
     
 
-class BaseConfig():
-    def __init__(self, exceptional_keys=[], config = None):
-        self.exceptional_keys = exceptional_keys 
-        self.config = config
-
-
-    def to_dict(self):
-        return self.config
-    
-    def __getitem__(self, key):
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        return self.config[key]
-
-    def __getattr__(self, key):
-        if key == "exceptional_keys":
-            return super().__getattribute__(key)
-        if key in self.exceptional_keys+ ["config"] or key.startswith("__"):
-            return super().__getattribute__(key)
-        else:
-            if self.config is None:
-                raise ValueError("No configuration loaded.")
-            return self.config[key]
-
-
-    def __setattr__(self, key, value):
-        if key == "exceptional_keys":
-            return super().__setattr__(key, value)
-        if key in self.exceptional_keys+ ["config"] or key.startswith("__"):
-            super().__setattr__(key, value)
-        else:
-            if self.config is None:
-                raise ValueError("No configuration loaded.")
-            self.config[key] = value
-
-    def __setitem__(self, key, value):
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        self.config[key] = value
-    
-    def __contains__(self, item):
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        return item in self.config
-
-    def load_config(self, file_path:Path=None):
-        if file_path is None:
-            file_path = self.file_path
-        with open(file_path, 'r', encoding='utf-8') as stream:
-            self.config = yaml.safe_load(stream)
-
-    def save_config(self, file_path:Path=None):
-        if file_path is None:
-            file_path = self.file_path
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        with open(file_path, "w") as f:
-            yaml.dump(self.config, f)

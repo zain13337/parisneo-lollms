@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from lollms.personality import AIPersonality, MSG_TYPE
-from lollms.binding import LOLLMSConfig, LLMBinding
+from lollms.main_config import LOLLMSConfig
+from lollms.binding import LLMBinding
 from lollms.helpers import ASCIIColors
 from lollms.console import MainMenu
 from lollms.paths import LollmsPaths
@@ -14,10 +15,8 @@ import importlib
 from pathlib import Path
 import argparse
 import logging
-import shutil
 import yaml
 import copy
-from threading import Thread
 
 class LoLLMsServer:
     def __init__(self):
@@ -112,7 +111,7 @@ class LoLLMsServer:
 
         self.menu.show_logo()        
         
-        self.app = Flask("LoLLMsServer_Server")
+        self.app = Flask("LoLLMsServer")
         #self.app.config['SECRET_KEY'] = 'lollmssecret'
         CORS(self.app)  # Enable CORS for all routes
         
@@ -547,16 +546,6 @@ class LoLLMsServer:
             
     def build_binding(self, bindings_path: Path, cfg: LOLLMSConfig)->LLMBinding:
         binding_path = Path(bindings_path) / cfg["binding_name"]
-        # first find out if there is a requirements.txt file
-        install_file_name = "install.py"
-        install_script_path = binding_path / install_file_name
-        if install_script_path.exists():
-            module_name = install_file_name[:-3]  # Remove the ".py" extension
-            module_spec = importlib.util.spec_from_file_location(module_name, str(install_script_path))
-            module = importlib.util.module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-            if hasattr(module, "Install"):
-                module.Install(self.config)
         # define the full absolute path to the module
         absolute_path = binding_path.resolve()
         # infer the module name from the file path

@@ -1,9 +1,8 @@
-from lollms.personality import AIPersonality,  MSG_TYPE
-from lollms.binding import LOLLMSConfig, LLMBinding
+from lollms.personality import MSG_TYPE
+from lollms.main_config import LOLLMSConfig
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
 from lollms import reset_all_installs
-import shutil
 import yaml
 from pathlib import Path
 import sys
@@ -14,9 +13,9 @@ from lollms import BindingBuilder, ModelBuilder, PersonalityBuilder
 
 
 class MainMenu:
-    def __init__(self, conversation):
+    def __init__(self, lollms_app):
         self.binding_infs = []
-        self.conversation = conversation
+        self.lollms_app = lollms_app
 
     def show_logo(self):
         print(f"{ASCIIColors.color_bright_yellow}")
@@ -53,9 +52,9 @@ class MainMenu:
         print(f"   {ASCIIColors.color_red}├{ASCIIColors.color_reset} send_file: uploads a file to the AI")
         print(f"   {ASCIIColors.color_red}└{ASCIIColors.color_reset} exit: exists the console")
         
-        if self.conversation.personality.help !="":
+        if self.lollms_app.personality.help !="":
             print(f"Personality help:")
-            print(f"{self.conversation.personality.help}")
+            print(f"{self.lollms_app.personality.help}")
             
         
 
@@ -69,28 +68,31 @@ class MainMenu:
     def select_binding(self):
         bindings_list = []
         print()
-        print(f"{ASCIIColors.color_green}Current binding: {ASCIIColors.color_reset}{self.conversation.config['binding_name']}")
-        for p in self.conversation.lollms_paths.bindings_zoo_path.iterdir():
+        print(f"{ASCIIColors.color_green}Current binding: {ASCIIColors.color_reset}{self.lollms_app.config['binding_name']}")
+        for p in self.lollms_app.lollms_paths.bindings_zoo_path.iterdir():
             if p.is_dir():
                 with open(p/"binding_card.yaml", "r") as f:
                     card = yaml.safe_load(f)
                 with open(p/"models.yaml", "r") as f:
                     models = yaml.safe_load(f)
-                entry=f"{card['name']} (by {card['author']})"
+                is_installed = (self.lollms_app.lollms_paths.personal_configuration_path/f"binding_{p.name}.yaml").exists()
+                entry=f"{ASCIIColors.color_green if is_installed else ''}{card['name']} (by {card['author']})"
                 bindings_list.append(entry)
                 entry={
                     "name":p.name,
                     "card":card,
-                    "models":models
+                    "models":models,
+                    "installed": is_installed
                 }
                 self.binding_infs.append(entry)
         bindings_list += ["Back"]
         choice = self.show_menu(bindings_list)
         if 1 <= choice <= len(bindings_list)-1:
             print(f"You selected binding: {ASCIIColors.color_green}{self.binding_infs[choice - 1]['name']}{ASCIIColors.color_reset}")
-            self.conversation.config['binding_name']=self.binding_infs[choice - 1]['name']
-            self.conversation.load_binding()
-            self.conversation.config.save_config()
+            self.lollms_app.config['binding_name']=self.binding_infs[choice - 1]['name']
+            self.lollms_app.load_binding()
+            self.lollms_app.config['model_name']=None
+            self.lollms_app.config.save_config()
         elif choice <= len(bindings_list):
             return
         else:
@@ -98,16 +100,19 @@ class MainMenu:
 
     def select_model(self):
         print()
-        print(f"{ASCIIColors.color_green}Current model: {ASCIIColors.color_reset}{self.conversation.config['model_name']}")
-        models_dir:Path = (self.conversation.lollms_paths.personal_models_path/self.conversation.config['binding_name'])
+        print(f"{ASCIIColors.color_green}Current model: {ASCIIColors.color_reset}{self.lollms_app.config['model_name']}")
+        models_dir:Path = (self.lollms_app.lollms_paths.personal_models_path/self.lollms_app.config['binding_name'])
         models_dir.mkdir(parents=True, exist_ok=True)
-        models_list = [m.name for m in models_dir.iterdir() if m.name.lower() not in [".ds_dtore","thumb.db"]] + ["Install model", "Change binding", "Back"]
+        if hasattr(self.lollms_app,"binding") and hasattr(self.lollms_app.binding,"list_models"):
+            models_list = [f'{v["filename"]} (by {v["owner"]})' for v in self.lollms_app.binding.list_models(self.lollms_app.config)] + ["Install model", "Change binding", "Back"]
+        else:
+            models_list = [m.name for m in models_dir.iterdir() if m.name.lower() not in [".ds_dtore","thumb.db"]] + ["Install model", "Change binding", "Back"]
         choice = self.show_menu(models_list)
         if 1 <= choice <= len(models_list)-3:
             print(f"You selected model: {ASCIIColors.color_green}{models_list[choice - 1]}{ASCIIColors.color_reset}")
-            self.conversation.config['model_name']=models_list[choice - 1]
-            self.conversation.config.save_config()
-            self.conversation.load_model()
+            self.lollms_app.config['model_name']=models_list[choice - 1]
+            self.lollms_app.config.save_config()
+            self.lollms_app.load_model()
         elif choice <= len(models_list)-2:
             self.install_model()
         elif choice <= len(models_list)-1:
@@ -129,12 +134,12 @@ class MainMenu:
 
             # Usage example
             with tqdm(total=100, unit="%", desc="Download Progress", ncols=80) as tqdm_bar:
-                self.conversation.config.download_model(url,self.conversation.binding, progress_callback)
+                self.lollms_app.config.download_model(url,self.lollms_app.binding, progress_callback)
             self.select_model()
         elif choice <= len(models_list)-1:
             path = Path(input("Give a path to the model to be used on your PC:"))
             if path.exists():
-                self.conversation.config.reference_model(path)
+                self.lollms_app.config.reference_model(path)
             self.select_model()
         elif choice <= len(models_list):
             return
@@ -143,31 +148,31 @@ class MainMenu:
 
     def select_personality(self):
         print()
-        print(f"{ASCIIColors.color_green}Current personality: {ASCIIColors.color_reset}{self.conversation.config['personalities'][self.conversation.config['active_personality_id']]}")
-        personality_languages = [p.stem for p in self.conversation.lollms_paths.personalities_zoo_path.iterdir() if p.is_dir()] + ["Back"]
+        print(f"{ASCIIColors.color_green}Current personality: {ASCIIColors.color_reset}{self.lollms_app.config['personalities'][self.lollms_app.config['active_personality_id']]}")
+        personality_languages = [p.stem for p in self.lollms_app.lollms_paths.personalities_zoo_path.iterdir() if p.is_dir()] + ["Back"]
         print("Select language")
         choice = self.show_menu(personality_languages)
         if 1 <= choice <= len(personality_languages)-1:
             language = personality_languages[choice - 1]
             print(f"You selected language: {ASCIIColors.color_green}{language}{ASCIIColors.color_reset}")
-            personality_categories = [p.stem for p in (self.conversation.lollms_paths.personalities_zoo_path/language).iterdir() if p.is_dir()]+["Custom","Back"]
+            personality_categories = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/language).iterdir() if p.is_dir()]+["Custom","Back"]
             print("Select category")
             choice = self.show_menu(personality_categories)
             if 1 <= choice <= len(personality_categories)-1:
                 category = personality_categories[choice - 1]
                 print(f"You selected category: {ASCIIColors.color_green}{category}{ASCIIColors.color_reset}")
                 if category=="Custom":
-                    personality_names = [p.stem for p in self.conversation.lollms_paths.personal_personalities_path.iterdir() if p.is_dir()]+["Back"]
+                    personality_names = [p.stem for p in self.lollms_app.lollms_paths.personal_personalities_path.iterdir() if p.is_dir()]+["Back"]
                 else:
-                    personality_names = [p.stem for p in (self.conversation.lollms_paths.personalities_zoo_path/language/category).iterdir() if p.is_dir()]+["Back"]
+                    personality_names = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/language/category).iterdir() if p.is_dir()]+["Back"]
                 print("Select personality")
                 choice = self.show_menu(personality_names)
                 if 1 <= choice <= len(personality_names)-1:
                     name = personality_names[choice - 1]
                     print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
-                    self.conversation.config["personalities"]=[f"{language}/{category}/{name}"]
-                    self.conversation.load_personality()
-                    self.conversation.config.save_config()
+                    self.lollms_app.config["personalities"]=[f"{language}/{category}/{name}"]
+                    self.lollms_app.load_personality()
+                    self.lollms_app.config.save_config()
                     print("Personality saved successfully!")
                 elif 1 <= choice <= len(personality_names):
                     return
@@ -183,22 +188,22 @@ class MainMenu:
             print("Invalid choice!")
 
     def reinstall_binding(self):
-        conversation = self.conversation
+        lollms_app = self.lollms_app
         try:
-            conversation.binding = BindingBuilder().build_binding(conversation.lollms_paths.bindings_zoo_path, conversation.config, force_reinstall=True)
+            lollms_app.binding = BindingBuilder().build_binding(lollms_app.lollms_paths.bindings_zoo_path, lollms_app.config, force_reinstall=True)
         except Exception as ex:
             print(ex)
-            print(f"Couldn't find binding. Please verify your configuration file at {conversation.config.file_path} or use the next menu to select a valid binding")
+            print(f"Couldn't find binding. Please verify your configuration file at {lollms_app.config.file_path} or use the next menu to select a valid binding")
             self.select_binding()
     
     def reinstall_personality(self):
-        conversation = self.conversation
+        lollms_app = self.lollms_app
         try:
-            conversation.personality = PersonalityBuilder(conversation.lollms_paths, conversation.config, conversation.model).build_personality(force_reinstall=True)
+            lollms_app.personality = PersonalityBuilder(lollms_app.lollms_paths, lollms_app.config, lollms_app.model).build_personality(force_reinstall=True)
         except Exception as ex:
-            ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {conversation.configuration_path} or use the next menu to select a valid personality")
+            ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {lollms_app.configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
-            ASCIIColors.error(f"{conversation.config.get_personality_path_infos()}")
+            ASCIIColors.error(f"{lollms_app.config.get_personality_path_infos()}")
             print("Please select a valid model or install a new one from a url")
             self.select_model()
 
@@ -595,8 +600,8 @@ def main():
             
     configuration_path = args.configuration_path
         
-    conversation = Conversation(configuration_path=configuration_path, show_commands_list=True)
-    conversation.start_conversation()
+    lollms_app = Conversation(configuration_path=configuration_path, show_commands_list=True)
+    lollms_app.start_conversation()
     
 
 if __name__ == "__main__":

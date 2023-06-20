@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 from lollms.helpers import ASCIIColors
-from lollms.helpers import BaseConfig
+from lollms.config import BaseConfig
 
 lollms_path = Path(__file__).parent
 lollms_default_cfg_path = lollms_path / "configs/config.yaml"
@@ -81,15 +81,14 @@ class LollmsPaths:
             # if the app is not forcing a specific path, then try to find out if the default installed library has specified a default path
             global_paths_cfg = lollms_path/"global_paths_cfg.yaml"
             if global_paths_cfg.exists():
+                cfg = BaseConfig()
+                cfg.load_config(global_paths_cfg)
                 try:
-                    cfg = BaseConfig()
-                    cfg.load_config(global_paths_cfg)
                     lollms_path = cfg.lollms_path
                     lollms_personal_path = cfg.lollms_personal_path
                     return LollmsPaths(lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path)
                 except Exception as ex:
                     print(f"{ASCIIColors.color_red}Global paths configuration file found but seems to be corrupted{ASCIIColors.color_reset}")
-                    print("Couldn't find your personal data path!")
                     cfg.lollms_path = Path(__file__).parent
                     cfg.lollms_personal_path = input("Please specify the folder where your configuration files, your models and your custom personalities need to be stored:")
                     cfg.save_config(global_paths_cfg)

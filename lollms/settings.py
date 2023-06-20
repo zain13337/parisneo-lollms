@@ -1,14 +1,10 @@
-from lollms.personality import AIPersonality,  MSG_TYPE
-from lollms.binding import LOLLMSConfig, LLMBinding
+
+from lollms.main_config import LOLLMSConfig
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
 from lollms import reset_all_installs
 import shutil
-import yaml
-import importlib
 from pathlib import Path
-import sys
-import pkg_resources
 import argparse
 from tqdm import tqdm
 from lollms import BindingBuilder, ModelBuilder, PersonalityBuilder
