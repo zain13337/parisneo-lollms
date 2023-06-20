@@ -38,18 +38,21 @@ class BindingBuilder:
         # use importlib to load the module from the file path
         loader = importlib.machinery.SourceFileLoader(module_name, str(absolute_path / "__init__.py"))
         binding_module = loader.load_module()
-        binding = getattr(binding_module, binding_module.binding_name)
-        return binding
+        binding:LLMBinding = getattr(binding_module, binding_module.binding_name)
+        return binding(
+                cfg, 
+                force_reinstall = force_reinstall
+                )
     
 
 class ModelBuilder:
-    def __init__(self, binding:LLMBinding, config:LOLLMSConfig):
+    def __init__(self, binding:LLMBinding):
         self.binding = binding
         self.model = None
-        self.build_model(config) 
+        self.build_model(binding.config) 
 
     def build_model(self, cfg: LOLLMSConfig):
-        self.model = self.binding(cfg)
+        self.model = self.binding.build_model()
 
     def get_model(self):
         return self.model

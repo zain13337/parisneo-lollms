@@ -63,6 +63,8 @@ class LLMBinding:
         self.config                 = config
         self.binding_config         = binding_config
 
+        self.models_folder          = None
+
         self.configuration_file_path = lollms_paths.personal_configuration_path/f"binding_{self.binding_folder_name}.yaml"
         self.binding_config.config.file_path = self.configuration_file_path
         if not self.configuration_file_path.exists() or force_install:
@@ -74,7 +76,16 @@ class LLMBinding:
         self.models_folder = config.lollms_paths.personal_models_path / self.binding_folder_name
         self.models_folder.mkdir(parents=True, exist_ok=True)
 
+    def build_model(self):
+        """
+        Build the model.
 
+        This method is responsible for constructing the model for the LOLLMS class.
+
+        Returns:
+            the model
+        """        
+        return self.models_folder 
 
     def install(self):
         """
@@ -176,13 +187,6 @@ class LLMBinding:
         """
         return " ".join(tokens_list)
 
-    @staticmethod
-    def list_models(config:dict, root_path="."):
-        """Lists the models for this binding
-        """
-        root_path = Path(root_path)
-        models_dir =(root_path/'models')/config["binding_name"]  # replace with the actual path to the models folder
-        return [f.name for f in models_dir.glob(LLMBinding.file_extension)]
 
     @staticmethod    
     def install_binding(binding_path, config:LOLLMSConfig):

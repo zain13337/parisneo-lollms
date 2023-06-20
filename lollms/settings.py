@@ -153,7 +153,7 @@ Participating personalities:
 
     def load_model(self):
         try:
-            self.model = ModelBuilder(self.binding, self.config).get_model()
+            self.model = ModelBuilder(self.binding).get_model()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.cfg_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")

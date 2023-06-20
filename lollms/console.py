@@ -106,7 +106,7 @@ class MainMenu:
         if hasattr(self.lollms_app,"binding") and hasattr(self.lollms_app.binding,"list_models"):
             models_list = [f'{v["filename"]} (by {v["owner"]})' for v in self.lollms_app.binding.list_models(self.lollms_app.config)] + ["Install model", "Change binding", "Back"]
         else:
-            models_list = [m.name for m in models_dir.iterdir() if m.name.lower() not in [".ds_dtore","thumb.db"]] + ["Install model", "Change binding", "Back"]
+            models_list = [m.name for m in models_dir.iterdir() if m.name.lower() not in [".ds_dtore","thumb.db",".keep"]] + ["Install model", "Change binding", "Back"]
         choice = self.show_menu(models_list)
         if 1 <= choice <= len(models_list)-3:
             print(f"You selected model: {ASCIIColors.color_green}{models_list[choice - 1]}{ASCIIColors.color_reset}")
@@ -392,7 +392,7 @@ Participating personalities:
 
     def load_model(self):
         try:
-            self.model = ModelBuilder(self.binding, self.config).get_model()
+            self.model = ModelBuilder(self.binding).get_model()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
