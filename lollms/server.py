@@ -100,12 +100,12 @@ class LoLLMsServer:
         if self.config.binding_name is None:
             self.menu.select_binding()
         else:
-            self.binding = self.build_binding(self.bindings_path, self.config)
+            self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
         if self.config.model_name is None:
             self.menu.select_model()
         else:
             try:
-                self.active_model = self.binding(self.config)
+                self.active_model = self.binding.build_model()
             except Exception as ex:
                 print(f"{ASCIIColors.color_red}Couldn't load model Please select a valid model{ASCIIColors.color_reset}")
                 print(f"{ASCIIColors.color_red}{ex}{ASCIIColors.color_reset}")
@@ -151,17 +151,18 @@ class LoLLMsServer:
             # cfg.download_model(url)
         else:
             try:
-                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
+                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.config.file_path} or use the next menu to select a valid binding")
                 print(f"Trying to reinstall binding")
-                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
+                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths, InstallOption.FORCE_INSTALL)
                 self.menu.select_binding()
 
     def load_model(self):
         try:
             self.model = ModelBuilder(self.binding).get_model()
+            ASCIIColors.success("Model loaded successfully")
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model.")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
@@ -367,7 +368,7 @@ class LoLLMsServer:
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["model_name"] = data['model_name']
             try:
-                self.active_model = self.binding(self.cp_config)
+                self.active_model = self.binding.build_model()
                 emit('select_model', {'success':True, 'model_name':  model_name}, room=request.sid)
             except Exception as ex:
                 print(ex)

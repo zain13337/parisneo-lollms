@@ -173,19 +173,8 @@ class LLMBinding:
         """
         return " ".join(tokens_list)
 
-
-    # To implement by children
-    # @staticmethod
-    # def get_available_models():
-
-
-# ===============================
-
-class BindingInstaller:
-    def __init__(self, config: LOLLMSConfig) -> None:
-        self.config = config
-
-    def reinstall_pytorch_with_cuda(self):
+    @staticmethod
+    def reinstall_pytorch_with_cuda():
         result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu117"])
         if result.returncode != 0:
             ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
@@ -195,6 +184,13 @@ class BindingInstaller:
             else:
                 ASCIIColors.error("Pytorch installed successfully!!")
 
+
+    # To implement by children
+    # @staticmethod
+    # def get_available_models():
+
+
+# ===============================
 
 class BindingBuilder:
     def build_binding(
