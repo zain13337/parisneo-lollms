@@ -180,7 +180,7 @@ Events generated:
   - Creates a deep copy of the configuration (`self.config`) and assigns it to `self.cp_config`.
   - Sets the `"model_name"` property of `self.cp_config` to the selected model name.
   - Tries to create an instance of the binding class (`self.binding`) with `self.cp_config`.
-    - If successful, assigns the created binding instance to `self.current_model`.
+    - If successful, assigns the created binding instance to `self.active_model`.
     - Emits a `'select_model'` event with a success response, indicating that the model selection was successful.
     - Returns and exits the function.
   - If an exception occurs during model creation, prints the exception and emits a `'select_model'` event with a failure response, indicating that a binding needs to be selected first.

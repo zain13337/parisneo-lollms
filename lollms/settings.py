@@ -1,14 +1,23 @@
-
+from lollms.config import InstallOption
 from lollms.main_config import LOLLMSConfig
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
-from lollms import reset_all_installs
+from lollms.binding import BindingBuilder, ModelBuilder
 import shutil
 from pathlib import Path
 import argparse
 from tqdm import tqdm
-from lollms import BindingBuilder, ModelBuilder, PersonalityBuilder
+from lollms.personality import PersonalityBuilder
 from lollms.console import MainMenu
+
+def reset_all_installs(lollms_paths:LollmsPaths):
+    ASCIIColors.info("Removeing all configuration files to force reinstall")
+    ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
+    for file_path in lollms_paths.personal_configuration_path.iterdir():
+        if file_path.name!="local_config.yaml" and file_path.suffix.lower()==".yaml":
+            file_path.unlink()
+            ASCIIColors.info(f"Deleted file: {file_path}")
+
 
 class Settings:
     def __init__(
@@ -143,12 +152,12 @@ Participating personalities:
             # cfg.download_model(url)
         else:
             try:
-                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
+                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.cfg_path} or use the next menu to select a valid binding")
                 print(f"Trying to reinstall binding")
-                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
+                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
                 self.menu.select_binding()
 
     def load_model(self):

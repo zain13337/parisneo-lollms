@@ -1,201 +1,20 @@
 from pathlib import Path
+from lollms.helpers import ASCIIColors
 
 import yaml
-class BaseConfig:
-    """
-    A base class for managing configuration data.
+from enum import Enum
 
-    The `BaseConfig` class provides basic functionality to load, save, and access configuration data.
-
-    Attributes:
-        exceptional_keys (list): A list of exceptional keys that can be accessed directly as attributes.
-        config (dict): The configuration data stored as a dictionary.
-
-    Methods:
-        to_dict():
-            Returns the configuration data as a dictionary.
-        __getitem__(key):
-            Retrieves the configuration value associated with the specified key.
-        __getattr__(key):
-            Retrieves the configuration value associated with the specified key as an attribute.
-        __setattr__(key, value):
-            Sets the value of the configuration key.
-        __setitem__(key, value):
-            Sets the value of the configuration key.
-        __contains__(item):
-            Checks if the configuration contains the specified key.
-        load_config(file_path):
-            Loads the configuration from a YAML file.
-        save_config(file_path):
-            Saves the configuration to a YAML file.
-    """
-
-    def __init__(self, exceptional_keys: list = [], config: dict = None, file_path:Path|str=None):
-        """
-        Initializes a new instance of the `BaseConfig` class.
-
-        Args:
-            exceptional_keys (list, optional): A list of exceptional keys that can be accessed directly as attributes.
-                Defaults to an empty list.
-            config (dict, optional): The configuration data stored as a dictionary. Defaults to None.
-        """
-        self.exceptional_keys   = exceptional_keys
-        self.config             = config
-        self.file_path          = file_path
-
-    def to_dict(self):
-        """
-        Returns the configuration data as a dictionary.
-
-        Returns:
-            dict: The configuration data as a dictionary.
-        """
-        return self.config
-
-    def __getitem__(self, key):
-        """
-        Retrieves the configuration value associated with the specified key.
-
-        Args:
-            key (Any): The key to retrieve the configuration value.
-
-        Returns:
-            Any: The configuration value associated with the key.
-
-        Raises:
-            ValueError: If no configuration is loaded.
-            KeyError: If the specified key is not found in the configuration.
-        """
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        return self.config[key]
-
-    def __getattr__(self, key):
-        """
-        Retrieves the configuration value associated with the specified key as an attribute.
-
-        Args:
-            key (str): The key to retrieve the configuration value.
-
-        Returns:
-            Any: The configuration value associated with the key.
-
-        Raises:
-            ValueError: If no configuration is loaded.
-            AttributeError: If the specified key is not found in the configuration.
-        """
-        if key == "exceptional_keys":
-            return super().__getattribute__(key)
-        if key in self.exceptional_keys + ["config","file_path"] or key.startswith("__"):
-            return super().__getattribute__(key)
-        else:
-            if self.config is None:
-                raise ValueError("No configuration loaded.")
-            return self.config[key]
-
-    def __setattr__(self, key, value):
-        """
-        Sets the value of the configuration key.
-
-        Args:
-            key (str): The key of the configuration.
-            value (Any): The new value for the configuration key.
-
-        Raises:
-            ValueError: If no configuration is loaded.
-        """
-        if key == "exceptional_keys":
-            return super().__setattr__(key, value)
-        if key in self.exceptional_keys + ["config","file_path"] or key.startswith("__"):
-            super().__setattr__(key, value)
-        else:
-            if self.config is None:
-                raise ValueError("No configuration loaded.")
-            self.config[key] = value
-
-    def __setitem__(self, key, value):
-        """
-        Sets the value of the configuration key.
-
-        Args:
-            key (str): The key of the configuration.
-            value (Any): The new value for the configuration key.
-
-        Raises:
-            ValueError: If no configuration is loaded.
-        """
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        self.config[key] = value
-
-    def __contains__(self, item):
-        """
-        Checks if the configuration contains the specified key.
-
-        Args:
-            item (str): The key to check.
-
-        Returns:
-            bool: True if the key is present in the configuration, False otherwise.
-
-        Raises:
-            ValueError: If no configuration is loaded.
-        """
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-        return item in self.config
-
-    def load_config(self, file_path: Path | str = None):
-        """
-        Loads the configuration from a YAML file.
-
-        Args:
-            file_path (str or Path, optional): The path to the YAML file. If not provided, uses the previously set file path.
-
-        Raises:
-            ValueError: If no configuration file path is specified.
-            FileNotFoundError: If the specified file path does not exist.
-            yaml.YAMLError: If there is an error parsing the YAML file.
-        """
-        if file_path is None:
-            if self.file_path is None:
-                raise ValueError("No configuration file path specified.")
-            file_path = self.file_path
-
-        file_path = Path(file_path)
-        if not file_path.exists():
-            raise FileNotFoundError(f"Configuration file not found: {file_path}")
-
-        with open(file_path, 'r', encoding='utf-8') as stream:
-            self.config = yaml.safe_load(stream)
-
-    def save_config(self, file_path=None):
-        """
-        Saves the configuration to a YAML file.
-
-        Args:
-            file_path (str or Path, optional): The path to the YAML file. If not provided, uses the previously set file path.
-
-        Raises:
-            ValueError: If no configuration is loaded.
-            ValueError: If no configuration file path is specified.
-            PermissionError: If the user does not have permission to write to the specified file path.
-            yaml.YAMLError: If there is an error serializing the configuration to YAML.
-        """
-        if file_path is None:
-            if self.file_path is None:
-                raise ValueError("No configuration file path specified.")
-            file_path = self.file_path
-
-        if self.config is None:
-            raise ValueError("No configuration loaded.")
-
-        file_path = Path(file_path)
-        with open(file_path, "w") as f:
-            yaml.dump(self.config, f)
-
-
-
+class InstallOption(Enum):
+    """Enumeration for installation options."""
+    
+    NEVER_INSTALL = 1
+    """Do not install under any circumstances."""
+    
+    INSTALL_IF_NECESSARY = 2
+    """Install if necessary, but do not force installation."""
+    
+    FORCE_INSTALL = 3
+    """Force installation, regardless of current state."""
 
 
 class ConfigTemplate:
@@ -376,6 +195,211 @@ class ConfigTemplate:
         return False
 
 
+
+class BaseConfig:
+    """
+    A base class for managing configuration data.
+
+    The `BaseConfig` class provides basic functionality to load, save, and access configuration data.
+
+    Attributes:
+        exceptional_keys (list): A list of exceptional keys that can be accessed directly as attributes.
+        config (dict): The configuration data stored as a dictionary.
+
+    Methods:
+        to_dict():
+            Returns the configuration data as a dictionary.
+        __getitem__(key):
+            Retrieves the configuration value associated with the specified key.
+        __getattr__(key):
+            Retrieves the configuration value associated with the specified key as an attribute.
+        __setattr__(key, value):
+            Sets the value of the configuration key.
+        __setitem__(key, value):
+            Sets the value of the configuration key.
+        __contains__(item):
+            Checks if the configuration contains the specified key.
+        load_config(file_path):
+            Loads the configuration from a YAML file.
+        save_config(file_path):
+            Saves the configuration to a YAML file.
+    """
+
+    def __init__(self, exceptional_keys: list = [], config: dict = None, file_path:Path|str=None):
+        """
+        Initializes a new instance of the `BaseConfig` class.
+
+        Args:
+            exceptional_keys (list, optional): A list of exceptional keys that can be accessed directly as attributes.
+                Defaults to an empty list.
+            config (dict, optional): The configuration data stored as a dictionary. Defaults to None.
+        """
+        self.exceptional_keys   = exceptional_keys
+        self.config             = config
+        self.file_path          = file_path
+
+    @staticmethod
+    def from_template(template:ConfigTemplate, exceptional_keys: list = []):
+        config = {}
+        for entry in template.template:
+            config[entry["name"]]=entry["value"]
+        return BaseConfig(exceptional_keys, config)
+
+    def to_dict(self):
+        """
+        Returns the configuration data as a dictionary.
+
+        Returns:
+            dict: The configuration data as a dictionary.
+        """
+        return self.config
+
+    def __getitem__(self, key):
+        """
+        Retrieves the configuration value associated with the specified key.
+
+        Args:
+            key (Any): The key to retrieve the configuration value.
+
+        Returns:
+            Any: The configuration value associated with the key.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+            KeyError: If the specified key is not found in the configuration.
+        """
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+        return self.config[key]
+
+    def __getattr__(self, key):
+        """
+        Retrieves the configuration value associated with the specified key as an attribute.
+
+        Args:
+            key (str): The key to retrieve the configuration value.
+
+        Returns:
+            Any: The configuration value associated with the key.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+            AttributeError: If the specified key is not found in the configuration.
+        """
+        if key == "exceptional_keys":
+            return super().__getattribute__(key)
+        if key in self.exceptional_keys + ["config","file_path"] or key.startswith("__"):
+            return super().__getattribute__(key)
+        else:
+            if self.config is None:
+                raise ValueError("No configuration loaded.")
+            return self.config[key]
+
+    def __setattr__(self, key, value):
+        """
+        Sets the value of the configuration key.
+
+        Args:
+            key (str): The key of the configuration.
+            value (Any): The new value for the configuration key.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if key == "exceptional_keys":
+            return super().__setattr__(key, value)
+        if key in self.exceptional_keys + ["config","file_path"] or key.startswith("__"):
+            super().__setattr__(key, value)
+        else:
+            if self.config is None:
+                raise ValueError("No configuration loaded.")
+            self.config[key] = value
+
+    def __setitem__(self, key, value):
+        """
+        Sets the value of the configuration key.
+
+        Args:
+            key (str): The key of the configuration.
+            value (Any): The new value for the configuration key.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+        self.config[key] = value
+
+    def __contains__(self, item):
+        """
+        Checks if the configuration contains the specified key.
+
+        Args:
+            item (str): The key to check.
+
+        Returns:
+            bool: True if the key is present in the configuration, False otherwise.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+        return item in self.config
+
+    def load_config(self, file_path: Path | str = None):
+        """
+        Loads the configuration from a YAML file.
+
+        Args:
+            file_path (str or Path, optional): The path to the YAML file. If not provided, uses the previously set file path.
+
+        Raises:
+            ValueError: If no configuration file path is specified.
+            FileNotFoundError: If the specified file path does not exist.
+            yaml.YAMLError: If there is an error parsing the YAML file.
+        """
+        if file_path is None:
+            if self.file_path is None:
+                raise ValueError("No configuration file path specified.")
+            file_path = self.file_path
+
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {file_path}")
+
+        with open(file_path, 'r', encoding='utf-8') as stream:
+            self.config = yaml.safe_load(stream)
+
+    def save_config(self, file_path=None):
+        """
+        Saves the configuration to a YAML file.
+
+        Args:
+            file_path (str or Path, optional): The path to the YAML file. If not provided, uses the previously set file path.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+            ValueError: If no configuration file path is specified.
+            PermissionError: If the user does not have permission to write to the specified file path.
+            yaml.YAMLError: If there is an error serializing the configuration to YAML.
+        """
+        if file_path is None:
+            if self.file_path is None:
+                raise ValueError("No configuration file path specified.")
+            file_path = self.file_path
+
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+
+        file_path = Path(file_path)
+        with open(file_path, "w") as f:
+            yaml.dump(self.config, f)
+
+
+
+
+
 class TypedConfig:
     """
     This type of configuration contains a template of descriptions for the fields of the configuration.
@@ -395,6 +419,55 @@ class TypedConfig:
 
         # Fill the template values from the config values
         self.sync()
+
+    def get(self, key, default_value=None):
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+        if key in self.config:
+            return self.config[key]
+        else:
+            return default_value
+
+
+    def __getattr__(self, key):
+        """
+        Retrieves the configuration entry with the specified key as an attribute.
+
+        Args:
+            key (str): The name of the configuration entry.
+
+        Returns:
+            dict: The configuration entry with the specified key, or None if not found.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if key == "exceptional_keys":
+            return super().__getattribute__(key)
+        if key in  ["config","config_template"] or key.startswith("__"):
+            return super().__getattribute__(key)
+        else:
+            if self.config is None:
+                raise ValueError("No configuration loaded.")
+            return self.config[key]
+        
+
+    def __getitem__(self, key):
+        """
+        Retrieves the configuration entry with the specified key as an attribute.
+
+        Args:
+            key (str): The name of the configuration entry.
+
+        Returns:
+            dict: The configuration entry with the specified key, or None if not found.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+        return self.config[key]
 
     def sync(self):
         """

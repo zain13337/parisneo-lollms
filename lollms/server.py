@@ -1,15 +1,16 @@
+from lollms.config import InstallOption
 from flask import Flask, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
-from lollms.personality import AIPersonality, MSG_TYPE
+from lollms.types import MSG_TYPE
+from lollms.personality import AIPersonality
 from lollms.main_config import LOLLMSConfig
-from lollms.binding import LLMBinding
+from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
+from lollms.personality import PersonalityBuilder
 from lollms.helpers import ASCIIColors
 from lollms.console import MainMenu
 from lollms.paths import LollmsPaths
 from lollms.console import MainMenu
-from lollms import BindingBuilder, ModelBuilder, PersonalityBuilder
-from lollms import reset_all_installs
 from typing import List, Tuple
 import importlib
 from pathlib import Path
@@ -18,13 +19,22 @@ import logging
 import yaml
 import copy
 
+def reset_all_installs(lollms_paths:LollmsPaths):
+    ASCIIColors.info("Removeing all configuration files to force reinstall")
+    ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
+    for file_path in lollms_paths.personal_configuration_path.iterdir():
+        if file_path.name!="local_config.yaml" and file_path.suffix.lower()==".yaml":
+            file_path.unlink()
+            ASCIIColors.info(f"Deleted file: {file_path}")
+
+
 class LoLLMsServer:
     def __init__(self):
         host = "localhost"
         port = "9601"
         self.clients = {}
         self.current_binding = None
-        self.current_model = None
+        self.active_model = None
         self.personalities = []
         self.answer = ['']
         self.is_ready = True
@@ -95,14 +105,19 @@ class LoLLMsServer:
             self.menu.select_model()
         else:
             try:
-                self.current_model = self.binding(self.config)
+                self.active_model = self.binding(self.config)
             except Exception as ex:
                 print(f"{ASCIIColors.color_red}Couldn't load model Please select a valid model{ASCIIColors.color_reset}")
                 print(f"{ASCIIColors.color_red}{ex}{ASCIIColors.color_reset}")
                 self.menu.select_model()
 
         for p in self.config.personalities:
-            personality = AIPersonality(self.lollms_paths, self.config.lollms_paths.personalities_zoo_path/p, self.current_model)
+            personality = AIPersonality(
+                                            self.config.lollms_paths.personalities_zoo_path/p,
+                                            self.lollms_paths,
+                                            self.config,
+                                            self.active_model
+                                        )
             self.personalities.append(personality)
 
         if self.config.active_personality_id>len(self.personalities):
@@ -352,7 +367,7 @@ class LoLLMsServer:
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["model_name"] = data['model_name']
             try:
-                self.current_model = self.binding(self.cp_config)
+                self.active_model = self.binding(self.cp_config)
                 emit('select_model', {'success':True, 'model_name':  model_name}, room=request.sid)
             except Exception as ex:
                 print(ex)
@@ -362,7 +377,12 @@ class LoLLMsServer:
         def handle_add_personality(data):
             personality_path = data['path']
             try:
-                personality = AIPersonality(self.lollms_paths, personality_path)
+                personality = AIPersonality(
+                                                personality_path, 
+                                                self.lollms_paths, 
+                                                self.config,
+                                                self.active_model
+                                            )
                 self.personalities.append(personality)
                 self.config["personalities"].append(personality_path)
                 emit('personality_added', {'success':True, 'name': personality.name, 'id':len(self.personalities)-1}, room=request.sid)
@@ -391,13 +411,13 @@ class LoLLMsServer:
         @self.socketio.on('tokenize')
         def tokenize(data):
             prompt = data['prompt']
-            tk = self.current_model.tokenize(prompt)
+            tk = self.active_model.tokenize(prompt)
             emit("tokenized", {"tokens":tk})
 
         @self.socketio.on('detokenize')
         def detokenize(data):
             prompt = data['prompt']
-            txt = self.current_model.detokenize(prompt)
+            txt = self.active_model.detokenize(prompt)
             emit("detokenized", {"text":txt})
 
         @self.socketio.on('cancel_generation')
@@ -420,7 +440,7 @@ class LoLLMsServer:
                 return
             def generate_text():
                 self.is_ready = False
-                model = self.current_model
+                model = self.active_model
                 self.clients[client_id]["is_generating"]=True
                 self.clients[client_id]["requested_stop"]=False
                 prompt          = data['prompt']

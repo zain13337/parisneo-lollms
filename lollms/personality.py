@@ -1,5 +1,7 @@
 from datetime import datetime
 from pathlib import Path
+from lollms.config import InstallOption, TypedConfig, BaseConfig
+from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.binding import LLMBinding
 
@@ -13,227 +15,8 @@ import importlib
 import shutil
 import subprocess
 import yaml
-from enum import Enum
 from lollms.helpers import ASCIIColors
-
-class MSG_TYPE(Enum):
-    MSG_TYPE_CHUNK=0
-    MSG_TYPE_FULL=1
-    MSG_TYPE_META=2
-    MSG_TYPE_REF=3
-    MSG_TYPE_CODE=4
-    MSG_TYPE_UI=5
-
-
-class APScript:
-    """
-    Template class for implementing personality processor classes in the APScript framework.
-
-    This class provides a basic structure and placeholder methods for processing model inputs and outputs.
-    Personality-specific processor classes should inherit from this class and override the necessary methods.
-
-    Methods:
-        __init__():
-            Initializes the APScript object.
-
-        run_workflow(generate_fn, prompt):
-            Runs the workflow for processing the model input and output.
-
-        process_model_input(text):
-            Process the model input.
-
-        process_model_output(text):
-            Process the model output.
-
-    Attributes:
-        None
-
-    Usage:
-    ```
-    # Create a personality-specific processor class that inherits from APScript
-    class MyPersonalityProcessor(APScript):
-        def __init__(self):
-            super().__init__()
-
-        def process_model_input(self, text):
-            # Implement the desired behavior for processing the model input
-            # and return the processed model input
-
-        def process_model_output(self, text):
-            # Implement the desired behavior for processing the model output
-            # and return the processed model output
-
-    # Create an instance of the personality processor
-    my_processor = MyPersonalityProcessor()
-
-    # Define the generate function and prompt
-    def generate_fn(prompt):
-        # Implement the logic to generate model output based on the prompt
-        # and return the generated text
-
-    prompt = "Enter your input: "
-
-    # Run the workflow
-    my_processor.run_workflow(generate_fn, prompt)
-    ```
-    """
-    def __init__(self, personality=None) -> None:
-        self.files=[]
-        self.personality = personality
-       
-    def install_personality(self, personality_path, force_reinstall=False):
-        install_file_name = "install.py"
-        install_script_path = personality_path/ "scripts" / install_file_name
-        if install_script_path.exists():
-            module_name = install_file_name[:-3]  # Remove the ".py" extension
-            module_spec = importlib.util.spec_from_file_location(module_name, str(install_script_path))
-            module = importlib.util.module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-            if hasattr(module, "Install"):
-                module.Install(self.personality,force_reinstall=force_reinstall)    
-                
-    def add_file(self, path):
-        self.files.append(path)
-        return True
-
-    def remove_file(self, path):
-        self.files.remove(path)
-
-    def load_config_file(self, path, default_config=None):
-        """
-        Load the content of local_config.yaml file.
-
-        The function reads the content of the local_config.yaml file and returns it as a Python dictionary.
-        If a default_config is provided, it fills any missing entries in the loaded dictionary.
-        If at least one field from default configuration was not present in the loaded configuration, the updated
-        configuration is saved.
-
-        Args:
-            path (str): The path to the local_config.yaml file.
-            default_config (dict, optional): A dictionary with default values to fill missing entries.
-
-        Returns:
-            dict: A dictionary containing the loaded data from the local_config.yaml file, with missing entries filled
-            by default_config if provided.
-        """
-        with open(path, 'r') as file:
-            data = yaml.safe_load(file)
-
-        if default_config:
-            updated = False
-            for key, value in default_config.items():
-                if key not in data:
-                    data[key] = value
-                    updated = True
-            
-            if updated:
-                self.save_config_file(path, data)
-
-        return data
-
-    def save_config_file(self, path, data):
-        """
-        Save the configuration data to a local_config.yaml file.
-
-        Args:
-            path (str): The path to save the local_config.yaml file.
-            data (dict): The configuration data to be saved.
-
-        Returns:
-            None
-        """
-        with open(path, 'w') as file:
-            yaml.dump(data, file)
-
-
-    def remove_text_from_string(self, string, text_to_find):
-        """
-        Removes everything from the first occurrence of the specified text in the string (case-insensitive).
-
-        Parameters:
-        string (str): The original string.
-        text_to_find (str): The text to find in the string.
-
-        Returns:
-        str: The updated string.
-        """
-        index = string.lower().find(text_to_find.lower())
-
-        if index != -1:
-            string = string[:index]
-
-        return string
-    
-    def process(self, text:str, message_type:MSG_TYPE):
-        bot_says = self.bot_says + text
-        antiprompt = self.personality.detect_antiprompt(bot_says)
-        if antiprompt:
-            self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
-            ASCIIColors.warning("Detected hallucination")
-            return False
-        else:
-            self.bot_says = bot_says
-            return True
-
-    def generate(self, prompt, max_size):
-        self.bot_says = ""
-        return self.personality.model.generate(
-                                prompt, 
-                                max_size, 
-                                self.process,
-                                temperature=self.personality.model_temperature,
-                                top_k=self.personality.model_top_k,
-                                top_p=self.personality.model_top_p,
-                                repeat_penalty=self.personality.model_repeat_penalty,
-                                ).strip()    
-
-    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback=None):
-        """
-        Runs the workflow for processing the model input and output.
-
-        This method should be called to execute the processing workflow.
-
-        Args:
-            generate_fn (function): A function that generates model output based on the input prompt.
-                The function should take a single argument (prompt) and return the generated text.
-            prompt (str): The input prompt for the model.
-            previous_discussion_text (str, optional): The text of the previous discussion. Default is an empty string.
-
-        Returns:
-            None
-        """
-        return None
-
-    def process_model_input(self, text:str):
-        """
-        Process the model input.
-
-        This method should be overridden in the personality-specific processor class to define
-        the desired behavior for processing the model input.
-
-        Args:
-            text (str): The model input text.
-
-        Returns:
-            Any: The processed model input.
-        """
-        return None
-
-    def process_model_output(self, text:str):
-        """
-        Process the model output.
-
-        This method should be overridden in the personality-specific processor class to define
-        the desired behavior for processing the model output.
-
-        Args:
-            text (str): The model output text.
-
-        Returns:
-            Any: The processed model output.
-        """
-        return None
-
+from lollms.types import MSG_TYPE
 
 
 
@@ -269,12 +52,13 @@ class AIPersonality:
     
     def __init__(
                     self, 
+                    personality_package_path: str|Path, 
                     lollms_paths:LollmsPaths, 
-                    personality_package_path: str|Path = None, 
+                    config:LOLLMSConfig,
                     model:LLMBinding=None, 
                     run_scripts=True, 
                     is_relative_path=True,
-                    force_reinstall=False
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
                 ):
         """
         Initialize an AIPersonality instance.
@@ -287,10 +71,11 @@ class AIPersonality:
         """
         self.lollms_paths = lollms_paths
         self.model = model
+        self.config = config
 
         self.files = []
 
-        self.force_reinstall = force_reinstall
+        self.installation_option = installation_option
 
         # First setup a default personality
         # Version
@@ -365,6 +150,8 @@ Date: {{date}}
             # Validate that the path format is OK with at least a config.yaml file present in the folder
             if not self.personality_package_path.is_dir():
                 raise ValueError("The provided path is not a folder.")
+
+            self.personality_folder_name = self.personality_package_path.stem
 
             # Open and store the personality
             self.load_personality(personality_package_path)
@@ -456,24 +243,6 @@ Date: {{date}}
 
 
         if self.run_scripts:
-            #If it has an install script then execute it.
-            install_file_name = "install.py"
-            self.install_script_path = self.scripts_path / install_file_name        
-            if self.install_script_path.exists():
-                module_name = install_file_name[:-3]  # Remove the ".py" extension
-                module_spec = importlib.util.spec_from_file_location(module_name, str(self.install_script_path))
-                module = importlib.util.module_from_spec(module_spec)
-                module_spec.loader.exec_module(module)
-                if hasattr(module, "Install"):
-                    self._install = module.Install(self, force_reinstall=self.force_reinstall)
-                else:
-                    self._install = None
-
-            #Install requirements
-            for entry in self._dependencies:
-                if not is_package_installed(entry):
-                    install_package(entry)
-
             # Search for any processor code
             processor_file_name = "processor.py"
             self.processor_script_path = self.scripts_path / processor_file_name
@@ -992,12 +761,12 @@ Date: {{date}}
         self._assets_list = value
 
     @property
-    def processor(self) -> APScript:
+    def processor(self) -> 'APScript':
         """Get the number of words to consider for repeat penalty."""
         return self._processor
 
     @processor.setter
-    def processor(self, value: APScript):
+    def processor(self, value: 'APScript'):
         """Set the number of words to consider for repeat penalty.
 
         Args:
@@ -1065,6 +834,255 @@ Date: {{date}}
         output_string = re.sub(pattern, replace, input_string)
         return output_string
 
+
+
+
+
+class APScript:
+    """
+    Template class for implementing personality processor classes in the APScript framework.
+
+    This class provides a basic structure and placeholder methods for processing model inputs and outputs.
+    Personality-specific processor classes should inherit from this class and override the necessary methods.
+    """
+    def __init__(
+                    self, 
+                    personality         :AIPersonality,
+                    personality_config  :TypedConfig
+                ) -> None:
+        
+        self.files=[]
+        self.personality                        = personality
+        self.personality_config                 = personality_config
+        self.installation_option                = personality.installation_option
+        self.configuration_file_path            = self.personality.lollms_paths.personal_configuration_path/f"personality_{self.personality.personality_folder_name}.yaml"
+        self.personality_config.config.file_path    = self.configuration_file_path
+
+        # Installation
+        if (not self.configuration_file_path.exists() or self.installation_option==InstallOption.FORCE_INSTALL) and self.installation_option!=InstallOption.NEVER_INSTALL:
+            self.install()
+            self.personality_config.config.save_config()
+        else:
+            self.load_personality_config()
+
+        self.models_folder = self.personality.lollms_paths.personal_models_path / self.personality.personality_folder_name
+        self.models_folder.mkdir(parents=True, exist_ok=True)
+
+
+    def load_personality_config(self):
+        """
+        Load the content of local_config.yaml file.
+
+        The function reads the content of the local_config.yaml file and returns it as a Python dictionary.
+
+        Args:
+            None
+
+        Returns:
+            dict: A dictionary containing the loaded data from the local_config.yaml file.
+        """     
+        try:
+            self.personality_config.config.load_config()
+        except:
+            self.personality_config.config.save_config()
+        self.personality_config.sync()        
+       
+    def install(self):
+        """
+        Installation procedure (to be implemented)
+        """
+        ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+        ASCIIColors.red(f"Installing {self.personality.personality_folder_name}")
+        ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+                
+    def add_file(self, path):
+        self.files.append(path)
+        return True
+
+    def remove_file(self, path):
+        self.files.remove(path)
+
+    def load_config_file(self, path, default_config=None):
+        """
+        Load the content of local_config.yaml file.
+
+        The function reads the content of the local_config.yaml file and returns it as a Python dictionary.
+        If a default_config is provided, it fills any missing entries in the loaded dictionary.
+        If at least one field from default configuration was not present in the loaded configuration, the updated
+        configuration is saved.
+
+        Args:
+            path (str): The path to the local_config.yaml file.
+            default_config (dict, optional): A dictionary with default values to fill missing entries.
+
+        Returns:
+            dict: A dictionary containing the loaded data from the local_config.yaml file, with missing entries filled
+            by default_config if provided.
+        """
+        with open(path, 'r') as file:
+            data = yaml.safe_load(file)
+
+        if default_config:
+            updated = False
+            for key, value in default_config.items():
+                if key not in data:
+                    data[key] = value
+                    updated = True
+            
+            if updated:
+                self.save_config_file(path, data)
+
+        return data
+
+    def save_config_file(self, path, data):
+        """
+        Save the configuration data to a local_config.yaml file.
+
+        Args:
+            path (str): The path to save the local_config.yaml file.
+            data (dict): The configuration data to be saved.
+
+        Returns:
+            None
+        """
+        with open(path, 'w') as file:
+            yaml.dump(data, file)
+
+
+    def remove_text_from_string(self, string, text_to_find):
+        """
+        Removes everything from the first occurrence of the specified text in the string (case-insensitive).
+
+        Parameters:
+        string (str): The original string.
+        text_to_find (str): The text to find in the string.
+
+        Returns:
+        str: The updated string.
+        """
+        index = string.lower().find(text_to_find.lower())
+
+        if index != -1:
+            string = string[:index]
+
+        return string
+    
+    def process(self, text:str, message_type:MSG_TYPE):
+        bot_says = self.bot_says + text
+        antiprompt = self.personality.detect_antiprompt(bot_says)
+        if antiprompt:
+            self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
+            ASCIIColors.warning("Detected hallucination")
+            return False
+        else:
+            self.bot_says = bot_says
+            return True
+
+    def generate(self, prompt, max_size):
+        self.bot_says = ""
+        return self.personality.model.generate(
+                                prompt, 
+                                max_size, 
+                                self.process,
+                                temperature=self.personality.model_temperature,
+                                top_k=self.personality.model_top_k,
+                                top_p=self.personality.model_top_p,
+                                repeat_penalty=self.personality.model_repeat_penalty,
+                                ).strip()    
+
+    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback=None):
+        """
+        Runs the workflow for processing the model input and output.
+
+        This method should be called to execute the processing workflow.
+
+        Args:
+            generate_fn (function): A function that generates model output based on the input prompt.
+                The function should take a single argument (prompt) and return the generated text.
+            prompt (str): The input prompt for the model.
+            previous_discussion_text (str, optional): The text of the previous discussion. Default is an empty string.
+
+        Returns:
+            None
+        """
+        return None
+
+    def process_model_input(self, text:str):
+        """
+        Process the model input.
+
+        This method should be overridden in the personality-specific processor class to define
+        the desired behavior for processing the model input.
+
+        Args:
+            text (str): The model input text.
+
+        Returns:
+            Any: The processed model input.
+        """
+        return None
+
+    def process_model_output(self, text:str):
+        """
+        Process the model output.
+
+        This method should be overridden in the personality-specific processor class to define
+        the desired behavior for processing the model output.
+
+        Args:
+            text (str): The model output text.
+
+        Returns:
+            Any: The processed model output.
+        """
+        return None
+
+
+
+
+
+# ===========================================================
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
         self.personality = personality
+
+
+class PersonalityBuilder:
+    def __init__(
+                    self, 
+                    lollms_paths:LollmsPaths, 
+                    config:LOLLMSConfig, 
+                    model:LLMBinding, 
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                ):
+        self.config = config
+        self.lollms_paths = lollms_paths
+        self.model = model
+        self.installation_option = installation_option
+
+
+    def build_personality(self):
+        if self.config["active_personality_id"]>=len(self.config["personalities"]):
+            ASCIIColors.warning("Personality ID was out of range. Resetting to 0.")
+            self.config["active_personality_id"]=0
+        if len(self.config["personalities"][self.config["active_personality_id"]].split("/"))==3:
+            self.personality = AIPersonality(
+                                            self.lollms_paths.personalities_zoo_path / self.config["personalities"][self.config["active_personality_id"]],
+                                            self.lollms_paths,
+                                            self.config,
+                                            self.model, 
+                                            installation_option=self.installation_option
+                                        )
+        else:
+            self.personality = AIPersonality(
+                                            self.config["personalities"][self.config["active_personality_id"]],
+                                            self.lollms_paths,
+                                            self.config,
+                                            self.model,
+                                            is_relative_path=False,
+                                            installation_option=self.installation_option
+                                        )
+        return self.personality
+    
+    def get_personality(self):
+        return self.personality

@@ -16,7 +16,7 @@ import yaml
 from tqdm import tqdm
 import importlib
 import subprocess
-from lollms.config import TypedConfig
+from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
 
 
@@ -26,36 +26,17 @@ __copyright__ = "Copyright 2023, "
 __license__ = "Apache 2.0"
 
 
-import yaml
-
-
-
-class BindingInstaller:
-    def __init__(self, config: LOLLMSConfig) -> None:
-        self.config = config
-
-    def reinstall_pytorch_with_cuda(self):
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu117"])
-        if result.returncode != 0:
-            ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
-            result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
-            if result.returncode != 0:
-                ASCIIColors.error("Couldn't install pytorch !!")
-            else:
-                ASCIIColors.error("Pytorch installed successfully!!")
-
-
 class LLMBinding:
    
     file_extension='*.bin'
-    binding_path = Path(__file__).parent
+    
     def __init__(
                     self,
                     binding_dir:Path,
                     lollms_paths:LollmsPaths,
                     config:LOLLMSConfig, 
                     binding_config:TypedConfig,
-                    force_install:bool=False
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
                 ) -> None:
         self.binding_dir            = binding_dir
         self.binding_folder_name    = binding_dir.stem
@@ -67,7 +48,9 @@ class LLMBinding:
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/f"binding_{self.binding_folder_name}.yaml"
         self.binding_config.config.file_path = self.configuration_file_path
-        if not self.configuration_file_path.exists() or force_install:
+
+        # Installation
+        if (not self.configuration_file_path.exists() or installation_option==InstallOption.FORCE_INSTALL) and installation_option!=InstallOption.NEVER_INSTALL:
             self.install()
             self.binding_config.config.save_config()
         else:
@@ -126,8 +109,11 @@ class LLMBinding:
 
         Returns:
             dict: A dictionary containing the loaded data from the local_config.yaml file.
-        """     
-        self.binding_config.config.load_config()
+        """
+        try:
+            self.binding_config.config.load_config()
+        except:
+            self.binding_config.config.save_config()
         self.binding_config.sync()
 
     def save_config_file(self, path):
@@ -188,19 +174,64 @@ class LLMBinding:
         return " ".join(tokens_list)
 
 
-    @staticmethod    
-    def install_binding(binding_path, config:LOLLMSConfig):
-        install_file_name = "install.py"
-        install_script_path = binding_path / install_file_name
-        if install_script_path.exists():
-            module_name = install_file_name[:-3]  # Remove the ".py" extension
-            module_spec = importlib.util.spec_from_file_location(module_name, str(install_script_path))
-            module = importlib.util.module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-            if hasattr(module, "Install"):
-                module.Install(config)
-
     # To implement by children
     # @staticmethod
     # def get_available_models():
+
+
+# ===============================
+
+class BindingInstaller:
+    def __init__(self, config: LOLLMSConfig) -> None:
+        self.config = config
+
+    def reinstall_pytorch_with_cuda(self):
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu117"])
+        if result.returncode != 0:
+            ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
+            result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+            if result.returncode != 0:
+                ASCIIColors.error("Couldn't install pytorch !!")
+            else:
+                ASCIIColors.error("Pytorch installed successfully!!")
+
+
+class BindingBuilder:
+    def build_binding(
+                        self, 
+                        config: LOLLMSConfig, 
+                        lollms_paths:LollmsPaths,
+                        installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                    )->LLMBinding:
+        
+        if len(str(config.binding_name).split("/"))>1:
+            binding_path = Path(config.binding_name)
+        else:
+            binding_path = lollms_paths.bindings_zoo_path / config["binding_name"]
+
+        # define the full absolute path to the module
+        absolute_path = binding_path.resolve()
+        # infer the module name from the file path
+        module_name = binding_path.stem
+        # use importlib to load the module from the file path
+        loader = importlib.machinery.SourceFileLoader(module_name, str(absolute_path / "__init__.py"))
+        binding_module = loader.load_module()
+        binding:LLMBinding = getattr(binding_module, binding_module.binding_name)
+        return binding(
+                config,
+                lollms_paths=lollms_paths,
+                installation_option = installation_option
+                )
+    
+class ModelBuilder:
+    def __init__(self, binding:LLMBinding):
+        self.binding = binding
+        self.model = None
+        self.build_model() 
+
+    def build_model(self):
+        self.model = self.binding.build_model()
+
+    def get_model(self):
+        return self.model
 

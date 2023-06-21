@@ -1,19 +1,33 @@
-from lollms.personality import MSG_TYPE
+from lollms.config import InstallOption
+from lollms.binding import BindingBuilder, ModelBuilder
+from lollms.personality import MSG_TYPE, PersonalityBuilder
 from lollms.main_config import LOLLMSConfig
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
-from lollms import reset_all_installs
-import yaml
+
 from pathlib import Path
-import sys
+from tqdm import tqdm
 import pkg_resources
 import argparse
-from tqdm import tqdm
-from lollms import BindingBuilder, ModelBuilder, PersonalityBuilder
+import yaml
+import sys
 
+class LollmsApplication:
+    def __init__(self, config:LOLLMSConfig, lollms_paths:LollmsPaths) -> None:
+        self.config         = config
+        self.lollms_paths   = lollms_paths
+
+
+def reset_all_installs(lollms_paths:LollmsPaths):
+    ASCIIColors.info("Removeing all configuration files to force reinstall")
+    ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
+    for file_path in lollms_paths.personal_configuration_path.iterdir():
+        if file_path.name!="local_config.yaml" and file_path.suffix.lower()==".yaml":
+            file_path.unlink()
+            ASCIIColors.info(f"Deleted file: {file_path}")
 
 class MainMenu:
-    def __init__(self, lollms_app):
+    def __init__(self, lollms_app:LollmsApplication):
         self.binding_infs = []
         self.lollms_app = lollms_app
 
@@ -76,7 +90,7 @@ class MainMenu:
                 with open(p/"models.yaml", "r") as f:
                     models = yaml.safe_load(f)
                 is_installed = (self.lollms_app.lollms_paths.personal_configuration_path/f"binding_{p.name}.yaml").exists()
-                entry=f"{ASCIIColors.color_green if is_installed else ''}{card['name']} (by {card['author']})"
+                entry=f"{ASCIIColors.color_green if is_installed else ''}{'*' if self.lollms_app.config['binding_name']==card['name'] else ''} {card['name']} (by {card['author']})"
                 bindings_list.append(entry)
                 entry={
                     "name":p.name,
@@ -190,7 +204,7 @@ class MainMenu:
     def reinstall_binding(self):
         lollms_app = self.lollms_app
         try:
-            lollms_app.binding = BindingBuilder().build_binding(lollms_app.lollms_paths.bindings_zoo_path, lollms_app.config, force_reinstall=True)
+            lollms_app.binding = BindingBuilder().build_binding(lollms_app.config, lollms_app.lollms_paths,InstallOption.FORCE_INSTALL)
         except Exception as ex:
             print(ex)
             print(f"Couldn't find binding. Please verify your configuration file at {lollms_app.config.file_path} or use the next menu to select a valid binding")
@@ -199,7 +213,7 @@ class MainMenu:
     def reinstall_personality(self):
         lollms_app = self.lollms_app
         try:
-            lollms_app.personality = PersonalityBuilder(lollms_app.lollms_paths, lollms_app.config, lollms_app.model).build_personality(force_reinstall=True)
+            lollms_app.personality = PersonalityBuilder(lollms_app.lollms_paths, lollms_app.config, lollms_app.model, installation_option=InstallOption.FORCE_INSTALL).build_personality()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {lollms_app.configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
@@ -244,7 +258,7 @@ class MainMenu:
             else:
                 print("Invalid choice! Try again.")
 
-class Conversation:
+class Conversation(LollmsApplication):
     def __init__(
                     self, 
                     configuration_path:str|Path=None, 
@@ -262,14 +276,17 @@ class Conversation:
         
         self.bot_says = ""
         # get paths
-        self.lollms_paths = LollmsPaths.find_paths(force_local=False)
+        lollms_paths = LollmsPaths.find_paths(force_local=False)
+
+        # Configuration loading part
+        config = LOLLMSConfig.autoload(lollms_paths, configuration_path)
+
+        super().__init__(config, lollms_paths=lollms_paths)
 
         # Build menu
         self.menu = MainMenu(self)
 
 
-        # Configuration loading part
-        self.config = LOLLMSConfig.autoload(self.lollms_paths, configuration_path)
         
         if self.config.model_name is None:
             self.menu.select_model()
@@ -382,12 +399,12 @@ Participating personalities:
             # cfg.download_model(url)
         else:
             try:
-                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config)
+                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid binding")
                 print(f"Trying to reinstall binding")
-                self.binding = BindingBuilder().build_binding(self.lollms_paths.bindings_zoo_path, self.config,force_reinstall=True)
+                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
                 self.menu.select_binding()
 
     def load_model(self):
