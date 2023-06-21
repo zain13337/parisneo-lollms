@@ -435,7 +435,7 @@ class LoLLMsServer:
             client_id = request.sid
             ASCIIColors.info(f"Text generation requested by client: {client_id}")
             if not self.is_ready:
-                emit("buzzy", {"message":"I am buzzy. Come back later."})
+                emit("buzzy", {"message":"I am buzzy. Come back later."}, room=client_id)
                 self.socketio.sleep(0)
                 ASCIIColors.warning(f"OOps request {client_id}  refused!! Server buzy")
                 return
@@ -477,8 +477,8 @@ class LoLLMsServer:
                     n_tokens = len(tk)
                     fd = model.detokenize(tk[-min(self.config.ctx_size,n_tokens):])
 
-                    ASCIIColors.print("warm up", ASCIIColors.color_bright_cyan)
                     try:
+                        ASCIIColors.print("warm up", ASCIIColors.color_bright_cyan)
                         generated_text = model.generate(fd, n_predict=n_predicts, callback=callback,
                                                         temperature = parameters["temperature"],
                                                         top_k = parameters["top_k"],
@@ -570,8 +570,7 @@ class LoLLMsServer:
                         ASCIIColors.error(f"\ndone")
                     self.is_ready = True
             # Start the text generation task in a separate thread
-            self.socketio.start_background_task(target=generate_text, once=True)
-            generate_text()
+            task = self.socketio.start_background_task(target=generate_text)
             
     def build_binding(self, bindings_path: Path, cfg: LOLLMSConfig)->LLMBinding:
         binding_path = Path(bindings_path) / cfg["binding_name"]
