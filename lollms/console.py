@@ -114,6 +114,7 @@ class MainMenu:
 
     def select_model(self):
         print()
+        print(f"{ASCIIColors.color_green}Current binding: {ASCIIColors.color_reset}{self.lollms_app.config['binding_name']}")
         print(f"{ASCIIColors.color_green}Current model: {ASCIIColors.color_reset}{self.lollms_app.config['model_name']}")
         models_dir:Path = (self.lollms_app.lollms_paths.personal_models_path/self.lollms_app.config['binding_name'])
         models_dir.mkdir(parents=True, exist_ok=True)

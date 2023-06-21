@@ -161,7 +161,7 @@ class LoLLMsServer:
 
     def load_model(self):
         try:
-            self.model = ModelBuilder(self.binding).get_model()
+            self.active_model = ModelBuilder(self.binding).get_model()
             ASCIIColors.success("Model loaded successfully")
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model.")

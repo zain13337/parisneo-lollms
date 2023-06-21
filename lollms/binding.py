@@ -44,7 +44,6 @@ class LLMBinding:
         self.config                 = config
         self.binding_config         = binding_config
 
-        self.models_folder          = None
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/f"binding_{self.binding_folder_name}.yaml"
         self.binding_config.config.file_path = self.configuration_file_path
@@ -68,7 +67,7 @@ class LLMBinding:
         Returns:
             the model
         """        
-        return self.models_folder 
+        return None
 
     def install(self):
         """
