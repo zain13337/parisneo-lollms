@@ -27,8 +27,6 @@ __license__ = "Apache 2.0"
 
 
 class LLMBinding:
-   
-    file_extension='*.bin'
     
     def __init__(
                     self,
@@ -36,13 +34,16 @@ class LLMBinding:
                     lollms_paths:LollmsPaths,
                     config:LOLLMSConfig, 
                     binding_config:TypedConfig,
-                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
+                    file_extension='*.bin'
                 ) -> None:
+        
         self.binding_dir            = binding_dir
         self.binding_folder_name    = binding_dir.stem
         self.lollms_paths           = lollms_paths
         self.config                 = config
         self.binding_config         = binding_config
+        self.file_extension         = file_extension
 
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/f"binding_{self.binding_folder_name}.yaml"
@@ -171,6 +172,12 @@ class LLMBinding:
             str: The detokenized text as a string.
         """
         return " ".join(tokens_list)
+
+    def list_models(self, config:dict):
+        """Lists the models for this binding
+        """
+        models_dir = self.lollms_paths.bindings_zoo_path/config["binding_name"]  # replace with the actual path to the models folder
+        return [f.name for f in models_dir.glob(self.file_extension)]
 
     @staticmethod
     def reinstall_pytorch_with_cuda():
