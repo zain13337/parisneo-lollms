@@ -488,14 +488,14 @@ class LoLLMsServer:
                                                         seed = parameters["seed"]                                                
                                                         )
                         ASCIIColors.success(f"\ndone")
+                        if client_id in self.clients:
+                            if not self.clients[client_id]["requested_stop"]:
+                                # Emit the generated text to the client
+                                self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)                
+                                self.socketio.sleep(0)
                     except Exception as ex:
                         self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
                         ASCIIColors.error(f"\ndone")
-                    if client_id in self.clients:
-                        if not self.clients[client_id]["requested_stop"]:
-                            # Emit the generated text to the client
-                            self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)                
-                            self.socketio.sleep(0)
                     self.is_ready = True
                 else:
                     try:
