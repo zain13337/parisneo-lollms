@@ -68,7 +68,7 @@ class LollmsPaths:
         if not self.bindings_zoo_path.exists():
             # Clone the repository to the target path
             ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
-            subprocess.run(["git", "clone", personalities_zoo_repo, self.bindings_zoo_path])
+            subprocess.run(["git", "clone", bindings_zoo_repo, self.bindings_zoo_path])
         else:
             # Pull the repository if it already exists
             ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
