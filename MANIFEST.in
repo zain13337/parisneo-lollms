@@ -1,6 +1,4 @@
 recursive-include lollms/configs *
-recursive-include lollms/bindings_zoo *
-recursive-include lollms/personalities_zoo *
 global-exclude *.bin
 global-exclude *.pyc
 global-exclude local_config.yaml
