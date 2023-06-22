@@ -446,8 +446,6 @@ class TypedConfig:
         Raises:
             ValueError: If no configuration is loaded.
         """
-        if key == "exceptional_keys":
-            return super().__getattribute__(key)
         if key in  ["config","config_template"] or key.startswith("__"):
             return super().__getattribute__(key)
         else:
@@ -455,6 +453,27 @@ class TypedConfig:
                 raise ValueError("No configuration loaded.")
             return self.config[key]
         
+    def __setattr__(self, key, value):
+        """
+        Retrieves the configuration entry with the specified key as an attribute.
+
+        Args:
+            key (str): The name of the configuration entry.
+
+        Returns:
+            dict: The configuration entry with the specified key, or None if not found.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if key in ["config","config_template"] or key.startswith("__"):
+            super().__setattr__(key, value)
+        else:
+            if self.config is None:
+                raise ValueError("No configuration loaded.")
+            self.config[key] = value
+            self.sync()
+            
 
     def __getitem__(self, key):
         """
@@ -472,6 +491,24 @@ class TypedConfig:
         if self.config is None:
             raise ValueError("No configuration loaded.")
         return self.config[key]
+    
+    def __setitem__(self, key, value):
+        """
+        Retrieves the configuration entry with the specified key as an attribute.
+
+        Args:
+            key (str): The name of the configuration entry.
+
+        Returns:
+            dict: The configuration entry with the specified key, or None if not found.
+
+        Raises:
+            ValueError: If no configuration is loaded.
+        """
+        if self.config is None:
+            raise ValueError("No configuration loaded.")
+        self.config[key] = value   
+        self.sync()
 
     def sync(self):
         """
@@ -535,7 +572,8 @@ class TypedConfig:
         self.config = config
         self.sync()
 
-
+    def save(self, file_path:str|Path|None=None):
+        self.config.save_config(file_path=file_path)
     def to_dict(self, use_template=False):
         if not use_template:
             return self.config
