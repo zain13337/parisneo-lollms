@@ -125,11 +125,8 @@ class MainMenu:
 
         models_dir:Path = (self.lollms_app.lollms_paths.personal_models_path/self.lollms_app.config['binding_name'])
         models_dir.mkdir(parents=True, exist_ok=True)
-        
-        if hasattr(self.lollms_app,"binding") and hasattr(self.lollms_app.binding,"list_models"):
-            models_list = [f'{v["filename"]} (by {v["owner"]})' for v in self.lollms_app.binding.list_models(self.lollms_app.config)] + ["Install model", "Change binding", "Back"]
-        else:
-            models_list = [m.name for m in models_dir.iterdir() if m.name.lower() not in [".ds_dtore","thumb.db",".keep"]] + ["Install model", "Change binding", "Back"]
+
+        models_list = [v for v in self.lollms_app.binding.list_models(self.lollms_app.config)] + ["Install model", "Change binding", "Back"]
         choice = self.show_menu(models_list)
         if 1 <= choice <= len(models_list)-3:
             print(f"You selected model: {ASCIIColors.color_green}{models_list[choice - 1]}{ASCIIColors.color_reset}")
@@ -294,13 +291,11 @@ class Conversation(LollmsApplication):
         self.menu = MainMenu(self)
 
 
+        # load binding
+        self.load_binding()
         
         if self.config.model_name is None:
             self.menu.select_model()
-
-
-        # load binding
-        self.load_binding()
 
         # Load model
         self.load_model()
