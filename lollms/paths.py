@@ -2,12 +2,16 @@ from pathlib import Path
 import shutil
 from lollms.helpers import ASCIIColors
 from lollms.config import BaseConfig
+import subprocess
 
 lollms_path = Path(__file__).parent
 lollms_default_cfg_path = lollms_path / "configs/config.yaml"
 lollms_bindings_zoo_path = lollms_path / "bindings_zoo"
 lollms_personalities_zoo_path = lollms_path / "personalities_zoo"
 
+
+personalities_zoo_repo = "https://github.com/ParisNeo/lollms_personalities_zoo.git"
+bindings_zoo_repo = "https://github.com/ParisNeo/lollms_bindings_zoo.git"
 
 # Now we speify the personal folders
 class LollmsPaths:
@@ -25,16 +29,17 @@ class LollmsPaths:
             self.default_cfg_path = Path(custom_default_cfg_path)
         else:
             self.default_cfg_path = lollms_path / "configs/config.yaml"
-        self.bindings_zoo_path = lollms_path / "bindings_zoo"
-        self.personalities_zoo_path = lollms_path / "personalities_zoo"
 
         self.personal_path = personal_path
         self.personal_configuration_path = personal_path / "configs"
         self.personal_data_path = personal_path / "data"
         self.personal_databases_path = personal_path / "databases"
         self.personal_models_path = personal_path / "models"
-        self.personal_personalities_path = lollms_path / "personalities"
         self.personal_log_path = lollms_path / "logs"
+
+
+        self.bindings_zoo_path = personal_path / "bindings_zoo"
+        self.personalities_zoo_path = personal_path / "personalities_zoo"
 
 
         self.create_directories()
@@ -49,8 +54,26 @@ class LollmsPaths:
         self.personal_models_path.mkdir(parents=True, exist_ok=True)
         self.personal_data_path.mkdir(parents=True, exist_ok=True)
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
-        self.personal_personalities_path.mkdir(parents=True, exist_ok=True)
         self.personal_log_path.mkdir(parents=True, exist_ok=True)
+
+        if not self.personalities_zoo_path.exists():
+            # Clone the repository to the target path
+            ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
+            subprocess.run(["git", "clone", personalities_zoo_repo, self.personalities_zoo_path])
+        else:
+            # Pull the repository if it already exists
+            ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
+            subprocess.run(["git", "-C", self.personalities_zoo_path, "pull"])            
+
+        if not self.bindings_zoo_path.exists():
+            # Clone the repository to the target path
+            ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
+            subprocess.run(["git", "clone", personalities_zoo_repo, self.bindings_zoo_path])
+        else:
+            # Pull the repository if it already exists
+            ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
+            subprocess.run(["git", "-C", self.bindings_zoo_path, "pull"])            
+
 
     def copy_default_config(self):
         local_config_path = self.personal_configuration_path / "local_config.yaml"
