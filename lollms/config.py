@@ -239,11 +239,11 @@ class BaseConfig:
         self.file_path          = file_path
 
     @staticmethod
-    def from_template(template:ConfigTemplate, exceptional_keys: list = []):
+    def from_template(template:ConfigTemplate, exceptional_keys: list = [], file_path: Path | str = None):
         config = {}
         for entry in template.template:
             config[entry["name"]]=entry["value"]
-        return BaseConfig(exceptional_keys, config)
+        return BaseConfig(exceptional_keys, config, file_path)
 
     def to_dict(self):
         """
@@ -419,6 +419,10 @@ class TypedConfig:
 
         # Fill the template values from the config values
         self.sync()
+        
+    def update_template(self, new_template):
+        self.config_template.template = new_template
+        self.config = BaseConfig.from_template(self.config_template,self.config.exceptional_keys, self.config.file_path)
 
     def get(self, key, default_value=None):
         if self.config is None:

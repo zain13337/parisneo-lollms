@@ -44,7 +44,7 @@ class LLMBinding:
         self.config                 = config
         self.binding_config         = binding_config
         self.file_extension         = file_extension
-
+        self.seed                   = config["seed"]
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/f"binding_{self.binding_folder_name}.yaml"
         self.binding_config.config.file_path = self.configuration_file_path
@@ -97,7 +97,9 @@ class LLMBinding:
         return model_path
 
     
-
+    def get_current_seed(self):
+        return self.seed
+    
     def load_binding_config(self):
         """
         Load the content of local_config.yaml file.
