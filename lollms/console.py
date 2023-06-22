@@ -16,6 +16,12 @@ class LollmsApplication:
     def __init__(self, config:LOLLMSConfig, lollms_paths:LollmsPaths) -> None:
         self.config         = config
         self.lollms_paths   = lollms_paths
+    def load_binding(self):
+        pass
+    def load_model(self):
+        pass
+    def load_personality(self):
+        pass
 
 
 def reset_all_installs(lollms_paths:LollmsPaths):
@@ -84,7 +90,7 @@ class MainMenu:
         print()
         print(f"{ASCIIColors.color_green}Current binding: {ASCIIColors.color_reset}{self.lollms_app.config['binding_name']}")
         for p in self.lollms_app.lollms_paths.bindings_zoo_path.iterdir():
-            if p.is_dir():
+            if p.is_dir() and not p.stem.startswith("."):
                 with open(p/"binding_card.yaml", "r") as f:
                     card = yaml.safe_load(f)
                 with open(p/"models.yaml", "r") as f:
@@ -116,8 +122,10 @@ class MainMenu:
         print()
         print(f"{ASCIIColors.color_green}Current binding: {ASCIIColors.color_reset}{self.lollms_app.config['binding_name']}")
         print(f"{ASCIIColors.color_green}Current model: {ASCIIColors.color_reset}{self.lollms_app.config['model_name']}")
+
         models_dir:Path = (self.lollms_app.lollms_paths.personal_models_path/self.lollms_app.config['binding_name'])
         models_dir.mkdir(parents=True, exist_ok=True)
+        
         if hasattr(self.lollms_app,"binding") and hasattr(self.lollms_app.binding,"list_models"):
             models_list = [f'{v["filename"]} (by {v["owner"]})' for v in self.lollms_app.binding.list_models(self.lollms_app.config)] + ["Install model", "Change binding", "Back"]
         else:
@@ -139,6 +147,7 @@ class MainMenu:
             print("Invalid choice!")
 
     def install_model(self):
+
         models_list = ["Install model from internet","Install model from local file","Back"]
         choice = self.show_menu(models_list)
         if 1 <= choice <= len(models_list)-2:

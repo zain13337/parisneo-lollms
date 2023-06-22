@@ -894,7 +894,17 @@ class APScript:
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
         ASCIIColors.red(f"Installing {self.personality.personality_folder_name}")
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
-                
+
+
+    def uninstall(self):
+        """
+        Installation procedure (to be implemented)
+        """
+        ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+        ASCIIColors.red(f"Uninstalling {self.personality.personality_folder_name}")
+        ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+
+
     def add_file(self, path):
         self.files.append(path)
         return True

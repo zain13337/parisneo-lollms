@@ -35,6 +35,7 @@ class LollmsPaths:
         self.personal_data_path = personal_path / "data"
         self.personal_databases_path = personal_path / "databases"
         self.personal_models_path = personal_path / "models"
+        self.personal_uploads_path = lollms_path / "uploads"
         self.personal_log_path = lollms_path / "logs"
 
 
@@ -55,6 +56,7 @@ class LollmsPaths:
         self.personal_data_path.mkdir(parents=True, exist_ok=True)
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
         self.personal_log_path.mkdir(parents=True, exist_ok=True)
+        self.personal_uploads_path.mkdir(parents=True, exist_ok=True)
 
         if not self.personalities_zoo_path.exists():
             # Clone the repository to the target path
