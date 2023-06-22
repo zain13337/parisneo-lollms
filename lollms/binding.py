@@ -89,11 +89,15 @@ class LLMBinding:
         Returns:
             str: The path of the model.
         """
+        if self.config.model_name is None:
+            return None
+        
         if self.config.model_name.endswith(".reference"):
             with open(str(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}"), 'r') as f:
                 model_path = Path(f.read())
         else:
             model_path = Path(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}")
+        
         return model_path
 
     
