@@ -12,6 +12,10 @@ from typing import Callable
 from lollms.paths import LollmsPaths
 from lollms.helpers import ASCIIColors
 
+import tempfile
+import requests
+import shutil
+import os
 import yaml
 from tqdm import tqdm
 import importlib
@@ -58,6 +62,34 @@ class LLMBinding:
 
         self.models_folder = config.lollms_paths.personal_models_path / self.binding_folder_name
         self.models_folder.mkdir(parents=True, exist_ok=True)
+
+
+    def download_and_install_wheel(self, url):
+        # Create a temporary directory
+        temp_dir = tempfile.mkdtemp()
+
+        try:
+            # Download the wheel file
+            response = requests.get(url)
+            if response.status_code == 200:
+                # Save the downloaded file to the temporary directory
+                wheel_path = os.path.join(temp_dir, 'package.whl')
+                with open(wheel_path, 'wb') as file:
+                    file.write(response.content)
+
+                # Install the wheel file using pip
+                subprocess.check_call(['pip', 'install', wheel_path])
+
+                # Clean up the temporary directory
+                shutil.rmtree(temp_dir)
+                print('Installation completed successfully.')
+            else:
+                print('Failed to download the file.')
+
+        except Exception as e:
+            print('An error occurred during installation:', str(e))
+            shutil.rmtree(temp_dir)
+
 
     def build_model(self):
         """
