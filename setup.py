@@ -26,7 +26,7 @@ def get_all_files(path):
 
 setuptools.setup(
     name="lollms",
-    version="2.0.25",
+    version="2.0.27",
     author="Saifeddine ALOUI",
     author_email="aloui.saifeddine@gmail.com",
     description="A python library for AI personality definition",

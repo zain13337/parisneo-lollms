@@ -988,16 +988,17 @@ class APScript:
             self.bot_says = bot_says
             return True
 
-    def generate(self, prompt, max_size):
+    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None ):
         self.bot_says = ""
+        ASCIIColors.info("Text generation started: Warming up")
         return self.personality.model.generate(
                                 prompt, 
                                 max_size, 
                                 self.process,
-                                temperature=self.personality.model_temperature,
-                                top_k=self.personality.model_top_k,
-                                top_p=self.personality.model_top_p,
-                                repeat_penalty=self.personality.model_repeat_penalty,
+                                temperature=self.personality.model_temperature if temperature is None else temperature,
+                                top_k=self.personality.model_top_k if top_k is None else top_k,
+                                top_p=self.personality.model_top_p if top_p is None else top_p,
+                                repeat_penalty=self.personality.model_repeat_penalty if repeat_penalty is None else repeat_penalty,
                                 ).strip()    
 
     def run_workflow(self, prompt:str, previous_discussion_text:str="", callback=None):
