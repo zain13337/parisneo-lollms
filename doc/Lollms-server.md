@@ -84,59 +84,27 @@ LoLLMs Playground repository](https://github.com/ParisNeo/lollms-playground) fro
 
 2. Open the playground in your web browser.
 
-## Generating Text with LoLLMs
+## Using the LoLLMs Console App
 
-To generate text using LoLLMs, you can use the provided socket.io interface. Refer to the example below:
+LoLLMs also provides a console app that allows direct text generation from a console interface. To start the console app, follow these steps:
 
-```javascript
-// Import the required libraries
-const io = require('socket.io-client');
+1. After installing LoLLMs, open your terminal or command prompt.
 
-// Connect to the LoLLMs server
-const socket = io('http://localhost:9600');
+2. Run the following command to start the LoLLMs console:
 
-// Event handler for receiving generated text
-socket.on('generated_text', (data) => {
-  const generatedText = data.text;
-  
-  // Display the generated text
-  console.log('Bot:', generatedText);
-});
+   ```shell
+   lollms-console
+   ```
 
-// Event handler for receiving user input
-function handleUserInput(input) {
-  // Send user input to the LoLLMs server for text generation
-  socket.emit('generate_text', {
-    prompt: input,
-    personality: -1,
-    n_predicts: 1,
-    parameters: {
-      temperature: 0.8,
-      top_k: 0,
-      top_p: 0.9,
-      repeat_penalty: 1.2,
-      repeat_last_n: 3,
-      seed: 42
-    }
-  });
-}
+3. The console app will load the same binding and personalities that are active on the server.
 
-// Example usage: Chat interaction
-// Simulate a conversation with the LoLLMs chatbot
+4. You can type `exit` to stop the application.
 
-// Send initial greeting
-handleUserInput('Hello');
+5. Typing `help` will display help information.
 
-// Wait for user input from the console
-process.stdin.on('data', (data) => {
-  const userInput = data.toString().trim();
-  
-  // Send user input to the chatbot
-  handleUserInput(userInput);
-});
-```
+6. Typing `menu` will display a menu where you can select entries by typing their number. The menu may have submenus for selecting binding, model, personality, and installing models from the internet or a local file.
 
-Please note that this example assumes you have the required libraries installed (`socket.io-client`). Save the script as a `.js` file and execute it using Node.js.
+Please note that the console app provides a convenient way to generate text directly from the console interface.
 
 ## Disclaimer
 
@@ -146,4 +114,4 @@ Always consider the implications and potential biases associated with text gener
 
 ## Conclusion
 
-Congratulations! You have successfully installed, set up, and used LoLLMs. Ensure that you have Python 3.10 or later, pip, and any necessary build tools installed. If you want to enable GPU support, consider installing CUDA. You can now generate text using the provided interface or the playground. Explore the capabilities of LoLLMs and enjoy generating text with large language models!
+Congratulations! You have successfully installed, set up, and used LoLLMs. Ensure that you have Python 3.10 or later, pip, and any necessary build tools installed. If you want to enable GPU support, consider installing CUDA. You can now generate text using the provided interface, the playground, or the console app. Explore the capabilities of LoLLMs and enjoy generating text with large language models!
