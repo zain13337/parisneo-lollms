@@ -14,7 +14,7 @@ def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
     ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
     for file_path in lollms_paths.personal_configuration_path.iterdir():
-        if file_path.name!="local_config.yaml" and file_path.suffix.lower()==".yaml":
+        if file_path.name!=f"{lollms_paths.tool_prefix}local_config.yaml" and file_path.suffix.lower()==".yaml":
             file_path.unlink()
             ASCIIColors.info(f"Deleted file: {file_path}")
 
@@ -36,7 +36,10 @@ class Settings:
         
         self.bot_says = ""
         # get paths
-        self.lollms_paths = LollmsPaths.find_paths(force_local=False)
+        self.lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
+        ASCIIColors.yellow("------ Lollms Paths ------")
+        ASCIIColors.info(self.lollms_paths)        
+        ASCIIColors.yellow("------ ------------ ------")
 
         # Build menu
         self.menu = MainMenu(self)
@@ -44,7 +47,7 @@ class Settings:
         # Change configuration
         original = self.lollms_paths.default_cfg_path
         if configuration_path is None:
-            local = self.lollms_paths.personal_configuration_path / "local_config.yaml"        
+            local = self.lollms_paths.personal_configuration_path / f"{self.lollms_paths.tool_prefix}local_config.yaml"        
         else:
             local = Path(configuration_path)
             
@@ -54,12 +57,11 @@ class Settings:
 
         self.config = LOLLMSConfig(self.cfg_path, self.lollms_paths)
         # load binding
-        self.load_binding()
-
-        # Load model
-        self.load_model()
-        # cfg.binding_name = llm_binding.binding_folder_name
-        # cfg.model_name = model_name
+        if self.config.binding_name is not None:
+            self.load_binding()
+            # Load model
+            if self.config.model_name is not None:
+                self.load_model()
 
         # Load personality
         try:
@@ -252,7 +254,8 @@ def main():
         LollmsPaths.reset_configs()
     
     if args.reset_config:
-        cfg_path = LollmsPaths.find_paths().personal_configuration_path / "local_config.yaml"
+        lollms_paths = LollmsPaths.find_paths(tool_prefix="lollms_server_")
+        cfg_path = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
         try:
             cfg_path.unlink()
             ASCIIColors.success("LOLLMS configuration reset successfully")

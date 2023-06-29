@@ -66,11 +66,11 @@ class LOLLMSConfig(BaseConfig):
         
 
     @staticmethod
-    def autoload(lollms_paths, config_path:str=None):
+    def autoload(lollms_paths:LollmsPaths, config_path:str=None):
         # Configuration loading part
         original_cfg_path = lollms_paths.default_cfg_path
         if config_path is None:
-            local = lollms_paths.personal_configuration_path / "local_config.yaml"
+            local = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
             if not local.exists():
                 shutil.copy(original_cfg_path, local)
             cfg_path = local

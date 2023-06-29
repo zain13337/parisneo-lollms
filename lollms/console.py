@@ -23,12 +23,14 @@ class LollmsApplication:
     def load_personality(self):
         pass
 
+def reset_paths(lollms_paths:LollmsPaths):
+    lollms_paths.resetPaths()
 
 def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
     ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
     for file_path in lollms_paths.personal_configuration_path.iterdir():
-        if file_path.name!="local_config.yaml" and file_path.suffix.lower()==".yaml":
+        if file_path.name!=f"{lollms_paths.tool_prefix}local_config.yaml" and file_path.suffix.lower()==".yaml":
             file_path.unlink()
             ASCIIColors.info(f"Deleted file: {file_path}")
 
@@ -234,6 +236,7 @@ class MainMenu:
             print(f"{ASCIIColors.color_green}4 -{ASCIIColors.color_reset} Reinstall current Binding")
             print(f"{ASCIIColors.color_green}5 -{ASCIIColors.color_reset} Reinstall current Personality")
             print(f"{ASCIIColors.color_green}6 -{ASCIIColors.color_reset} Reset all installs")        
+            print(f"{ASCIIColors.color_green}7 -{ASCIIColors.color_reset} Reset paths")        
             print(f"{ASCIIColors.color_green}0 -{ASCIIColors.color_reset} Back to app")
             print(f"{ASCIIColors.color_green}-1 -{ASCIIColors.color_reset} Help")
             print(f"{ASCIIColors.color_green}-2 -{ASCIIColors.color_reset} Exit app")
@@ -250,6 +253,8 @@ class MainMenu:
                 self.reinstall_personality()
             elif choice == "6":
                 reset_all_installs()
+            elif choice == "6":
+                reset_paths()
                 
             elif choice == "0":
                 print("Back to main app...")
@@ -280,7 +285,7 @@ class Conversation(LollmsApplication):
         
         self.bot_says = ""
         # get paths
-        lollms_paths = LollmsPaths.find_paths(force_local=False)
+        lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
 
         # Configuration loading part
         config = LOLLMSConfig.autoload(lollms_paths, configuration_path)
@@ -606,7 +611,8 @@ def main():
         LollmsPaths.reset_configs()
     
     if args.reset_config:
-        cfg_path = LollmsPaths.find_paths().personal_configuration_path / "local_config.yaml"
+        lollms_paths = LollmsPaths.find_paths(tool_prefix="lollms_server_")
+        cfg_path = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
         try:
             cfg_path.unlink()
             ASCIIColors.success("LOLLMS configuration reset successfully")

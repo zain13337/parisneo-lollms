@@ -23,7 +23,7 @@ def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
     ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
     for file_path in lollms_paths.personal_configuration_path.iterdir():
-        if file_path.name!="local_config.yaml" and file_path.suffix.lower()==".yaml":
+        if file_path.name!=f"{lollms_paths.tool_prefix}local_config.yaml" and file_path.suffix.lower()==".yaml":
             file_path.unlink()
             ASCIIColors.info(f"Deleted file: {file_path}")
 
@@ -40,7 +40,7 @@ class LoLLMsServer:
         self.is_ready = True
         
         
-        self.lollms_paths = LollmsPaths.find_paths(force_local=False)
+        self.lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
         self.menu = MainMenu(self)
         parser = argparse.ArgumentParser()
         parser.add_argument('--host', '-hst', default=host, help='Host name')
@@ -55,7 +55,7 @@ class LoLLMsServer:
         parser.add_argument('--models_path', '-mp', default=str(self.lollms_paths.personal_models_path),
                             help='The path to the models folder')
 
-        parser.add_argument('--binding_name', '-b', default="llama_cpp_official",
+        parser.add_argument('--binding_name', '-b', default=None,
                             help='Binding to be used by default')
         parser.add_argument('--model_name', '-m', default=None,
                             help='Model name')
@@ -76,7 +76,8 @@ class LoLLMsServer:
             LollmsPaths.reset_configs()
 
         if args.reset_config:
-            cfg_path = LollmsPaths.find_paths().personal_configuration_path / "local_config.yaml"
+            lollms_paths = LollmsPaths.find_paths(tool_prefix="lollms_server_")
+            cfg_path = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
             try:
                 cfg_path.unlink()
                 ASCIIColors.success("LOLLMS configuration reset successfully")
