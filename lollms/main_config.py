@@ -8,7 +8,7 @@ from lollms.paths       import LollmsPaths
 from lollms.config      import BaseConfig
 #from lollms.binding import  LLMBinding
 import shutil
-import urllib
+import urllib.request as rq
 from tqdm               import tqdm
 from pathlib            import Path
 
@@ -160,7 +160,7 @@ class LOLLMSConfig(BaseConfig):
                     progress_bar.update(block_size)
                 # Download file from URL to folder
                 try:
-                    urllib.request.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress if callback is None else callback)
+                    rq.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress if callback is None else callback)
                     print("File downloaded successfully!")
                 except Exception as e:
                     print("Error downloading file:", e)
