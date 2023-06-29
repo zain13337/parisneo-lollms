@@ -6,3 +6,5 @@ flask_socketio
 flask-cors
 simple-websocket
 eventlet
+wget
+setuptools
