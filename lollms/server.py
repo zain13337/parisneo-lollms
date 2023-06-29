@@ -461,7 +461,7 @@ class LoLLMsServer:
                     self.answer = {"full_text":""}
                     def callback(text, message_type: MSG_TYPE):
                         if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
-                            print(f"generated:{len(self.answer['full_text'])} words", end='\r')
+                            ASCIIColors.success(f"generated:{len(self.answer['full_text'])} words", end='\r')
                             self.answer["full_text"] = self.answer["full_text"] + text
                             self.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
                             self.socketio.sleep(0)
