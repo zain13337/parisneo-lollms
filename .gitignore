@@ -179,3 +179,5 @@ outputs
 
 # Global path configuration
 global_paths_cfg.yaml
+
+.vscode
