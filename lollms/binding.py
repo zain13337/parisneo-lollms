@@ -211,6 +211,17 @@ class LLMBinding:
         """
         return " ".join(tokens_list)
 
+
+    def embed(self, text):
+        """
+        Computes text embedding
+        Args:
+            text (str): The text to be embedded.
+        Returns:
+            List[float]
+        """
+        pass
+
     def list_models(self, config:dict):
         """Lists the models for this binding
         """
