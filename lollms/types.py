@@ -16,6 +16,7 @@ class MSG_TYPE(Enum):
     MSG_TYPE_STEP_END=6         # A step has been done (the text contains an explanation of the step done by he personality)
 
     #Extra
-    MSG_TYPE_REF=7          # References (in form of  [text](path))
-    MSG_TYPE_CODE=8         # A javascript code to execute
-    MSG_TYPE_UI=9           # A vue.js component to show (we need to build some and parse the text to show it)
+    MSG_TYPE_JSON_INFOS=7       # A JSON output that is useful for summarizing the process of generation used by personalities like chain of thoughts and tree of thooughts
+    MSG_TYPE_REF=8              # References (in form of  [text](path))
+    MSG_TYPE_CODE=9             # A javascript code to execute
+    MSG_TYPE_UI=10              # A vue.js component to show (we need to build some and parse the text to show it)
