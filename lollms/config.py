@@ -242,14 +242,7 @@ class BaseConfig:
     def from_template(template:ConfigTemplate, exceptional_keys: list = [], file_path: Path | str = None):
         config = {}
         for entry in template.template:
-            if entry["type"]!="list":
-                config[entry["name"]]=entry["value"]
-            else:
-                try:
-                    config[entry["name"]]=eval(entry["value"])
-                except Exception as ex:
-                    ASCIIColors.error(f'Could not set parameter {entry["name"]}. Exception occures : {ex}')
-                    config[entry["name"]]=[]
+            config[entry["name"]]=entry["value"]
 
         return BaseConfig(exceptional_keys, config, file_path)
 

@@ -63,7 +63,9 @@ class LLMBinding:
         self.models_folder = config.lollms_paths.personal_models_path / self.binding_folder_name
         self.models_folder.mkdir(parents=True, exist_ok=True)
 
-
+    def __str__(self) -> str:
+        return self.config["binding_name"]+f"({self.config['model_name']})"
+    
     def download_and_install_wheel(self, url):
         # Create a temporary directory
         temp_dir = tempfile.mkdtemp()

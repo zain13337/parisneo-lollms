@@ -476,7 +476,7 @@ class LoLLMsServer:
 
                     tk = model.tokenize(prompt)
                     n_tokens = len(tk)
-                    fd = model.detokenize(tk[-min(self.config.ctx_size,n_tokens):])
+                    fd = model.detokenize(tk[-min(self.config.ctx_size-n_predicts,n_tokens):])
 
                     try:
                         ASCIIColors.print("warm up", ASCIIColors.color_bright_cyan)
@@ -545,7 +545,7 @@ class LoLLMsServer:
 
                         tk = personality.model.tokenize(full_discussion)
                         n_tokens = len(tk)
-                        fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk,n_tokens):])
+                        fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk-personality.model_n_predicts,n_tokens):])
                         
                         if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
                             print("processing...", end="", flush=True)
@@ -587,6 +587,7 @@ class LoLLMsServer:
 
 
     def run(self, host="localhost", port="9601"):
+        print(f"{ASCIIColors.color_red}Current binding (model) : {ASCIIColors.color_reset}{self.binding}")
         print(f"{ASCIIColors.color_red}Current personality : {ASCIIColors.color_reset}{self.active_personality}")
         ASCIIColors.info(f"Serving on address: http://{host}:{port}")
 
