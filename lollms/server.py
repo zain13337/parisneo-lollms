@@ -11,6 +11,7 @@ from lollms.helpers import ASCIIColors
 from lollms.console import MainMenu
 from lollms.paths import LollmsPaths
 from lollms.console import MainMenu
+from lollms.app import LollmsApplication
 from typing import List, Tuple
 import importlib
 from pathlib import Path
@@ -28,39 +29,24 @@ def reset_all_installs(lollms_paths:LollmsPaths):
             ASCIIColors.info(f"Deleted file: {file_path}")
 
 
-class LoLLMsServer:
+class LoLLMsServer(LollmsApplication):
     def __init__(self):
+        
+
         host = "localhost"
         port = "9601"
         self.clients = {}
         self.current_binding = None
-        self.active_model = None
+        self.model = None
         self.personalities = []
         self.answer = ['']
         self.is_ready = True
         
         
-        self.lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
-        self.menu = MainMenu(self)
         parser = argparse.ArgumentParser()
         parser.add_argument('--host', '-hst', default=host, help='Host name')
         parser.add_argument('--port', '-prt', default=port, help='Port number')
 
-        parser.add_argument('--config', '-cfg', default=None, help='Path to the configuration file')
-        parser.add_argument('--bindings_path', '-bp', default=str(self.lollms_paths.bindings_zoo_path),
-                            help='The path to the Bindings folder')
-        parser.add_argument('--personalities_path', '-pp',
-                            default=str(self.lollms_paths.personalities_zoo_path),
-                            help='The path to the personalities folder')
-        parser.add_argument('--models_path', '-mp', default=str(self.lollms_paths.personal_models_path),
-                            help='The path to the models folder')
-
-        parser.add_argument('--binding_name', '-b', default=None,
-                            help='Binding to be used by default')
-        parser.add_argument('--model_name', '-m', default=None,
-                            help='Model name')
-        parser.add_argument('--personality_full_name', '-p', default="personality",
-                            help='Personality path relative to the personalities folder (language/category/name)')
         
         parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
         parser.add_argument('--reset_config', action='store_true', help='Reset the configurations')
@@ -70,7 +56,7 @@ class LoLLMsServer:
         args = parser.parse_args()
 
         if args.reset_installs:
-            reset_all_installs()
+            self.reset_all_installs()
 
         if args.reset_personal_path:
             LollmsPaths.reset_configs()
@@ -83,50 +69,15 @@ class LoLLMsServer:
                 ASCIIColors.success("LOLLMS configuration reset successfully")
             except:
                 ASCIIColors.success("Couldn't reset LOLLMS configuration")
+        else:
+            lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
 
         # Configuration loading part
-        self.config = LOLLMSConfig.autoload(self.lollms_paths, args.config)
+        config = LOLLMSConfig.autoload(lollms_paths, None)
 
-
-        if args.binding_name:
-            self.config.binding_name = args.binding_name
-
-        if args.model_name:
-            self.config.model_name = args.model_name
-
-        # Recover bindings path
-        self.personalities_path = Path(args.personalities_path)
-        self.bindings_path = Path(args.bindings_path)
-        self.models_path = Path(args.models_path)
-        if self.config.binding_name is None:
-            self.menu.select_binding()
-        else:
-            self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
-        if self.config.model_name is None:
-            self.menu.select_model()
-        else:
-            try:
-                self.active_model = self.binding.build_model()
-            except Exception as ex:
-                print(f"{ASCIIColors.color_red}Couldn't load model Please select a valid model{ASCIIColors.color_reset}")
-                print(f"{ASCIIColors.color_red}{ex}{ASCIIColors.color_reset}")
-                self.menu.select_model()
-
-        for p in self.config.personalities:
-            personality = AIPersonality(
-                                            self.config.lollms_paths.personalities_zoo_path/p,
-                                            self.lollms_paths,
-                                            self.config,
-                                            self.active_model
-                                        )
-            self.personalities.append(personality)
-
-        if self.config.active_personality_id>len(self.personalities):
-            self.config.active_personality_id = 0
-        self.active_personality = self.personalities[self.config.active_personality_id]
+        super().__init__("lollms-server", config, lollms_paths)
 
         self.menu.show_logo()        
-        
         self.app = Flask("LoLLMsServer")
         #self.app.config['SECRET_KEY'] = 'lollmssecret'
         CORS(self.app)  # Enable CORS for all routes
@@ -143,45 +94,6 @@ class LoLLMsServer:
         self.initialize_routes()
         self.run(args.host, args.port)
 
-
-    def load_binding(self):
-        if self.config.binding_name is None:
-            print(f"No bounding selected")
-            print("Please select a valid model or install a new one from a url")
-            self.menu.select_binding()
-            # cfg.download_model(url)
-        else:
-            try:
-                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
-            except Exception as ex:
-                print(ex)
-                print(f"Couldn't find binding. Please verify your configuration file at {self.config.file_path} or use the next menu to select a valid binding")
-                print(f"Trying to reinstall binding")
-                self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths, InstallOption.FORCE_INSTALL)
-                self.menu.select_binding()
-
-    def load_model(self):
-        try:
-            self.active_model = ModelBuilder(self.binding).get_model()
-            ASCIIColors.success("Model loaded successfully")
-        except Exception as ex:
-            ASCIIColors.error(f"Couldn't load model.")
-            ASCIIColors.error(f"Binding returned this exception : {ex}")
-            ASCIIColors.error(f"{self.config.get_model_path_infos()}")
-            print("Please select a valid model or install a new one from a url")
-            self.menu.select_model()
-
-    def load_personality(self):
-        try:
-            self.personality = PersonalityBuilder(self.lollms_paths, self.config, self.model).build_personality()
-        except Exception as ex:
-            ASCIIColors.error(f"Couldn't load personality.")
-            ASCIIColors.error(f"Binding returned this exception : {ex}")
-            ASCIIColors.error(f"{self.config.get_personality_path_infos()}")
-            print("Please select a valid model or install a new one from a url")
-            self.menu.select_model()
-        self.cond_tk = self.personality.model.tokenize(self.personality.personality_conditioning)
-        self.n_cond_tk = len(self.cond_tk)
 
     def initialize_routes(self):
         @self.socketio.on('connect')
@@ -369,7 +281,7 @@ class LoLLMsServer:
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["model_name"] = data['model_name']
             try:
-                self.active_model = self.binding.build_model()
+                self.model = self.binding.build_model()
                 emit('select_model', {'success':True, 'model_name':  model_name}, room=request.sid)
             except Exception as ex:
                 print(ex)
@@ -383,7 +295,7 @@ class LoLLMsServer:
                                                 personality_path, 
                                                 self.lollms_paths, 
                                                 self.config,
-                                                self.active_model
+                                                self.model
                                             )
                 self.personalities.append(personality)
                 self.config["personalities"].append(personality_path)
@@ -413,13 +325,13 @@ class LoLLMsServer:
         @self.socketio.on('tokenize')
         def tokenize(data):
             prompt = data['prompt']
-            tk = self.active_model.tokenize(prompt)
+            tk = self.model.tokenize(prompt)
             emit("tokenized", {"tokens":tk})
 
         @self.socketio.on('detokenize')
         def detokenize(data):
             prompt = data['prompt']
-            txt = self.active_model.detokenize(prompt)
+            txt = self.model.detokenize(prompt)
             emit("detokenized", {"text":txt})
 
         @self.socketio.on('cancel_generation')
@@ -442,7 +354,7 @@ class LoLLMsServer:
                 return
             def generate_text():
                 self.is_ready = False
-                model = self.active_model
+                model = self.model
                 self.clients[client_id]["is_generating"]=True
                 self.clients[client_id]["requested_stop"]=False
                 prompt          = data['prompt']
@@ -462,7 +374,7 @@ class LoLLMsServer:
                     self.answer = {"full_text":""}
                     def callback(text, message_type: MSG_TYPE):
                         if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
-                            ASCIIColors.success(f"generated:{len(self.answer['full_text'])} words", end='\r')
+                            ASCIIColors.success(f"generated:{len(self.answer['full_text'].split())} words", end='\r')
                             self.answer["full_text"] = self.answer["full_text"] + text
                             self.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
                             self.socketio.sleep(0)
@@ -479,8 +391,10 @@ class LoLLMsServer:
                     fd = model.detokenize(tk[-min(self.config.ctx_size-n_predicts,n_tokens):])
 
                     try:
-                        ASCIIColors.print("warm up", ASCIIColors.color_bright_cyan)
-                        generated_text = model.generate(fd, n_predict=n_predicts, callback=callback,
+                        ASCIIColors.print("warming up", ASCIIColors.color_bright_cyan)
+                        generated_text = model.generate(fd, 
+                                                        n_predict=n_predicts, 
+                                                        callback=callback,
                                                         temperature = parameters["temperature"],
                                                         top_k = parameters["top_k"],
                                                         top_p = parameters["top_p"],
@@ -588,7 +502,7 @@ class LoLLMsServer:
 
     def run(self, host="localhost", port="9601"):
         print(f"{ASCIIColors.color_red}Current binding (model) : {ASCIIColors.color_reset}{self.binding}")
-        print(f"{ASCIIColors.color_red}Current personality : {ASCIIColors.color_reset}{self.active_personality}")
+        print(f"{ASCIIColors.color_red}Current personality : {ASCIIColors.color_reset}{self.config.personalities[self.config.active_personality_id]}")
         ASCIIColors.info(f"Serving on address: http://{host}:{port}")
 
         self.socketio.run(self.app, host=host, port=port)

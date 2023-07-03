@@ -1072,13 +1072,19 @@ class PersonalityBuilder:
         self.installation_option = installation_option
 
 
-    def build_personality(self):
-        if self.config["active_personality_id"]>=len(self.config["personalities"]):
-            ASCIIColors.warning("Personality ID was out of range. Resetting to 0.")
-            self.config["active_personality_id"]=0
-        if len(self.config["personalities"][self.config["active_personality_id"]].split("/"))==3:
+    def build_personality(self, id:int=None):
+        if id is None:
+            id = self.config["active_personality_id"]
+            if self.config["active_personality_id"]>=len(self.config["personalities"]):
+                ASCIIColors.warning("Personality ID was out of range. Resetting to 0.")
+                self.config["active_personality_id"]=0
+                id = 0
+        else:
+            if id>len(self.config["personalities"]):
+                id = len(self.config["personalities"])-1
+        if len(self.config["personalities"][id].split("/"))==3:
             self.personality = AIPersonality(
-                                            self.lollms_paths.personalities_zoo_path / self.config["personalities"][self.config["active_personality_id"]],
+                                            self.lollms_paths.personalities_zoo_path / self.config["personalities"][id],
                                             self.lollms_paths,
                                             self.config,
                                             self.model, 
@@ -1086,7 +1092,7 @@ class PersonalityBuilder:
                                         )
         else:
             self.personality = AIPersonality(
-                                            self.config["personalities"][self.config["active_personality_id"]],
+                                            self.config["personalities"][id],
                                             self.lollms_paths,
                                             self.config,
                                             self.model,

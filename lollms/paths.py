@@ -74,6 +74,15 @@ class LollmsPaths:
         self.personal_log_path.mkdir(parents=True, exist_ok=True)
         self.personal_uploads_path.mkdir(parents=True, exist_ok=True)
 
+        if not self.bindings_zoo_path.exists():
+            # Clone the repository to the target path
+            ASCIIColors.info("No bindings found in your personal space.\nCloning the personalities zoo")
+            subprocess.run(["git", "clone", bindings_zoo_repo, self.bindings_zoo_path])
+        else:
+            # Pull the repository if it already exists
+            ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
+            subprocess.run(["git", "-C", self.bindings_zoo_path, "pull"])            
+
         if not self.personalities_zoo_path.exists():
             # Clone the repository to the target path
             ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
@@ -82,15 +91,6 @@ class LollmsPaths:
             # Pull the repository if it already exists
             ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
             subprocess.run(["git", "-C", self.personalities_zoo_path, "pull"])            
-
-        if not self.bindings_zoo_path.exists():
-            # Clone the repository to the target path
-            ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
-            subprocess.run(["git", "clone", bindings_zoo_repo, self.bindings_zoo_path])
-        else:
-            # Pull the repository if it already exists
-            ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
-            subprocess.run(["git", "-C", self.bindings_zoo_path, "pull"])            
 
 
     def copy_default_config(self):
