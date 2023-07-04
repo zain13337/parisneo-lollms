@@ -39,7 +39,8 @@ class LollmsApplication:
                 self.model          = self.load_model()
             except Exception as ex:
                 ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
-
+        else:
+            self.binding = None
         self.mount_personalities()
 
 
