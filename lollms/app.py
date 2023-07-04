@@ -27,20 +27,23 @@ class LollmsApplication:
 
         try:
             self.binding            = self.load_binding()
+            ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
         except Exception as ex:
             ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
 
         if self.binding is not None:
             if self.config.model_name is None:
                 ASCIIColors.warning(f"No model selected")
-                print("Please select a valid binding")
+                print("Please select a valid model")
                 self.menu.select_model()
             try:
                 self.model          = self.load_model()
             except Exception as ex:
                 ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                self.model = None
         else:
             self.binding = None
+            self.model = None
         self.mount_personalities()
 
 
