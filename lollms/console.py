@@ -122,8 +122,6 @@ Participating personalities:
     def stop_log(self):
         self.is_logging = False           
 
-
-
     def reset_context(self):
         if self.personality.include_welcome_message_in_disucssion:
             full_discussion = (

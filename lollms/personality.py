@@ -180,12 +180,12 @@ Date: {{date}}
         if not config_file.exists():
             raise ValueError(f"The provided folder {package_path} does not exist.")
 
-        with open(config_file, "r") as f:
+        with open(config_file, "r", encoding='utf-8') as f:
             config = yaml.safe_load(f)
 
         secret_file = package_path / "secret.yaml"
         if secret_file.exists():
-            with open(secret_file, "r") as f:
+            with open(secret_file, "r", encoding='utf-8') as f:
                 self._secret_cfg = yaml.safe_load(f)
         else:
             self._secret_cfg = None
