@@ -37,8 +37,9 @@ class LollmsPaths:
         self.personal_data_path             = personal_path / "data"
         self.personal_databases_path        = personal_path / "databases"
         self.personal_models_path           = personal_path / "models"
-        self.personal_uploads_path          = lollms_path / "uploads"
-        self.personal_log_path              = lollms_path / "logs"
+        self.personal_uploads_path          = personal_path / "uploads"
+        self.personal_log_path              = personal_path / "logs"
+        self.personal_outputs_path          = personal_path / "outputs"
 
 
         self.bindings_zoo_path              = personal_path / "bindings_zoo"
@@ -57,6 +58,7 @@ class LollmsPaths:
             "Personal Models Path": self.personal_models_path,
             "Personal Uploads Path": self.personal_uploads_path,
             "Personal Log Path": self.personal_log_path,
+            "Personal outputs Path": self.personal_outputs_path,
             "Bindings Zoo Path": self.bindings_zoo_path,
             "Personalities Zoo Path": self.personalities_zoo_path
         }
@@ -72,6 +74,8 @@ class LollmsPaths:
         self.personal_data_path.mkdir(parents=True, exist_ok=True)
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
         self.personal_log_path.mkdir(parents=True, exist_ok=True)
+        self.personal_outputs_path.mkdir(parents=True, exist_ok=True)
+        
         self.personal_uploads_path.mkdir(parents=True, exist_ok=True)
 
         if not self.bindings_zoo_path.exists():
