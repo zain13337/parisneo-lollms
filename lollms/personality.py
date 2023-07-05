@@ -17,7 +17,7 @@ import subprocess
 import yaml
 from lollms.helpers import ASCIIColors
 from lollms.types import MSG_TYPE
-
+import json
 
 
 def is_package_installed(package_name):
@@ -1018,40 +1018,105 @@ class APScript:
         """
         return None
 
-    def process_model_input(self, text:str):
-        """
-        Process the model input.
-
-        This method should be overridden in the personality-specific processor class to define
-        the desired behavior for processing the model input.
+    def step_start(self, step_text, callback=None):
+        """This triggers a step start
 
         Args:
-            text (str): The model input text.
-
-        Returns:
-            Any: The processed model input.
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step start to. Defaults to None.
         """
-        return None
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_START)
 
-    def process_model_output(self, text:str):
-        """
-        Process the model output.
-
-        This method should be overridden in the personality-specific processor class to define
-        the desired behavior for processing the model output.
+    def step_end(self, step_text, callback=None):
+        """This triggers a step end
 
         Args:
-            text (str): The model output text.
-
-        Returns:
-            Any: The processed model output.
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step end to. Defaults to None.
         """
-        return None
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_END)
 
+    def step(self, step_text, callback=None):
+        """This triggers a step information
 
+        Args:
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP)
 
+    def exception(self, ex, callback=None):
+        """This sends exception to the client
 
+        Args:
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(str(ex), MSG_TYPE.MSG_TYPE_EXCEPTION)
 
+    def json(self, json_infos:dict, callback=None):
+        """This sends json data to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(json.dumps(json_infos), MSG_TYPE.MSG_TYPE_JSON_INFOS)
+
+    def ui(self, html_ui:str, callback=None):
+        """This sends ui elements to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(html_ui, MSG_TYPE.MSG_TYPE_UI)
+
+    def code(self, code:str, callback=None):
+        """This sends code to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(code, MSG_TYPE.MSG_TYPE_CODE)
+
+    def full(self, full_text:str, callback=None):
+        """This sends full text to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
+
+    def info(self, info_text:str, callback=None):
+        """This sends info text to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the info to. Defaults to None.
+        """
+        if callback:
+            callback(info_text, MSG_TYPE.MSG_TYPE_FULL)
+
+    def step_progress(self, progress:float, callback=None):
+        """This sends step rogress to front end
+
+        Args:
+            step_text (dict): The step progress in %
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the progress to. Defaults to None.
+        """
+        if callback:
+            callback(str(progress), MSG_TYPE.MSG_TYPE_STEP_PROGRESS)
 # ===========================================================
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
