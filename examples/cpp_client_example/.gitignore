@@ -1,0 +1,2 @@
+# Ignore the cloned Socket.IO Client C++ library
+socket.io-client-cpp/
