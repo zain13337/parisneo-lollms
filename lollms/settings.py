@@ -32,7 +32,7 @@ class Settings(LollmsApplication):
         # Load maoin configuration
         config = LOLLMSConfig.autoload(lollms_paths)
 
-        super().__init__("lollms-settings", config, lollms_paths)
+        super().__init__("lollms-settings", config, lollms_paths, load_model=False)
 
         if show_logo:
             self.menu.show_logo()

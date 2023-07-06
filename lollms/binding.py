@@ -127,11 +127,13 @@ class LLMBinding:
             return None
         
         if self.config.model_name.endswith(".reference"):
+            ASCIIColors.yellow("Loading a reference model:")
             with open(str(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}"), 'r') as f:
                 model_path = Path(f.read())
+            ASCIIColors.yellow(model_path)
         else:
             model_path = Path(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}")
-        
+
         return model_path
 
     
@@ -228,7 +230,7 @@ class LLMBinding:
         """Lists the models for this binding
         """
         models_dir = self.lollms_paths.personal_models_path/config["binding_name"]  # replace with the actual path to the models folder
-        return [f.name for f in models_dir.glob(self.file_extension)]
+        return [f.name for f in models_dir.iterdir() if f.suffix == self.file_extension.replace("*","") or f.suffix==".reference"]
 
     @staticmethod
     def reinstall_pytorch_with_cuda():

@@ -501,7 +501,19 @@ class LoLLMsServer(LollmsApplication):
 
 
     def run(self, host="localhost", port="9601"):
+        if self.binding is None:
+            ASCIIColors.warning("No binding selected. Please select one")
+            self.menu.select_binding()
+
         print(f"{ASCIIColors.color_red}Current binding (model) : {ASCIIColors.color_reset}{self.binding}")
+        print(f"{ASCIIColors.color_red}Mounted personalities : {ASCIIColors.color_reset}{self.config.personalities}")
+        if len(self.config.personalities)==0:
+            ASCIIColors.warning("No personality selected. Selecting lollms. You can mount other personalities using lollms-settings application")
+            self.config.personalities = ["english/generic/lollms"]
+            self.config.save_config()
+
+        if self.config.active_personality_id>=len(self.config.personalities):
+            self.config.active_personality_id = 0
         print(f"{ASCIIColors.color_red}Current personality : {ASCIIColors.color_reset}{self.config.personalities[self.config.active_personality_id]}")
         ASCIIColors.info(f"Serving on address: http://{host}:{port}")
 

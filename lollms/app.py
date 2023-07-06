@@ -8,7 +8,7 @@ import traceback
 from lollms.terminal import MainMenu
 
 class LollmsApplication:
-    def __init__(self, app_name:str, config:LOLLMSConfig, lollms_paths:LollmsPaths) -> None:
+    def __init__(self, app_name:str, config:LOLLMSConfig, lollms_paths:LollmsPaths, load_binding=True, load_model=True) -> None:
         """
         Creates a LOLLMS Application
         """
@@ -24,25 +24,31 @@ class LollmsApplication:
             ASCIIColors.warning(f"No binding selected")
             ASCIIColors.info("Please select a valid model or install a new one from a url")
             self.menu.select_binding()
-
-        try:
-            self.binding            = self.load_binding()
-        except Exception as ex:
-            ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
-
-        if self.binding is not None:
-            ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
-            if self.config.model_name is None:
-                ASCIIColors.warning(f"No model selected")
-                print("Please select a valid model")
-                self.menu.select_model()
+        if load_binding:
             try:
-                self.model          = self.load_model()
+                self.binding            = self.load_binding()
             except Exception as ex:
-                ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
+
+            if self.binding is not None:
+                ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
+                if load_model:
+                    if self.config.model_name is None:
+                        ASCIIColors.warning(f"No model selected")
+                        print("Please select a valid model")
+                        self.menu.select_model()
+                    try:
+                        self.model          = self.load_model()
+                    except Exception as ex:
+                        ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                        self.model = None
+                else:
+                    self.model = None
+            else:
+                ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
+                self.binding = None
                 self.model = None
         else:
-            ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
             self.binding = None
             self.model = None
         self.mount_personalities()
