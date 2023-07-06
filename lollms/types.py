@@ -21,3 +21,29 @@ class MSG_TYPE(Enum):
     MSG_TYPE_REF=10             # References (in form of  [text](path))
     MSG_TYPE_CODE=11            # A javascript code to execute
     MSG_TYPE_UI=12              # A vue.js component to show (we need to build some and parse the text to show it)
+
+class GenerationPresets:
+    """
+    Class containing various generation presets.
+    """
+
+    @staticmethod
+    def deterministic_preset():
+        """
+        Preset for deterministic output with low temperature and top_k, and high top_p.
+        """
+        return {'temperature': 0.2, 'top_k': 10, 'top_p': 0.8}
+
+    @staticmethod
+    def creative_preset():
+        """
+        Preset for creative output with high temperature, top_k, and top_p.
+        """
+        return {'temperature': 0.8, 'top_k': 50, 'top_p': 0.9}
+
+    @staticmethod
+    def default_preset():
+        """
+        Default preset with moderate temperature, top_k, and top_p.
+        """
+        return {'temperature': 0.5, 'top_k': 20, 'top_p': 0.85}
