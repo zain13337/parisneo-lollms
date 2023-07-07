@@ -1098,6 +1098,27 @@ class APScript:
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
 
+    def full_invisible_to_ai(self, full_text:str, callback=None):
+        """This sends full text to front end (INVISIBLE to AI)
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI)
+
+    def full_invisible_to_user(self, full_text:str, callback=None):
+        """This sends full text to front end (INVISIBLE to user)
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
+
+
     def info(self, info_text:str, callback=None):
         """This sends info text to front end
 
