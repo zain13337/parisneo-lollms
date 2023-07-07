@@ -22,7 +22,7 @@ import importlib
 import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
-
+import traceback
 
 __author__ = "parisneo"
 __github__ = "https://github.com/ParisNeo/lollms_bindings_zoo"

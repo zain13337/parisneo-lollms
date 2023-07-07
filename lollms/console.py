@@ -241,7 +241,7 @@ Participating personalities:
                         antiprompt = self.personality.detect_antiprompt(bot_says)
                         if antiprompt:
                             self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
-                            print("Detected hallucination")
+                            ASCIIColors.warning(f"Detected hallucination with antiprompt {antiprompt}")
                             return False
                         else:
                             self.bot_says = bot_says
