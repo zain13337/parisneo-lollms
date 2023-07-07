@@ -462,10 +462,10 @@ class LoLLMsServer(LollmsApplication):
                         fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk-personality.model_n_predicts,n_tokens):])
                         
                         if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                            print("processing...", end="", flush=True)
+                            ASCIIColors.info("processing...")
                             generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
                         else:
-                            ASCIIColors.info("generating...", end="", flush=True)
+                            ASCIIColors.info("generating...")
                             generated_text = personality.model.generate(
                                                                         personality.personality_conditioning+fd, 
                                                                         n_predict=personality.model_n_predicts, 
@@ -475,7 +475,7 @@ class LoLLMsServer(LollmsApplication):
                             generated_text = personality.processor.process_model_output(generated_text)
 
                         full_discussion_blocks.append(generated_text.strip())
-                        ASCIIColors.success("\ndone", end="", flush=True)
+                        ASCIIColors.success("\ndone")
 
                         # Emit the generated text to the client
                         self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)

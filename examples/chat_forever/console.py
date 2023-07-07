@@ -1,5 +1,5 @@
 from lollms.console import Conversation 
-
+import sys
 class MyConversation(Conversation):
   def __init__(self, cfg=None):
     super().__init__(cfg, show_welcome_message=False)
@@ -15,7 +15,9 @@ class MyConversation(Conversation):
       full_discussion += self.personality.user_message_prefix+prompt+self.personality.link_text
       full_discussion += self.personality.ai_message_prefix
       def callback(text, type=None):
-          print(text, end="", flush=True)
+          print(text, end="")
+          sys.stdout = sys.__stdout__
+          sys.stdout.flush()
           return True
       print(self.personality.name+": ",end="",flush=True)
       output = self.safe_generate(full_discussion, callback=callback)
