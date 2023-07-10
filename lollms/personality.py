@@ -836,9 +836,73 @@ Date: {{date}}
 
 
 
+class StateMachine:
+    def __init__(self, states_dict):
+        """
+        states structure is the following
+        [
+            {
+                "name": the state name,
+                "commands": [ # list of commands
+                    "command": function
+                ],
+                "default": default function
+            }
+        ]
+        """
+        self.states_dict = states_dict
+        self.current_state_id = 0
+    
+    def goto_state(self, state):
+        """
+        Transition to the state with the given name or index.
+
+        Args:
+            state (str or int): The name or index of the state to transition to.
+
+        Raises:
+            ValueError: If no state is found with the given name or index.
+        """
+        if isinstance(state, str):
+            for i, state_dict in enumerate(self.states_dict):
+                if state_dict["name"] == state:
+                    self.current_state_id = i
+                    return
+        elif isinstance(state, int):
+            if 0 <= state < len(self.states_dict):
+                self.current_state_id = state
+                return
+        raise ValueError(f"No state found with name or index: {state}")
 
 
-class APScript:
+
+    def process_state(self, command):
+        """
+        Process the given command based on the current state.
+
+        Args:
+            command: The command to process.
+
+        Raises:
+            ValueError: If the current state doesn't have the command and no default function is defined.
+        """
+        current_state = self.states_dict[self.current_state_id]
+        commands = current_state["commands"]
+        
+        for cmd, func in commands:
+            if cmd == command:
+                func()
+                return
+        
+        default_func = current_state.get("default")
+        if default_func is not None:
+            default_func()
+        else:
+            raise ValueError(f"Command '{command}' not found in current state and no default function defined.")
+
+        
+
+class APScript(StateMachine):
     """
     Template class for implementing personality processor classes in the APScript framework.
 
@@ -848,9 +912,10 @@ class APScript:
     def __init__(
                     self, 
                     personality         :AIPersonality,
-                    personality_config  :TypedConfig
+                    personality_config  :TypedConfig,
+                    states_dict         :dict   = {}
                 ) -> None:
-        
+        super().__init__(states_dict)
         self.files=[]
         self.personality                        = personality
         self.personality_config                 = personality_config
