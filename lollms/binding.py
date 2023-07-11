@@ -22,7 +22,7 @@ import importlib
 import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
-
+import urllib
 
 __author__ = "parisneo"
 __github__ = "https://github.com/ParisNeo/lollms_bindings_zoo"
@@ -93,6 +93,19 @@ class LLMBinding:
             shutil.rmtree(temp_dir)
 
 
+    def get_file_size(self, url):
+        # Send a HEAD request to retrieve file metadata
+        response = urllib.request.urlopen(url)
+        
+        # Extract the Content-Length header value
+        file_size = response.headers.get('Content-Length')
+        
+        # Convert the file size to integer
+        if file_size:
+            file_size = int(file_size)
+        
+        return file_size
+    
     def build_model(self):
         """
         Build the model.
