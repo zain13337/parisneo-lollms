@@ -22,6 +22,7 @@ import importlib
 import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
+import traceback
 import urllib
 
 __author__ = "parisneo"
@@ -91,7 +92,6 @@ class LLMBinding:
         except Exception as e:
             print('An error occurred during installation:', str(e))
             shutil.rmtree(temp_dir)
-
 
     def get_file_size(self, url):
         # Send a HEAD request to retrieve file metadata

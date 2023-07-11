@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 from lollms.binding import BindingBuilder
 from lollms.config import InstallOption
 from lollms.personality import PersonalityBuilder
+from lollms.helpers import trace_exception
 
 from tqdm import tqdm
 import pkg_resources
@@ -277,6 +278,7 @@ class MainMenu:
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {lollms_app.configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
+            trace_exception(ex)
             ASCIIColors.error(f"{lollms_app.config.get_personality_path_infos()}")
             print("Please select a valid model or install a new one from a url")
             self.select_model()

@@ -4,7 +4,7 @@ from lollms.paths import LollmsPaths
 from lollms.personality import PersonalityBuilder
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.config import InstallOption
-import traceback
+from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
 
 class LollmsApplication:
@@ -29,6 +29,7 @@ class LollmsApplication:
                 self.binding            = self.load_binding()
             except Exception as ex:
                 ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
+                trace_exception(ex)
 
             if self.binding is not None:
                 ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
@@ -41,6 +42,7 @@ class LollmsApplication:
                         self.model          = self.load_model()
                     except Exception as ex:
                         ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                        trace_exception(ex)
                         self.model = None
                 else:
                     self.model = None
@@ -53,15 +55,6 @@ class LollmsApplication:
             self.model = None
         self.mount_personalities()
 
-
-    def trace_exception(self, ex):
-        # Catch the exception and get the traceback as a list of strings
-        traceback_lines = traceback.format_exception(type(ex), ex, ex.__traceback__)
-
-        # Join the traceback lines into a single string
-        traceback_text = ''.join(traceback_lines)        
-        ASCIIColors.error(traceback_text)
-
     def load_binding(self):
         try:
             binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
@@ -69,7 +62,12 @@ class LollmsApplication:
             print(ex)
             print(f"Couldn't find binding. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid binding")
             print(f"Trying to reinstall binding")
-            binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
+            try:
+                binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
+            except Exception as ex:
+                ASCIIColors.error("Couldn't reinstall model")
+                trace_exception(ex)
+
         return binding    
     
     def load_model(self):
@@ -81,6 +79,7 @@ class LollmsApplication:
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
+            trace_exception(ex)
             ASCIIColors.error(f"{self.config.get_model_path_infos()}")
             print("Please select a valid model or install a new one from a url")
             model = None
@@ -102,7 +101,7 @@ class LollmsApplication:
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
-            self.trace_exception(ex)
+            trace_exception(ex)
             ASCIIColors.error(f"{self.config.get_personality_path_infos()}")
             self.personality = None
         self.mounted_personalities.append(self.personality)

@@ -3,7 +3,7 @@ import socketio
 from pathlib import Path
 from lollms import MSG_TYPE
 import time 
-
+import sys
 # Connect to the Socket.IO server
 sio = socketio.Client()
 
@@ -35,7 +35,10 @@ def test_generate_text(host, port, text_file):
 
     @sio.event
     def text_chunk(data):
-        print(data["chunk"],end="",flush=True)
+        print(data["chunk"],end="")
+        sys.stdout = sys.__stdout__
+        sys.stdout.flush()
+
 
     @sio.event
     def text_generated(data):
