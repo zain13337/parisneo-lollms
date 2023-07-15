@@ -876,7 +876,7 @@ class StateMachine:
 
 
 
-    def process_state(self, command):
+    def process_state(self, command, callback=None):
         """
         Process the given command based on the current state.
 
@@ -886,17 +886,21 @@ class StateMachine:
         Raises:
             ValueError: If the current state doesn't have the command and no default function is defined.
         """
+        if callback:
+            self.callback=callback
+            
         current_state = self.states_dict[self.current_state_id]
         commands = current_state["commands"]
+        command = command.strip()
         
-        for cmd, func in commands:
-            if cmd == command:
-                func()
+        for cmd, func in commands.items():
+            if cmd == command[0:len(cmd)]:
+                func(command)
                 return
         
         default_func = current_state.get("default")
         if default_func is not None:
-            default_func()
+            default_func(command)
         else:
             raise ValueError(f"Command '{command}' not found in current state and no default function defined.")
 
@@ -970,7 +974,8 @@ class APScript(StateMachine):
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
 
 
-    def add_file(self, path):
+    def add_file(self, path, callback=None):
+        self.callback=callback
         self.files.append(path)
         return True
 
