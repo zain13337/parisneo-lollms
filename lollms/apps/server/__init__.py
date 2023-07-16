@@ -8,9 +8,9 @@ from lollms.main_config import LOLLMSConfig
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.personality import PersonalityBuilder
 from lollms.helpers import ASCIIColors
-from lollms.console import MainMenu
+from lollms.apps.console import MainMenu
 from lollms.paths import LollmsPaths
-from lollms.console import MainMenu
+from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
 from typing import List, Tuple
 import importlib
@@ -334,6 +334,12 @@ class LoLLMsServer(LollmsApplication):
             txt = self.model.detokenize(prompt)
             emit("detokenized", {"text":txt})
 
+        @self.socketio.on('embed')
+        def detokenize(data):
+            prompt = data['prompt']
+            txt = self.model.embed(prompt)
+            emit("embeded", {"text":txt})
+
         @self.socketio.on('cancel_generation')
         def cancel_generation(data):
             client_id = request.sid
@@ -415,6 +421,7 @@ class LoLLMsServer(LollmsApplication):
                 else:
                     try:
                         personality: AIPersonality = self.personalities[personality_id]
+                        ump = "!@>"+self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
                         personality.model = model
                         cond_tk = personality.model.tokenize(personality.personality_conditioning)
                         n_cond_tk = len(cond_tk)
@@ -432,12 +439,12 @@ class LoLLMsServer(LollmsApplication):
                                 preprocessed_prompt = prompt
                             
                             if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                                full_discussion_blocks.append(personality.user_message_prefix)
+                                full_discussion_blocks.append(ump)
                                 full_discussion_blocks.append(preprocessed_prompt)
                         
                             else:
 
-                                full_discussion_blocks.append(personality.user_message_prefix)
+                                full_discussion_blocks.append(ump)
                                 full_discussion_blocks.append(preprocessed_prompt)
                                 full_discussion_blocks.append(personality.link_text)
                                 full_discussion_blocks.append(personality.ai_message_prefix)

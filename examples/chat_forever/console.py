@@ -1,4 +1,4 @@
-from lollms.console import Conversation 
+from lollms.apps.console import Conversation 
 import sys
 class MyConversation(Conversation):
   def __init__(self, cfg=None):

@@ -14,11 +14,146 @@ import pkg_resources
 from pathlib import Path
 import yaml
 import sys
+class Menu:
+    """Console menu tool that allows the user to select options."""
 
-class MainMenu:
+    def __init__(self, name, options):
+        """
+        Initialize a new menu instance.
+
+        Parameters:
+            name (str): The name of the menu.
+            options (list): A list of menu options, each represented as a dictionary
+                            with 'name' as the option display name, 'fn' as the function
+                            to be called when the user selects the option, an optional
+                            'help' message to display a brief description of the option,
+                            and an optional 'exit_after_exec' flag to exit the menu
+                            automatically after executing the function.
+        """
+        self.name = name
+        self.options = options
+
+    def show(self, menu_structure=None):
+        """
+        Display the menu options to the user and handle the user's choice.
+
+        Parameters:
+            menu_structure (list, optional): A list of menu options to use instead of
+                                             the ones sent to the constructor. If None,
+                                             it uses the options sent to the constructor.
+
+        Note: If both `menu_structure` and options sent to the constructor are None,
+              the method will raise a ValueError.
+        """
+        if menu_structure is None and not self.options:
+            raise ValueError("Menu options not provided.")
+
+        if menu_structure is not None:
+            current_options = menu_structure
+        else:
+            current_options = self.options
+
+        while True:
+            ASCIIColors.cyan(f"\n--- {self.name.upper()} MENU ---")
+            for i, option in enumerate(current_options, start=1):
+                ASCIIColors.yellow(f"{i}.",end="")
+                print(f" {option['name']}")
+            ASCIIColors.yellow("0.",end="")
+            print(" Go back to the previous menu" if self.name != "Main" else "0. Exit")
+            print("help")
+
+            choice = input("Select an option: ")
+            if choice.isdigit():
+                choice = int(choice)
+                if 0 <= choice <= len(current_options):
+                    if choice == 0:
+                        if self.name == "Main":
+                            print("Exiting the menu.")
+                            break
+                        else:
+                            return
+                    else:
+                        chosen_option = current_options[choice - 1]
+                        sub_menu = chosen_option.get('sub_menu')
+                        exit_after_exec = chosen_option.get('exit_after_exec', False)
+                        if sub_menu:
+                            self.show(sub_menu)
+                        else:
+                            chosen_option['fn']()
+                            if exit_after_exec:
+                                print(f"Exiting {self.name.upper()} menu.")
+                                return
+                else:
+                    print("Invalid option. Please select again.")
+            elif choice.lower() == "help":
+                self.display_help(current_options)
+            else:
+                print("Invalid input. Please enter a number or 'help' for assistance.")
+
+    def display_help(self, options):
+        """
+        Display a brief description of each option available in the menu.
+
+        Parameters:
+            options (list): The list of menu options to display the help for.
+        """
+        print(f"\n--- {self.name.upper()} MENU HELP ---")
+        for option in options:
+            help_msg = option.get('help', "No help available.")
+            print(f"{option['name']}: {help_msg}")
+    def yes_no_question(self, question):
+        """
+        Ask the user a yes or no question and wait for a valid response.
+
+        Parameters:
+            question (str): The question to be displayed to the user.
+
+        Returns:
+            bool: True if the user answers 'yes', False if the user answers 'no'.
+        """
+        while True:
+            response = input(f"{question} (yes/no): ").lower()
+            if response in ['y', 'yes']:
+                return True
+            elif response in ['n', 'no']:
+                return False
+            else:
+                print("Invalid response. Please answer with 'yes' or 'no' (or 'y'/'n').")
+
+class MainMenu(Menu):
     def __init__(self, lollms_app:'LollmsApplication'):
         self.binding_infs = []
         self.lollms_app = lollms_app
+        main_menu_options = [
+            {'name': 'Main settings', 'fn': self.main_settings, 'help': "Show main settings."},
+            {'name': 'Select Binding', 'fn': self.select_binding, 'help': "Choose a binding."},
+            {'name': 'Select Model', 'fn': self.select_model, 'help': "Choose a model."},
+            {'name': 'View mounted Personalities', 'fn': self.vew_mounted_personalities, 'help': "View all currently mounted personalities."},
+            {'name': 'Mount Personality', 'fn': self.mount_personality, 'help': "Mount a new personality."},
+            {'name': 'Unmount Personality', 'fn': self.unmount_personality, 'help': "Unmount a personality."},
+            {'name': 'Select Personality', 'fn': self.select_personality, 'help': "Choose a personality."},
+            {'name': 'Reinstall Binding', 'fn': self.reinstall_binding, 'help': "Reinstall the selected binding."},
+            {'name': 'Reinstall current Personality', 'fn': self.reinstall_personality, 'help': "Reinstall the current selected personality."},
+            {'name': 'Reset all installs', 'fn': self.lollms_app.reset_all_installs, 'help': "Reset all installed personalities."},
+            {'name': 'Reset paths', 'fn': self.lollms_app.lollms_paths.resetPaths, 'help': "Reset all paths to default."},
+        ]
+        super().__init__("Lollms Main menu", main_menu_options)
+
+    def main_settings(self):
+        self.show([
+            {'name': 'Set user name', 'fn': self.set_user_name, 'help': "Sets the user name."},
+            {'name': 'Set use user name in discussion', 'fn': self.set_use_user_name_in_discussions, 'help': "Sets the user name."},
+        ])
+
+    def set_user_name(self):
+        print(f"Current user name : {self.lollms_app.config.user_name}")
+        self.lollms_app.config.user_name = input("New user name:")
+        self.lollms_app.config.save_config()
+
+    def set_use_user_name_in_discussions(self):
+        ASCIIColors.info(f"Current status: {self.lollms_app.config.use_user_name_in_discussions}")
+        self.lollms_app.config.use_user_name_in_discussions = self.yes_no_question('Use user name in dicsussion')
+        self.lollms_app.config.save_config()
 
     def show_logo(self):
         print(f"{ASCIIColors.color_bright_yellow}")
@@ -284,51 +419,5 @@ class MainMenu:
             self.select_model()
 
     def main_menu(self):
-        while True:
-            print("\nMain Menu:")
-            print(f"{ASCIIColors.color_green}1 -{ASCIIColors.color_reset} Select Binding")
-            print(f"{ASCIIColors.color_green}2 -{ASCIIColors.color_reset} Select Model")
-            print(f"{ASCIIColors.color_green}3 -{ASCIIColors.color_reset} View mounted Personalities")
-            print(f"{ASCIIColors.color_green}4 -{ASCIIColors.color_reset} Mount Personality")
-            print(f"{ASCIIColors.color_green}5 -{ASCIIColors.color_reset} Unmount Personality")
-            print(f"{ASCIIColors.color_green}6 -{ASCIIColors.color_reset} Select Personality")
-            print(f"{ASCIIColors.color_green}7 -{ASCIIColors.color_reset} Reinstall Binding")
-            print(f"{ASCIIColors.color_green}8 -{ASCIIColors.color_reset} Reinstall current Personality")
-            print(f"{ASCIIColors.color_green}9 -{ASCIIColors.color_reset} Reset all installs")        
-            print(f"{ASCIIColors.color_green}10 -{ASCIIColors.color_reset} Reset paths")        
-            print(f"{ASCIIColors.color_green}11 -{ASCIIColors.color_reset} Back to app")
-            print(f"{ASCIIColors.color_green}12 -{ASCIIColors.color_reset} Help")
-            print(f"{ASCIIColors.color_green}13 -{ASCIIColors.color_reset} Exit app")
-            choice = input("Enter your choice: ").strip()
-            if choice == "1":
-                self.select_binding()
-            elif choice == "2":
-                self.select_model()
-            elif choice == "3":
-                self.vew_mounted_personalities()
-            elif choice == "4":
-                self.mount_personality()
-            elif choice == "5":
-                self.unmount_personality()
-            elif choice == "6":
-                self.select_personality()
-            elif choice == "7":
-                self.reinstall_binding()
-            elif choice == "8":
-                self.reinstall_personality()
-            elif choice == "9":
-                self.lollms_app.reset_all_installs()
-            elif choice == "10":
-                self.lollms_app.reset_paths()
-                
-            elif choice == "11":
-                print("Back to main app...")
-                break
-            elif choice == "12":
-                self.show_commands_list()
-            elif choice == "13":
-                print("Bye")
-                sys.exit(0)
-            else:
-                print("Invalid choice! Try again.")
+        self.show()
 

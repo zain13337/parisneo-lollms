@@ -7,6 +7,8 @@ from lollms.config import InstallOption
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
 
+import subprocess
+
 class LollmsApplication:
     def __init__(self, app_name:str, config:LOLLMSConfig, lollms_paths:LollmsPaths, load_binding=True, load_model=True) -> None:
         """
@@ -19,6 +21,17 @@ class LollmsApplication:
         self.menu                   = MainMenu(self)
         self.mounted_personalities  = []
         self.personality            = None
+
+        try:
+            if config.auto_update:
+                ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
+                subprocess.run(["git", "-C", self.lollms_paths.bindings_zoo_path, "pull"])            
+                # Pull the repository if it already exists
+                ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
+                subprocess.run(["git", "-C", self.lollms_paths.personalities_zoo_path, "pull"])            
+        except Exception as ex:
+            ASCIIColors.error("Couldn't pull zoos. Please contact the main dev on our discord channel and report the problem.")
+            trace_exception(ex)
 
         if self.config.binding_name is None:
             ASCIIColors.warning(f"No binding selected")

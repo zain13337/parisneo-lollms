@@ -82,19 +82,11 @@ class LollmsPaths:
             # Clone the repository to the target path
             ASCIIColors.info("No bindings found in your personal space.\nCloning the personalities zoo")
             subprocess.run(["git", "clone", bindings_zoo_repo, self.bindings_zoo_path])
-        else:
-            # Pull the repository if it already exists
-            ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
-            subprocess.run(["git", "-C", self.bindings_zoo_path, "pull"])            
 
         if not self.personalities_zoo_path.exists():
             # Clone the repository to the target path
             ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
             subprocess.run(["git", "clone", personalities_zoo_repo, self.personalities_zoo_path])
-        else:
-            # Pull the repository if it already exists
-            ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
-            subprocess.run(["git", "-C", self.personalities_zoo_path, "pull"])            
 
 
     def copy_default_config(self):
@@ -156,7 +148,7 @@ class LollmsPaths:
             except Exception as ex:
                 print(f"{ASCIIColors.color_red}Global paths configuration file found but seems to be corrupted{ASCIIColors.color_reset}")
                 print("Couldn't find your personal data path!")
-                cfg.lollms_path = str(Path(__file__).parent)
+                cfg.lollms_path = lollms_path
                 cfg["lollms_personal_path"] = str(Path.home()/"Documents/lollms")
                 print("Please specify the folder where your configuration files, your models and your custom personalities need to be stored:")
                 lollms_personal_path = input(f"Folder path: ({cfg.lollms_personal_path}):")
@@ -173,7 +165,7 @@ class LollmsPaths:
                 cfg = BaseConfig()
                 cfg.load_config(global_paths_cfg_path)
                 try:
-                    lollms_path = cfg.lollms_path
+                    # lollms_path = cfg.lollms_path
                     lollms_personal_path = cfg.lollms_personal_path
                     return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
                 except Exception as ex:

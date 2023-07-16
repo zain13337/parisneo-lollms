@@ -174,7 +174,11 @@ Participating personalities:
         full_discussion = self.reset_context()
         while True:
             try:
-                prompt = input(f"{ASCIIColors.color_green}You: {ASCIIColors.color_reset}")
+                ump = "!@>"+self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
+                if self.config.use_user_name_in_discussions:
+                    prompt = input(f"{ASCIIColors.color_green}{self.config.user_name}: {ASCIIColors.color_reset}")
+                else:
+                    prompt = input(f"{ASCIIColors.color_green}You: {ASCIIColors.color_reset}")
                 if prompt == "exit":
                     return
                 if prompt == "menu":
@@ -221,12 +225,12 @@ Participating personalities:
                     
                     if self.personality.processor is not None and self.personality.processor_cfg["custom_workflow"]:
                         full_discussion += (
-                            self.personality.user_message_prefix +
+                            ump +
                             preprocessed_prompt
                         )
                     else:
                         full_discussion += (
-                            self.personality.user_message_prefix +
+                            ump +
                             preprocessed_prompt +
                             self.personality.link_text +
                             self.personality.ai_message_prefix

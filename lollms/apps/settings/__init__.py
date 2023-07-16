@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse
 from tqdm import tqdm
 from lollms.personality import PersonalityBuilder
-from lollms.console import MainMenu
+from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
 
 
