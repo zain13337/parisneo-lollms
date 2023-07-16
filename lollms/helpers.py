@@ -55,7 +55,7 @@ class ASCIIColors:
 
     @staticmethod
     def info(text, end="\n", flush=False):
-        print(f"{ASCIIColors.color_blue}{text}{ASCIIColors.color_reset}", end=end, flush=flush)
+        print(f"{ASCIIColors.color_bright_blue}{text}{ASCIIColors.color_reset}", end=end, flush=flush)
 
     @staticmethod
     def red(text, end="\n", flush=False):
