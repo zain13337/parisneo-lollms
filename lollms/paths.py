@@ -40,6 +40,7 @@ class LollmsPaths:
         self.personal_uploads_path          = personal_path / "uploads"
         self.personal_log_path              = personal_path / "logs"
         self.personal_outputs_path          = personal_path / "outputs"
+        self.personal_user_infos_path       = personal_path / "user_infos"
 
 
         self.bindings_zoo_path              = personal_path / "bindings_zoo"
@@ -60,7 +61,8 @@ class LollmsPaths:
             "Personal Log Path": self.personal_log_path,
             "Personal outputs Path": self.personal_outputs_path,
             "Bindings Zoo Path": self.bindings_zoo_path,
-            "Personalities Zoo Path": self.personalities_zoo_path
+            "Personalities Zoo Path": self.personalities_zoo_path,
+            "Personal user infos path": self.personal_user_infos_path
         }
         return "\n".join([f"{category}: {path}" for category, path in directories.items()])
 
@@ -75,9 +77,9 @@ class LollmsPaths:
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
         self.personal_log_path.mkdir(parents=True, exist_ok=True)
         self.personal_outputs_path.mkdir(parents=True, exist_ok=True)
-        
         self.personal_uploads_path.mkdir(parents=True, exist_ok=True)
-
+        self.personal_user_infos_path.mkdir(parents=True, exist_ok=True)
+        
         if not self.bindings_zoo_path.exists():
             # Clone the repository to the target path
             ASCIIColors.info("No bindings found in your personal space.\nCloning the personalities zoo")
