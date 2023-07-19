@@ -19,7 +19,7 @@ import argparse
 import logging
 import yaml
 import copy
-
+import gc
 def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
     ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
@@ -265,8 +265,17 @@ class LoLLMsServer(LollmsApplication):
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["binding_name"] = data['binding_name']
             try:
+                del self.model
+                del self.binding
+                self.model = None
+                self.binding = None
+                gc.collect()
+                for personality in self.mount_personalities:
+                    personality.model = None
                 self.binding = self.build_binding(self.bindings_path, self.cp_config)
                 self.config = self.cp_config
+                self.mount_personalities()
+                gc.collect()                
                 emit('select_binding', {'success':True, 'binding_name': self.cp_config["binding_name"]}, room=request.sid)
             except Exception as ex:
                 print(ex)
@@ -281,7 +290,14 @@ class LoLLMsServer(LollmsApplication):
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["model_name"] = data['model_name']
             try:
+                del self.model
+                self.model = None
+                gc.collect()
+                for personality in self.mount_personalities:
+                    personality.model = None
                 self.model = self.binding.build_model()
+                self.mount_personalities()
+                gc.collect()
                 emit('select_model', {'success':True, 'model_name':  model_name}, room=request.sid)
             except Exception as ex:
                 print(ex)
@@ -421,7 +437,7 @@ class LoLLMsServer(LollmsApplication):
                 else:
                     try:
                         personality: AIPersonality = self.personalities[personality_id]
-                        ump = "!@>"+self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
+                        ump = self.config.discussion_prompt_separator +self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
                         personality.model = model
                         cond_tk = personality.model.tokenize(personality.personality_conditioning)
                         n_cond_tk = len(cond_tk)

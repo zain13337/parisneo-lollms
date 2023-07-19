@@ -1,8 +1,8 @@
 # Lord Of Large Language Models Socket.io Endpoints Documentation
 
-<img src="https://github.com/ParisNeo/lollms/blob/main/lollms/assets/logo.png" alt="Logo" width="200" height="200">
+<img src="https://github.com/ParisNeo/lollms/blob/main/lollms/assets/logo.png?raw=true" alt="Logo" width="200" height="200">
 
-The server provides several Socket.io endpoints that clients can use to interact with the server. The default URL for the server is `http://localhost:9600`, but it can be changed using the configuration file or launch parameters.
+The server provides several Socket.io endpoints that clients can use to interact with the server. The default URL for the server is `http://localhost:9601`, but it can be changed using the configuration file or launch parameters.
 
 ## Endpoints
 

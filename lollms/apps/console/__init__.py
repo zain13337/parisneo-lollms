@@ -174,7 +174,7 @@ Participating personalities:
         full_discussion = self.reset_context()
         while True:
             try:
-                ump = "!@>"+self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
+                ump = self.config.discussion_prompt_separator +self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
                 if self.config.use_user_name_in_discussions:
                     prompt = input(f"{ASCIIColors.color_green}{self.config.user_name}: {ASCIIColors.color_reset}")
                 else:

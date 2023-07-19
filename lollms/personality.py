@@ -104,10 +104,10 @@ Date: {{date}}
 """
         self._welcome_message: str = "Welcome! I am lollms (Lord of LLMs) A free and open assistant built by ParisNeo. What can I do for you today?"
         self._include_welcome_message_in_disucssion: bool = True
-        self._user_message_prefix: str = "## Human: "
+        self._user_message_prefix: str = "!@> Human: "
         self._link_text: str = "\n"
-        self._ai_message_prefix: str = "## lollms:"
-        self._anti_prompts:list = ["## Human","## lollms","##Human","##Assistant","##lollms"]
+        self._ai_message_prefix: str = "!@> lollms:"
+        self._anti_prompts:list = [self.config.discussion_prompt_separator]
 
         # Extra
         self._dependencies: List[str] = []
@@ -206,7 +206,7 @@ Date: {{date}}
         self._user_message_prefix = config.get("user_message_prefix", self._user_message_prefix)
         self._link_text = config.get("link_text", self._link_text)
         self._ai_message_prefix = config.get("ai_message_prefix", self._ai_message_prefix)
-        self._anti_prompts = config.get("anti_prompts", self._anti_prompts)
+        self._anti_prompts = [self.config.discussion_prompt_separator]+config.get("anti_prompts", self._anti_prompts)
         self._dependencies = config.get("dependencies", self._dependencies)
         self._disclaimer = config.get("disclaimer", self._disclaimer)
         self._help = config.get("help", self._help)
@@ -1138,6 +1138,26 @@ class APScript(StateMachine):
         """
         if callback:
             callback(str(ex), MSG_TYPE.MSG_TYPE_EXCEPTION)
+
+    def warning(self, warning:str, callback=None):
+        """This sends exception to the client
+
+        Args:
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(warning, MSG_TYPE.MSG_TYPE_EXCEPTION)
+
+    def info(self, info:str, callback=None):
+        """This sends exception to the client
+
+        Args:
+            inf (str): The information to be sent
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+        """
+        if callback:
+            callback(info, MSG_TYPE.MSG_TYPE_INFO)
 
     def json(self, json_infos:dict, callback=None):
         """This sends json data to front end
