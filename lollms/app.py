@@ -46,6 +46,7 @@ class LollmsApplication:
             except Exception as ex:
                 ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
                 trace_exception(ex)
+                self.binding            = None
 
             if self.binding is not None:
                 ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
@@ -74,17 +75,18 @@ class LollmsApplication:
     def load_binding(self):
         try:
             binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
+            return binding    
         except Exception as ex:
             print(ex)
-            print(f"Couldn't find binding. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid binding")
+            print(f"Couldn't find binding. Please verify your configuration file at {self.lollms_paths.personal_configuration_path}/local_configs.yaml or use the next menu to select a valid binding")
             print(f"Trying to reinstall binding")
             try:
                 binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
             except Exception as ex:
                 ASCIIColors.error("Couldn't reinstall model")
                 trace_exception(ex)
+            return None    
 
-        return binding    
     
     def load_model(self):
         try:

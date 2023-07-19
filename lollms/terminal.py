@@ -232,7 +232,7 @@ class MainMenu(Menu):
         if 1 <= choice <= len(bindings_list)-1:
             print(f"You selected binding: {ASCIIColors.color_green}{self.binding_infs[choice - 1]['name']}{ASCIIColors.color_reset}")
             self.lollms_app.config['binding_name']=self.binding_infs[choice - 1]['name']
-            self.lollms_app.load_binding()
+            self.lollms_app.binding = self.lollms_app.load_binding()
             self.lollms_app.config['model_name']=None
             self.lollms_app.config.save_config()
         elif choice <= len(bindings_list):
