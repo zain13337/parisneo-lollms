@@ -248,7 +248,7 @@ class MainMenu(Menu):
         models_dir:Path = (self.lollms_app.lollms_paths.personal_models_path/self.lollms_app.config['binding_name'])
         models_dir.mkdir(parents=True, exist_ok=True)
 
-        models_list = [v for v in self.lollms_app.binding.list_models(self.lollms_app.config)] + ["Install model", "Change binding", "Back"]
+        models_list = self.lollms_app.binding.list_models(self.lollms_app.config) + ["Install model", "Change binding", "Back"]
         choice = self.show_menu(models_list)
         if 1 <= choice <= len(models_list)-3:
             print(f"You selected model: {ASCIIColors.color_green}{models_list[choice - 1]}{ASCIIColors.color_reset}")
