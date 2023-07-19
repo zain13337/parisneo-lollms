@@ -10,7 +10,7 @@ from lollms.terminal import MainMenu
 import subprocess
 
 class LollmsApplication:
-    def __init__(self, app_name:str, config:LOLLMSConfig, lollms_paths:LollmsPaths, load_binding=True, load_model=True) -> None:
+    def __init__(self, app_name:str, config:LOLLMSConfig, lollms_paths:LollmsPaths, load_binding=True, load_model=True, try_select_binding=False, try_select_model=False) -> None:
         """
         Creates a LOLLMS Application
         """
@@ -36,7 +36,10 @@ class LollmsApplication:
         if self.config.binding_name is None:
             ASCIIColors.warning(f"No binding selected")
             ASCIIColors.info("Please select a valid model or install a new one from a url")
-            self.menu.select_binding()
+            if try_select_binding:
+                self.menu.select_binding()
+            else:
+                self.binding=None
         if load_binding:
             try:
                 self.binding            = self.load_binding()

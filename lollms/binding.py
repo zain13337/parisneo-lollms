@@ -116,6 +116,12 @@ class LLMBinding:
             the model
         """        
         return None
+    
+    def destroy_model(self):
+        """
+        destroys the current model
+        """
+        pass
 
     def install(self):
         """

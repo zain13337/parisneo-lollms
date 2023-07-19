@@ -876,7 +876,7 @@ class StateMachine:
 
 
 
-    def process_state(self, command, callback=None):
+    def process_state(self, command, full_context, callback=None):
         """
         Process the given command based on the current state.
 
@@ -895,12 +895,12 @@ class StateMachine:
         
         for cmd, func in commands.items():
             if cmd == command[0:len(cmd)]:
-                func(command)
+                func(command, full_context)
                 return
         
         default_func = current_state.get("default")
         if default_func is not None:
-            default_func(command)
+            default_func(command, full_context)
         else:
             raise ValueError(f"Command '{command}' not found in current state and no default function defined.")
 
