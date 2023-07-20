@@ -1,4 +1,5 @@
 recursive-include lollms/configs *
+recursive-include lollms/apps/playground *
 global-exclude *.bin
 global-exclude *.pyc
 global-exclude local_config.yaml
