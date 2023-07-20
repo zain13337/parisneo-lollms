@@ -8,10 +8,12 @@ lollms_path = Path(__file__).parent
 lollms_default_cfg_path = lollms_path / "configs/config.yaml"
 lollms_bindings_zoo_path = lollms_path / "bindings_zoo"
 lollms_personalities_zoo_path = lollms_path / "personalities_zoo"
+lollms_extensions_zoo_path = lollms_path / "extensions_zoo"
 
 
 personalities_zoo_repo = "https://github.com/ParisNeo/lollms_personalities_zoo.git"
 bindings_zoo_repo = "https://github.com/ParisNeo/lollms_bindings_zoo.git"
+extensions_zoo_repo = "https://github.com/ParisNeo/lollms_extensions_zoo.git"
 
 # Now we speify the personal folders
 class LollmsPaths:
@@ -45,6 +47,7 @@ class LollmsPaths:
 
         self.bindings_zoo_path              = personal_path / "bindings_zoo"
         self.personalities_zoo_path         = personal_path / "personalities_zoo"
+        self.extensions_zoo_path            = personal_path / "extensions_zoo_path"
 
 
         self.create_directories()
@@ -62,6 +65,7 @@ class LollmsPaths:
             "Personal outputs Path": self.personal_outputs_path,
             "Bindings Zoo Path": self.bindings_zoo_path,
             "Personalities Zoo Path": self.personalities_zoo_path,
+            "Extensions zoo path": self.extensions_zoo_path,
             "Personal user infos path": self.personal_user_infos_path
         }
         return "\n".join([f"{category}: {path}" for category, path in directories.items()])
@@ -89,6 +93,11 @@ class LollmsPaths:
             # Clone the repository to the target path
             ASCIIColors.info("No personalities found in your personal space.\nCloning the personalities zoo")
             subprocess.run(["git", "clone", personalities_zoo_repo, self.personalities_zoo_path])
+
+        if not self.extensions_zoo_path.exists():
+            # Clone the repository to the target path
+            ASCIIColors.info("No extensions found in your personal space.\nCloning the extensions zoo")
+            subprocess.run(["git", "clone", extensions_zoo_repo, self.extensions_zoo_path])
 
 
     def copy_default_config(self):
