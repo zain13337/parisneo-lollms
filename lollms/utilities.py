@@ -101,7 +101,11 @@ class TextVectorizer:
             if use_pca:
                 # Use PCA for dimensionality reduction
                 pca = PCA(n_components=2)
-                embeddings_2d = pca.fit_transform(combined_embeddings)
+                try:
+                    embeddings_2d = pca.fit_transform(combined_embeddings)
+                except Exception as ex:
+                    
+                    embeddings_2d = []
             else:
                 # Use t-SNE for dimensionality reduction
                 # Adjust the perplexity value
@@ -219,7 +223,7 @@ class TextVectorizer:
             data=[]
             for chunk in chunks:
                 try:
-                    data.append(self.model.detokenize(chunk) ) 
+                    data.append(self.model.detokenize(chunk).replace("<s>","").replace("</s>","") ) 
                 except Exception as ex:
                     print("oups")
             self.vectorizer.fit(data)
@@ -306,3 +310,92 @@ class TextVectorizer:
         self.texts={}
         if self.personality_config.save_db:
             self.save_to_json()
+            
+      
+class GenericDataLoader:
+    @staticmethod
+    def install_package(package_name):
+        import subprocess
+        import sys
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+
+    @staticmethod        
+    def read_pdf_file(file_path):
+        try:
+            import PyPDF2
+        except ImportError:
+            GenericDataLoader.install_package("PyPDF2")
+            import PyPDF2
+        with open(file_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text()
+        return text
+
+    @staticmethod
+    def read_docx_file(file_path):
+        try:
+            from docx import Document
+        except ImportError:
+            GenericDataLoader.install_package("python-docx")
+            from docx import Document
+        doc = Document(file_path)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        return text
+
+    @staticmethod
+    def read_json_file(file_path):
+        import json
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    
+    @staticmethod
+    def read_csv_file(file_path):
+        try:
+            import csv
+        except ImportError:
+            GenericDataLoader.install_package("csv")
+            import csv
+        with open(file_path, 'r') as file:
+            csv_reader = csv.reader(file)
+            lines = [row for row in csv_reader]
+        return lines    
+
+    @staticmethod
+    def read_html_file(file_path):
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            GenericDataLoader.install_package("beautifulsoup4")
+            from bs4 import BeautifulSoup
+        with open(file_path, 'r') as file:
+            soup = BeautifulSoup(file, 'html.parser')
+            text = soup.get_text()
+        return text
+    
+    @staticmethod
+    def read_pptx_file(file_path):
+        try:
+            from pptx import Presentation
+        except ImportError:
+            GenericDataLoader.install_package("python-pptx")
+            from pptx import Presentation
+        prs = Presentation(file_path)
+        text = ""
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        for run in paragraph.runs:
+                            text += run.text
+        return text
+    
+    @staticmethod
+    def read_text_file(file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+        return content
