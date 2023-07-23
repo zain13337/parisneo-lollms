@@ -44,11 +44,7 @@ def install_package(package_name):
 class AIPersonality:
 
     # Extra 
-    Conditionning_commands={
-        "date_time": datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p"), # Replaces {{date}} with actual date
-        "date": datetime.now().strftime("%A, %B %d, %Y"), # Replaces {{date}} with actual date
-        "time": datetime.now().strftime("%H:%M:%S"), # Replaces {{time}} with actual time
-    }
+
     
     def __init__(
                     self, 
@@ -354,6 +350,14 @@ Date: {{date}}
 
     # ========================================== Properties ===========================================
     @property
+    def conditionning_commands(self):
+        return {
+            "date_time": datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p"), # Replaces {{date}} with actual date
+            "date": datetime.now().strftime("%A, %B %d, %Y"), # Replaces {{date}} with actual date
+            "time": datetime.now().strftime("%H:%M:%S"), # Replaces {{time}} with actual time
+        }
+
+    @property
     def logo(self):
         """
         Get the personality logo.
@@ -453,7 +457,7 @@ Date: {{date}}
         Returns:
             str: The personality conditioning of the AI assistant.
         """
-        return self.replace_keys(self._personality_conditioning, self.Conditionning_commands)
+        return self.replace_keys(self._personality_conditioning, self.conditionning_commands)
 
     @personality_conditioning.setter
     def personality_conditioning(self, conditioning: str):
@@ -473,7 +477,7 @@ Date: {{date}}
         Returns:
             str: The welcome message of the AI assistant.
         """
-        return self.replace_keys(self._welcome_message, self.Conditionning_commands)
+        return self.replace_keys(self._welcome_message, self.conditionning_commands)
 
     @welcome_message.setter
     def welcome_message(self, message: str):
@@ -1063,7 +1067,7 @@ class APScript(StateMachine):
         antiprompt = self.personality.detect_antiprompt(bot_says)
         if antiprompt:
             self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
-            ASCIIColors.warning(f"Detected hallucination with antiprompt: {antiprompt}")
+            ASCIIColors.warning(f"\nDetected hallucination with antiprompt: {antiprompt}")
             return False
         else:
             self.bot_says = bot_says

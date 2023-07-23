@@ -22,6 +22,9 @@ class LollmsApplication:
         self.mounted_personalities  = []
         self.personality            = None
 
+        self.binding=None
+        self.model=None
+
         try:
             if config.auto_update:
                 ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
@@ -38,11 +41,10 @@ class LollmsApplication:
 
         if self.config.binding_name is None:
             ASCIIColors.warning(f"No binding selected")
-            ASCIIColors.info("Please select a valid model or install a new one from a url")
             if try_select_binding:
+                ASCIIColors.info("Please select a valid model or install a new one from a url")
                 self.menu.select_binding()
-            else:
-                self.binding=None
+        
 
         if load_binding:
             try:
@@ -57,23 +59,17 @@ class LollmsApplication:
                 if load_model:
                     if self.config.model_name is None:
                         ASCIIColors.warning(f"No model selected")
-                        print("Please select a valid model")
-                        self.menu.select_model()
-                    try:
-                        self.model          = self.load_model()
-                    except Exception as ex:
-                        ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
-                        trace_exception(ex)
-                        self.model = None
-                else:
-                    self.model = None
+                        if try_select_model:
+                            print("Please select a valid model")
+                            self.menu.select_model()
+                    if self.config.model_name is not None:
+                        try:
+                            self.model          = self.load_model()
+                        except Exception as ex:
+                            ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                            trace_exception(ex)
             else:
                 ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
-                self.binding = None
-                self.model = None
-        else:
-            self.binding = None
-            self.model = None
         self.mount_personalities()
 
     def load_binding(self):
