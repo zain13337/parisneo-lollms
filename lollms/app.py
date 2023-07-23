@@ -29,6 +29,9 @@ class LollmsApplication:
                 # Pull the repository if it already exists
                 ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
                 subprocess.run(["git", "-C", self.lollms_paths.personalities_zoo_path, "pull"])            
+                # Pull the repository if it already exists
+                ASCIIColors.info("Extensions zoo found in your personal space.\nPulling last personalities zoo")
+                subprocess.run(["git", "-C", self.lollms_paths.extensions_zoo_path, "pull"])            
         except Exception as ex:
             ASCIIColors.error("Couldn't pull zoos. Please contact the main dev on our discord channel and report the problem.")
             trace_exception(ex)
@@ -40,6 +43,7 @@ class LollmsApplication:
                 self.menu.select_binding()
             else:
                 self.binding=None
+
         if load_binding:
             try:
                 self.binding            = self.load_binding()
@@ -107,23 +111,25 @@ class LollmsApplication:
 
     def mount_personality(self, id:int):
         try:
-            self.personality = PersonalityBuilder(self.lollms_paths, self.config, self.model).build_personality(id)
-            self.config.active_personality_id=len(self.config.personalities)-1
-            if self.personality.model is not None:
-                self.cond_tk = self.personality.model.tokenize(self.personality.personality_conditioning)
+            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model).build_personality(id)
+            if personality.model is not None:
+                self.cond_tk = personality.model.tokenize(personality.personality_conditioning)
                 self.n_cond_tk = len(self.cond_tk)
-                ASCIIColors.success(f"Personality  {self.personality.name} mounted successfully")
+                ASCIIColors.success(f"Personality  {personality.name} mounted successfully")
             else:
-                ASCIIColors.success(f"Personality  {self.personality.name} mounted successfully but no model is selected")
+                ASCIIColors.success(f"Personality  {personality.name} mounted successfully but no model is selected")
 
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
             trace_exception(ex)
             ASCIIColors.error(f"{self.config.get_personality_path_infos()}")
-            self.personality = None
-        self.mounted_personalities.append(self.personality)
-        return self.personality
+            if id == self.config.active_personality_id:
+                self.config.active_personality_id=len(self.config.personalities)-1
+            personality = None
+        
+        self.mounted_personalities.append(personality)
+        return personality
     
     def mount_personalities(self):
         self.mounted_personalities = []
@@ -135,6 +141,8 @@ class LollmsApplication:
         to_remove.sort(reverse=True)
         for i in to_remove:
             self.unmount_personality(i)
+
+        self.personality = self.mounted_personalities[self.config.active_personality_id]
 
 
     def unmount_personality(self, id:int)->bool:
