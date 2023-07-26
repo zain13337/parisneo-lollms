@@ -1088,6 +1088,22 @@ class APScript(StateMachine):
                                 ).strip()    
         return self.bot_says
 
+
+    def execute_command(self, command:dict):
+        """Executes a command
+
+        Args:
+            command (dict): command information in form:
+            name: (command name)
+            value: (command value)
+            params: (command parameters)
+        """
+
+        if command["value"] in self.states_dict[self.current_state_id]["commands"]:
+            return self.states_dict[self.current_state_id]["commands"][command["value"]](command)
+        else:
+            return False
+
     def run_workflow(self, prompt:str, previous_discussion_text:str="", callback=None):
         """
         Runs the workflow for processing the model input and output.
