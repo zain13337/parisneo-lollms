@@ -856,6 +856,7 @@ class StateMachine:
         """
         self.states_dict = states_dict
         self.current_state_id = 0
+        self.callback = None
     
     def goto_state(self, state):
         """
@@ -1201,6 +1202,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
 
@@ -1211,6 +1215,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI)
 
@@ -1221,6 +1228,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
 
@@ -1232,6 +1242,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the info to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(info_text, MSG_TYPE.MSG_TYPE_FULL)
 
@@ -1242,8 +1255,13 @@ class APScript(StateMachine):
             step_text (dict): The step progress in %
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the progress to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(str(progress), MSG_TYPE.MSG_TYPE_STEP_PROGRESS)
+
+            
 # ===========================================================
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
