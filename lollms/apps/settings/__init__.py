@@ -120,7 +120,7 @@ Participating personalities:
             full_discussion = ""
         return full_discussion
         
-    def safe_generate(self, full_discussion:str, n_predict=None, callback=None):
+    def safe_generate(self, full_discussion:str, n_predict=None, callback: Callable[[str, int, dict], bool]=None):
         """safe_generate
 
         Args:

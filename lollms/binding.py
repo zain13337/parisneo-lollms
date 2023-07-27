@@ -195,9 +195,9 @@ class LLMBinding:
 
 
     def generate(self, 
-                 prompt:str,                  
+                 prompt:str,
                  n_predict: int = 128,
-                 callback: Callable[[str], None] = None,
+                 callback: Callable[[str, int, dict], bool] = None,
                  verbose: bool = False,
                  **gpt_params ):
         """Generates text out of a prompt
@@ -206,7 +206,7 @@ class LLMBinding:
         Args:
             prompt (str): The prompt to use for generation
             n_predict (int, optional): Number of tokens to prodict. Defaults to 128.
-            callback (Callable[[str], None], optional): A callback function that is called everytime a new text element is generated. Defaults to None.
+            callback (Callable[[str, int, dict], None], optional): A callback function that is called everytime a new text element is generated. Defaults to None.
             verbose (bool, optional): If true, the code will spit many informations about the generation process. Defaults to False.
         """
         pass

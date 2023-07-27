@@ -7,6 +7,7 @@ from lollms.paths import LollmsPaths
 from lollms.app import LollmsApplication
 from lollms.terminal import MainMenu
 
+from typing import Callable
 from pathlib import Path
 import argparse
 import yaml
@@ -133,7 +134,7 @@ Participating personalities:
             full_discussion = ""
         return full_discussion
         
-    def safe_generate(self, full_discussion:str, n_predict=None, callback=None):
+    def safe_generate(self, full_discussion:str, n_predict=None, callback: Callable[[str, int, dict], bool]=None):
         """safe_generate
 
         Args:
@@ -236,7 +237,7 @@ Participating personalities:
                             self.personality.ai_message_prefix
                         )
 
-                def callback(text, type:MSG_TYPE=None):
+                def callback(text, type:MSG_TYPE=None, metadata:dict={}):
                     if type == MSG_TYPE.MSG_TYPE_CHUNK:
                         # Replace stdout with the default stdout
                         sys.stdout = sys.__stdout__

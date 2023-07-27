@@ -1,51 +1,85 @@
 from lollms.personality import APScript
 from lollms.helpers import ASCIIColors, trace_exception
-
+from lollms.paths import LollmsPaths
+from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
-import json
 from pathlib import Path
-import numpy as np
 import json
 
+class TFIDFLoader:
+    @staticmethod
+    def create_vectorizer_from_dict(tfidf_info):
+        vectorizer = TfidfVectorizer(**tfidf_info['params'])
+        vectorizer.vocabulary_ = tfidf_info['vocabulary']
+        vectorizer.idf_ = [tfidf_info['idf_values'][feature] for feature in vectorizer.get_feature_names()]
+        return vectorizer
 
+    @staticmethod
+    def create_dict_from_vectorizer(vectorizer):
+        tfidf_info = {
+            "vocabulary": vectorizer.vocabulary_,
+            "idf_values": dict(zip(vectorizer.get_feature_names(), vectorizer.idf_)),
+            "params": vectorizer.get_params()
+        }
+        return tfidf_info
 class TextVectorizer:
-    def __init__(self, processor):
+    def __init__(
+                    self, 
+                    vectorization_method, # supported "model_embedding" or "ftidf_vectorizer"
+                    model=None, #needed in case of using model_embedding
+                    database_path=None,
+                    save_db=False,
+                    visualize_data_at_startup=False,
+                    visualize_data_at_add_file=False,
+                    visualize_data_at_generate=False,
+                    data_visualization_method="PCA",
+                    database_dict=None
+                    ):
         
-        self.processor:APScript = processor
-        self.personality = self.processor.personality
-        self.model = self.personality.model
-        self.personality_config = self.processor.personality_config
-        self.lollms_paths = self.personality.lollms_paths
-        self.embeddings = {}
-        self.texts = {}
-        self.ready = False
-        self.vectorizer = None
-        
-        self.database_file = Path(self.lollms_paths.personal_data_path/self.personality_config["database_path"])
+        self.vectorization_method = vectorization_method
+        self.save_db = save_db
+        self.model = model
+        self.database_file = database_path
 
-        self.visualize_data_at_startup=self.personality_config["visualize_data_at_startup"]
-        self.visualize_data_at_add_file=self.personality_config["visualize_data_at_add_file"]
-        self.visualize_data_at_generate=self.personality_config["visualize_data_at_generate"]
+        self.visualize_data_at_startup=visualize_data_at_startup
+        self.visualize_data_at_add_file=visualize_data_at_add_file
+        self.visualize_data_at_generate=visualize_data_at_generate
         
-        if self.personality_config.vectorization_method=="model_embedding":
-            try:
-                if self.model.embed("hi")==None:
-                    self.personality_config.vectorization_method="ftidf_vectorizer"
+        self.data_visualization_method = data_visualization_method
+        
+        if database_dict is not None:
+            self.chunks = []
+            self.embeddings = database_dict["embeddings"]
+            self.texts =  database_dict["text"]
+            self.infos =   database_dict["infos"]
+            self.ready = True
+            self.vectorizer = database_dict["vectorizer"]
+        else:
+            self.chunks = []
+            self.embeddings = {}
+            self.texts = {}
+            self.ready = False
+            self.vectorizer = None
+        
+            if vectorization_method=="model_embedding":
+                try:
+                    if not self.model or self.model.embed("hi")==None: # test
+                        self.vectorization_method="ftidf_vectorizer"
+                        self.infos={
+                            "vectorization_method":"ftidf_vectorizer"
+                        }
+                    else:
+                        self.infos={
+                            "vectorization_method":"model_embedding"
+                        }
+                except Exception as ex:
+                    ASCIIColors.error("Couldn't embed the text, so trying to use tfidf instead.")
+                    trace_exception(ex)
                     self.infos={
                         "vectorization_method":"ftidf_vectorizer"
                     }
-                else:
-                    self.infos={
-                        "vectorization_method":"model_embedding"
-                    }
-            except Exception as ex:
-                ASCIIColors.error("Couldn't embed the text, so trying to use tfidf instead.")
-                trace_exception(ex)
-                self.infos={
-                    "vectorization_method":"ftidf_vectorizer"
-                }
         # Load previous state from the JSON file
-        if self.personality_config.save_db:
+        if self.save_db:
             if Path(self.database_file).exists():
                 ASCIIColors.success(f"Database file found : {self.database_file}")
                 self.load_from_json()
@@ -56,7 +90,7 @@ class TextVectorizer:
                 ASCIIColors.info(f"No database file found : {self.database_file}")
 
                 
-    def show_document(self, query_text=None):
+    def show_document(self, query_text=None, save_fig_path =None, show_interactive_form=False):
         import textwrap
         import seaborn as sns
         import matplotlib.pyplot as plt
@@ -66,9 +100,8 @@ class TextVectorizer:
         
         from sklearn.manifold import TSNE
         from sklearn.decomposition import PCA
-        import torch
 
-        if self.personality_config.data_visualization_method=="PCA":
+        if self.data_visualization_method=="PCA":
             use_pca =  True
         else:
             use_pca =  False
@@ -80,6 +113,7 @@ class TextVectorizer:
         texts = list(self.texts.values())
         embeddings = self.embeddings
         emb = list(embeddings.values())
+        ref = list(embeddings.keys())
         if len(emb)>=2:
             # Normalize embeddings
             emb = np.vstack(emb)
@@ -94,6 +128,7 @@ class TextVectorizer:
 
                 # Combine the query embedding with the document embeddings
                 combined_embeddings = np.vstack((normalized_embeddings, query_normalized_embedding))
+                ref.append("Quey_chunk_0")
             else:
                 # Combine the query embedding with the document embeddings
                 combined_embeddings = normalized_embeddings
@@ -113,13 +148,19 @@ class TextVectorizer:
                 tsne = TSNE(n_components=2, perplexity=perplexity)
                 embeddings_2d = tsne.fit_transform(combined_embeddings)
 
+            # Create a dictionary to map document paths to colors
+            document_path_colors = {}
+            for i, path in enumerate(ref):
+                document_path = "_".join(path.split("_")[:-1])  # Extract the document path (excluding chunk and chunk number)
+                if document_path not in document_path_colors:
+                    # Assign a new color to the document path if it's not in the dictionary
+                    document_path_colors[document_path] = sns.color_palette("hls", len(document_path_colors) + 1)[-1]
+
+            # Generate a list of colors for each data point based on the document path
+            point_colors = [document_path_colors["_".join(path.split("_")[:-1])] for path in ref]
 
             # Create a scatter plot using Seaborn
-            if query_text is not None:
-                sns.scatterplot(x=embeddings_2d[:-1, 0], y=embeddings_2d[:-1, 1])  # Plot document embeddings
-                plt.scatter(embeddings_2d[-1, 0], embeddings_2d[-1, 1], color='red')  # Plot query embedding
-            else:
-                sns.scatterplot(x=embeddings_2d[:, 0], y=embeddings_2d[:, 1])  # Plot document embeddings
+            sns.scatterplot(x=embeddings_2d[:, 0], y=embeddings_2d[:, 1], hue=point_colors)  # Plot document embeddings
             # Add labels to the scatter plot
             for i, (x, y) in enumerate(embeddings_2d[:-1]):
                 plt.text(x, y, str(i), fontsize=8)
@@ -176,11 +217,12 @@ class TextVectorizer:
 
             # Connect the click event handler to the figure
             plt.gcf().canvas.mpl_connect("button_press_event", on_click)
-            plt.savefig(self.lollms_paths.personal_uploads_path / self.personality.personality_folder_name/ "db.png")
-            plt.show()
+            if save_fig_path:
+                plt.savefig(save_fig_path)
+            if show_interactive_form:
+                plt.show()
         
-    def index_document(self, document_id, text, chunk_size, overlap_size, force_vectorize=False):
-
+    def add_document(self, document_id, text, chunk_size, overlap_size, force_vectorize=False):
         if document_id in self.embeddings and not force_vectorize:
             print(f"Document {document_id} already exists. Skipping vectorization.")
             return
@@ -188,15 +230,13 @@ class TextVectorizer:
         # Split tokens into sentences
         sentences = text.split('. ')
         def remove_empty_sentences(sentences):
-            return [sentence for sentence in sentences if sentence.strip() != '']
+            return [self.model.tokenize(sentence) for sentence in sentences if sentence.strip() != '']
         sentences = remove_empty_sentences(sentences)
         # Generate chunks with overlap and sentence boundaries
         chunks = []
         current_chunk = []
         for i in range(len(sentences)):
-            sentence = sentences[i]
-            sentence_tokens = self.model.tokenize(sentence)
-                   
+            sentence_tokens = sentences[i]
 
             # ASCIIColors.yellow(len(sentence_tokens))
             if len(current_chunk) + len(sentence_tokens) <= chunk_size:
@@ -204,45 +244,51 @@ class TextVectorizer:
             else:
                 if current_chunk:
                     chunks.append(current_chunk)
-
-                while len(sentence_tokens)>chunk_size:
-                    current_chunk = sentence_tokens[0:chunk_size]
-                    sentence_tokens = sentence_tokens[chunk_size:]
-                    chunks.append(current_chunk)
-                current_chunk = sentence_tokens
-                
+                    
+                current_chunk=[]
+                for j in reversed(range(overlap_size)):
+                    current_chunk.extend(sentences[i-j-1])
+                current_chunk.extend(sentence_tokens)
+            
 
         if current_chunk:
-            chunks.append(current_chunk)
-
-        if self.personality_config.vectorization_method=="ftidf_vectorizer":
-            from sklearn.feature_extraction.text import TfidfVectorizer
+            for i, chunk_text in enumerate(chunks):
+                chunk_id = f"{document_id}_chunk_{i + 1}"
+                chunk_dict = {
+                    "chunk_id": chunk_id,
+                    "chunk_text": chunk_text
+                }
+                self.chunks.append(chunk_dict)
+        
+    def index(self):
+        if self.vectorization_method=="ftidf_vectorizer":
             self.vectorizer = TfidfVectorizer()
-            #if self.personality.config.debug:
+            #if self.debug:
             #    ASCIIColors.yellow(','.join([len(chunk) for chunk in chunks]))
             data=[]
-            for chunk in chunks:
+            for chunk in self.chunks:
                 try:
-                    data.append(self.model.detokenize(chunk).replace("<s>","").replace("</s>","") ) 
+                    data.append(self.model.detokenize(chunk["chunk_text"]).replace("<s>","").replace("</s>","") ) 
                 except Exception as ex:
                     print("oups")
             self.vectorizer.fit(data)
 
         self.embeddings = {}
         # Generate embeddings for each chunk
-        for i, chunk in enumerate(chunks):
+        for i, chunk in enumerate(self.chunks):
             # Store chunk ID, embedding, and original text
-            chunk_id = f"{document_id}_chunk_{i + 1}"
+            chunk_id = chunk["chunk_id"]
+            chunk_text = chunk["chunk_text"]
             try:
-                self.texts[chunk_id] = self.model.detokenize(chunk[:chunk_size])
-                if self.personality_config.vectorization_method=="ftidf_vectorizer":
+                self.texts[chunk_id] = self.model.detokenize(chunk_text)
+                if self.vectorization_method=="ftidf_vectorizer":
                     self.embeddings[chunk_id] = self.vectorizer.transform([self.texts[chunk_id]]).toarray()
                 else:
                     self.embeddings[chunk_id] = self.model.embed(self.texts[chunk_id])
             except Exception as ex:
                 print("oups")
 
-        if self.personality_config.save_db:
+        if self.save_db:
             self.save_to_json()
             
         self.ready = True
@@ -252,10 +298,14 @@ class TextVectorizer:
 
     def embed_query(self, query_text):
         # Generate query embedding
-        if self.personality_config.vectorization_method=="ftidf_vectorizer":
+        if self.vectorization_method=="ftidf_vectorizer":
             query_embedding = self.vectorizer.transform([query_text]).toarray()
         else:
             query_embedding = self.model.embed(query_text)
+            if query_embedding is None:
+                ASCIIColors.warning("The model doesn't implement embedding extraction")
+                self.vectorization_method="ftidf_vectorizer"
+                query_embedding = self.vectorizer.transform([query_text]).toarray()
 
         return query_embedding
 
@@ -277,6 +327,18 @@ class TextVectorizer:
 
         return texts, sorted_similarities
 
+    def toJson(self):
+        state = {
+            "embeddings": {str(k): v.tolist()  if type(v)!=list else v for k, v in self.embeddings.items() },
+            "texts": self.texts,
+            "infos": self.infos,
+            "vectorizer": TFIDFLoader.create_vectorizer_from_dict(self.vectorizer) if self.vectorization_method=="ftidf_vectorizer" else None
+        }
+        return state
+    
+    def setVectorizer(self, vectorizer_dict:dict):
+        self.vectorizer=TFIDFLoader.create_vectorizer_from_dict(vectorizer_dict)
+
     def save_to_json(self):
         state = {
             "embeddings": {str(k): v.tolist()  if type(v)!=list else v for k, v in self.embeddings.items() },
@@ -295,7 +357,7 @@ class TextVectorizer:
             self.texts = state["texts"]
             self.infos= state["infos"]
             self.ready = True
-        if self.personality_config.vectorization_method=="ftidf_vectorizer":
+        if self.vectorization_method=="ftidf_vectorizer":
             from sklearn.feature_extraction.text import TfidfVectorizer
             data = list(self.texts.values())
             if len(data)>0:
@@ -304,11 +366,13 @@ class TextVectorizer:
                 self.embeddings={}
                 for k,v in self.texts.items():
                     self.embeddings[k]= self.vectorizer.transform([v]).toarray()
+                    
+                    
     def clear_database(self):
         self.vectorizer=None
         self.embeddings = {}
         self.texts={}
-        if self.personality_config.save_db:
+        if self.save_db:
             self.save_to_json()
             
       

@@ -7,7 +7,7 @@ class MyConversation(Conversation):
 
   def start_conversation(self):
     prompt = "Once apon a time"
-    def callback(text, type=None):
+    def callback(text, type=None, metadata:dict={}):
         print(text, end="")
         sys.stdout = sys.__stdout__
         sys.stdout.flush()

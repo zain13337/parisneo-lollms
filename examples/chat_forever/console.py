@@ -14,7 +14,7 @@ class MyConversation(Conversation):
         self.menu.main_menu()
       full_discussion += self.personality.user_message_prefix+prompt+self.personality.link_text
       full_discussion += self.personality.ai_message_prefix
-      def callback(text, type=None):
+      def callback(text, type=None, metadata:dict={}):
           print(text, end="")
           sys.stdout = sys.__stdout__
           sys.stdout.flush()

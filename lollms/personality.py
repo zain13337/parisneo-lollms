@@ -17,6 +17,7 @@ import subprocess
 import yaml
 from lollms.helpers import ASCIIColors
 from lollms.types import MSG_TYPE
+from typing import Callable
 import json
 
 
@@ -54,7 +55,8 @@ class AIPersonality:
                     model:LLMBinding=None, 
                     run_scripts=True, 
                     is_relative_path=True,
-                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
+                    callback: Callable[[str, int, dict], bool]=None
                 ):
         """
         Initialize an AIPersonality instance.
@@ -68,6 +70,7 @@ class AIPersonality:
         self.lollms_paths = lollms_paths
         self.model = model
         self.config = config
+        self.callback = callback
 
         self.files = []
 
@@ -248,7 +251,7 @@ Date: {{date}}
                 module = importlib.util.module_from_spec(module_spec)
                 module_spec.loader.exec_module(module)
                 if hasattr(module, "Processor"):
-                    self._processor = module.Processor(self)
+                    self._processor = module.Processor(self, callback=self.callback)
                 else:
                     self._processor = None
             else:
@@ -881,7 +884,7 @@ class StateMachine:
 
 
 
-    def process_state(self, command, full_context, callback=None):
+    def process_state(self, command, full_context, callback: Callable[[str, int, dict], bool]=None):
         """
         Process the given command based on the current state.
 
@@ -922,7 +925,8 @@ class APScript(StateMachine):
                     self, 
                     personality         :AIPersonality,
                     personality_config  :TypedConfig,
-                    states_dict         :dict   = {}
+                    states_dict         :dict   = {},
+                    callback            = None
                 ) -> None:
         super().__init__(states_dict)
         self.files=[]
@@ -932,6 +936,7 @@ class APScript(StateMachine):
         self.configuration_file_path            = self.personality.lollms_paths.personal_configuration_path/f"personality_{self.personality.personality_folder_name}.yaml"
         self.personality_config.config.file_path    = self.configuration_file_path
 
+        self.callback = callback
         # Installation
         if (not self.configuration_file_path.exists() or self.installation_option==InstallOption.FORCE_INSTALL) and self.installation_option!=InstallOption.NEVER_INSTALL:
             self.install()
@@ -990,8 +995,7 @@ class APScript(StateMachine):
             else:
                 ASCIIColors.error("Pytorch installed successfully!!")
 
-    def add_file(self, path, callback=None):
-        self.callback=callback
+    def add_file(self, path):
         self.files.append(path)
         return True
 
@@ -1104,7 +1108,7 @@ class APScript(StateMachine):
         else:
             return False
 
-    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback=None):
+    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, int, dict], bool]=None):
         """
         Runs the workflow for processing the model input and output.
 
@@ -1121,7 +1125,7 @@ class APScript(StateMachine):
         """
         return None
 
-    def step_start(self, step_text, callback=None):
+    def step_start(self, step_text, callback: Callable[[str, int, dict], bool]=None):
         """This triggers a step start
 
         Args:
@@ -1131,7 +1135,7 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_START)
 
-    def step_end(self, step_text, callback=None):
+    def step_end(self, step_text, status=True, callback: Callable[[str, int, dict], bool]=None):
         """This triggers a step end
 
         Args:
@@ -1139,9 +1143,9 @@ class APScript(StateMachine):
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step end to. Defaults to None.
         """
         if callback:
-            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_END)
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_END, {'status':status})
 
-    def step(self, step_text, callback=None):
+    def step(self, step_text, callback: Callable[[str, int, dict], bool]=None):
         """This triggers a step information
 
         Args:
@@ -1151,7 +1155,7 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP)
 
-    def exception(self, ex, callback=None):
+    def exception(self, ex, callback: Callable[[str, int, dict], bool]=None):
         """This sends exception to the client
 
         Args:
@@ -1161,7 +1165,7 @@ class APScript(StateMachine):
         if callback:
             callback(str(ex), MSG_TYPE.MSG_TYPE_EXCEPTION)
 
-    def warning(self, warning:str, callback=None):
+    def warning(self, warning:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends exception to the client
 
         Args:
@@ -1171,7 +1175,7 @@ class APScript(StateMachine):
         if callback:
             callback(warning, MSG_TYPE.MSG_TYPE_EXCEPTION)
 
-    def info(self, info:str, callback=None):
+    def info(self, info:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends exception to the client
 
         Args:
@@ -1181,7 +1185,7 @@ class APScript(StateMachine):
         if callback:
             callback(info, MSG_TYPE.MSG_TYPE_INFO)
 
-    def json(self, json_infos:dict, callback=None):
+    def json(self, json_infos:dict, callback: Callable[[str, int, dict], bool]=None):
         """This sends json data to front end
 
         Args:
@@ -1191,7 +1195,7 @@ class APScript(StateMachine):
         if callback:
             callback(json.dumps(json_infos), MSG_TYPE.MSG_TYPE_JSON_INFOS)
 
-    def ui(self, html_ui:str, callback=None):
+    def ui(self, html_ui:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends ui elements to front end
 
         Args:
@@ -1201,7 +1205,7 @@ class APScript(StateMachine):
         if callback:
             callback(html_ui, MSG_TYPE.MSG_TYPE_UI)
 
-    def code(self, code:str, callback=None):
+    def code(self, code:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends code to front end
 
         Args:
@@ -1211,7 +1215,7 @@ class APScript(StateMachine):
         if callback:
             callback(code, MSG_TYPE.MSG_TYPE_CODE)
 
-    def full(self, full_text:str, callback=None):
+    def full(self, full_text:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends full text to front end
 
         Args:
@@ -1224,7 +1228,7 @@ class APScript(StateMachine):
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
 
-    def full_invisible_to_ai(self, full_text:str, callback=None):
+    def full_invisible_to_ai(self, full_text:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends full text to front end (INVISIBLE to AI)
 
         Args:
@@ -1237,7 +1241,7 @@ class APScript(StateMachine):
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI)
 
-    def full_invisible_to_user(self, full_text:str, callback=None):
+    def full_invisible_to_user(self, full_text:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends full text to front end (INVISIBLE to user)
 
         Args:
@@ -1251,7 +1255,7 @@ class APScript(StateMachine):
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
 
 
-    def info(self, info_text:str, callback=None):
+    def info(self, info_text:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends info text to front end
 
         Args:
@@ -1264,7 +1268,7 @@ class APScript(StateMachine):
         if callback:
             callback(info_text, MSG_TYPE.MSG_TYPE_FULL)
 
-    def step_progress(self, progress:float, callback=None):
+    def step_progress(self, step_text:str, progress:float, callback: Callable[[str, int, dict], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -1275,8 +1279,16 @@ class APScript(StateMachine):
             callback = self.callback
 
         if callback:
-            callback(str(progress), MSG_TYPE.MSG_TYPE_STEP_PROGRESS)
-
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_PROGRESS, {'progress':progress})
+            
+    #Helper method to convert outputs path to url
+    def path2url(file):
+        file = str(file).replace("\\","/")
+        pth = file.split('/')
+        idx = pth.index("outputs")
+        pth = "/".join(pth[idx:])
+        file_path = f"![](/{pth})\n"
+        return file_path
             
 # ===========================================================
 class AIPersonalityInstaller:

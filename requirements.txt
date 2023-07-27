@@ -9,3 +9,8 @@ eventlet
 wget
 setuptools
 requests
+
+matplotlib
+seaborn
+mplcursors
+scikit-learn

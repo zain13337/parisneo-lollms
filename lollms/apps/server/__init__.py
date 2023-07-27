@@ -12,6 +12,7 @@ from lollms.apps.console import MainMenu
 from lollms.paths import LollmsPaths
 from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
+from lollms.utilities import TextVectorizer
 from typing import List, Tuple
 import importlib
 from pathlib import Path
@@ -20,6 +21,7 @@ import logging
 import yaml
 import copy
 import gc
+import json
 def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
     ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
@@ -322,6 +324,96 @@ class LoLLMsServer(LollmsApplication):
                 emit('personality_add_failed', {'success':False, 'error': error_message}, room=request.sid)
 
 
+        
+        @self.socketio.on('vectorize_text')
+        def vectorize_text(parameters:dict):
+            """Vectorizes text
+
+            Args:
+                parameters (dict): contains
+                'chunk_size': the maximum size of a text chunk (512 by default)
+                'vectorization_method': can be either "model_embedding" or "ftidf_vectorizer" (default is "ftidf_vectorizer")
+                'payloads': a list of dicts. each entry has the following format
+                {
+                    "path": the path to the document
+                    "text": the text of the document
+                },
+                'return_database': If true the vectorized database will be sent to the client (default is True)
+                'database_path': the path to store the database (default is none)
+                
+            returns a dict
+                status: True if success and false if not
+                if you asked for the database to be sent back you will ahve those fields too:
+                embeddings: a dictionary containing the text chunks with their ids and embeddings
+                "texts": a dictionary of text chunks for each embedding (use index for correspondance)
+                "infos": extra information
+                "vectorizer": The vectorize if this is using tfidf or none if it uses model
+                
+            """
+            vectorization_method = parameters.get('vectorization_method',"ftidf_vectorizer")
+            chunk_size = parameters.get("chunk_size",512)
+            payloads = parameters["payloads"]
+            database_path = parameters.get("database_path",None)
+            return_database = parameters.get("return_database",True)
+            if database_path is None and return_database is None:
+                ASCIIColors.warning("Vectorization should either ask to save the database or to recover it. You didn't ask for any one!")
+                emit('vectorized_db',{"status":False, "error":"Vectorization should either ask to save the database or to recover it. You didn't ask for any one!"}) 
+                return
+            tv = TextVectorizer(vectorization_method, self.model)
+            for payload in payloads:
+                tv.add_document(payload["path"],payload["text"],chunk_size=chunk_size)
+            json_db = tv.toJson()
+            if return_database:
+                emit('vectorized_db',{**{"status":True}, **json_db}) 
+            else:
+                emit('vectorized_db',{"status":True}) 
+                with open(database_path, "w") as file:
+                    json.dump(json_db, file, indent=4)
+                
+            
+        @self.socketio.on('query_database')
+        def query_database(parameters:dict):
+            """queries a database
+
+            Args:
+                parameters (dict): contains
+                'vectorization_method': can be either "model_embedding" or "ftidf_vectorizer"
+                'database': a list of dicts. each entry has the following format
+                {
+                    embeddings: a dictionary containing the text chunks with their ids and embeddings
+                    "texts": a dictionary of text chunks for each embedding (use index for correspondance)
+                    "infos": extra information
+                    "vectorizer": The vectorize if this is using tfidf or none if it uses model
+                }
+                'database_path': If supplied, the database is loaded from a path
+                'query': a query to search in the database
+            """
+            vectorization_method = parameters['vectorization_method']
+            database = parameters.get("database",None)
+            query = parameters.get("query",None)
+            if query is None:
+                ASCIIColors.error("No query given!")
+                emit('vector_db_query',{"status":False, "error":"Please supply a query"}) 
+                return
+            
+            if database is None:
+                database_path = parameters.get("database_path",None)
+                if database_path is None:
+                    ASCIIColors.error("No database given!")
+                    emit('vector_db_query',{"status":False, "error":"You did not supply a database file nor a database content"}) 
+                    return
+                else:
+                    with open(database_path, "r") as file:
+                        database = json.load(file)
+                        
+            tv = TextVectorizer(vectorization_method, self.model, database_dict=database)
+            docs, sorted_similarities = tv.recover_text(tv.embed_query(query))
+            emit('vectorized_db',{
+                "chunks":docs,
+                "refs":sorted_similarities
+            }) 
+            
+            
         @self.socketio.on('list_active_personalities')
         def handle_list_active_personalities():
             personality_names = [p.name for p in self.personalities]
@@ -394,7 +486,7 @@ class LoLLMsServer(LollmsApplication):
                 if personality_id==-1:
                     # Raw text generation
                     self.answer = {"full_text":""}
-                    def callback(text, message_type: MSG_TYPE):
+                    def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                         if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
                             ASCIIColors.success(f"generated:{len(self.answer['full_text'].split())} words", end='\r')
                             self.answer["full_text"] = self.answer["full_text"] + text
@@ -467,7 +559,7 @@ class LoLLMsServer(LollmsApplication):
 
                         full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
 
-                        def callback(text, message_type: MSG_TYPE):
+                        def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                             if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
                                 self.answer["full_text"] = self.answer["full_text"] + text
                                 self.socketio.emit('text_chunk', {'chunk': text}, room=client_id)
