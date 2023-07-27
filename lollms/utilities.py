@@ -218,10 +218,13 @@ class TextVectorizer:
 
             # Connect the click event handler to the figure
             plt.gcf().canvas.mpl_connect("button_press_event", on_click)
+            if save_fig_path:
+                try:
+                    plt.savefig(save_fig_path)
+                except Exception as ex:
+                    trace_exception(ex)
             if show_interactive_form:
                 plt.show()
-            if save_fig_path:
-                plt.savefig(save_fig_path)
         
     def add_document(self, document_id, text, chunk_size, overlap_size, force_vectorize=False):
         if document_id in self.embeddings and not force_vectorize:
