@@ -233,8 +233,18 @@ class TextVectorizer:
 
         # Split tokens into sentences
         sentences = text.split('. ')
+        sentences = [sentence.strip() + '. ' if not sentence.endswith('.') else sentence for sentence in sentences]
+        import regex as re
+
+        def remove_special_characters(input_string):
+            # Define a regex pattern to match non-alphanumeric characters and also keep Arabic and Chinese characters
+            pattern = r'[^\p{L}\p{N}\p{Zs}\u0600-\u06FF\u4E00-\u9FFF]+'
+            # Remove special characters using the regex pattern
+            cleaned_string = re.sub(pattern, '', input_string)
+            return cleaned_string
+                
         def remove_empty_sentences(sentences):
-            return [self.model.tokenize(sentence) for sentence in sentences if sentence.strip() != '']
+            return [self.model.tokenize(remove_special_characters(sentence)) for sentence in sentences if sentence.strip() != '']
         sentences = remove_empty_sentences(sentences)
         # Generate chunks with overlap and sentence boundaries
         chunks = []
@@ -247,6 +257,7 @@ class TextVectorizer:
                 current_chunk.extend(sentence_tokens)
             else:
                 if current_chunk:
+                    print(f"Chunk size:{len(current_chunk)}")
                     chunks.append(current_chunk)
                     
                 current_chunk=[]
