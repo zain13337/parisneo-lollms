@@ -5,6 +5,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from pathlib import Path
 import json
+import re
+import nltk
+from nltk.tokenize import sent_tokenize
+
 
 class TFIDFLoader:
     @staticmethod
@@ -22,6 +26,52 @@ class TFIDFLoader:
             "params": vectorizer.get_params()
         }
         return tfidf_info
+    
+class DocumentDecomposer:
+    def __init__(self, max_chunk_size):
+        self.max_chunk_size = max_chunk_size
+
+    def clean_text(self, text):
+        # Remove extra returns and leading/trailing spaces
+        text = text.replace('\r', '').strip()
+        return text
+
+    def split_into_paragraphs(self, text):
+        # Split the text into paragraphs using two or more consecutive newlines
+        paragraphs = re.split(r'\n{2,}', text)
+        return paragraphs
+
+    def decompose_document(self, text):
+        cleaned_text = self.clean_text(text)
+        paragraphs = self.split_into_paragraphs(cleaned_text)
+
+        # List to store the final clean chunks
+        clean_chunks = []
+
+        current_chunk = ""  # To store the current chunk being built
+
+        for paragraph in paragraphs:
+            # Split the paragraph into sentences
+            sentences = sent_tokenize(paragraph)
+
+            for sentence in sentences:
+                # If adding the current sentence to the chunk exceeds the max_chunk_size,
+                # we add the current chunk to the list of clean chunks and start a new chunk
+                if len(current_chunk) + len(sentence) + 1 > self.max_chunk_size:
+                    clean_chunks.append(current_chunk.strip())
+                    current_chunk = ""
+
+                # Add the current sentence to the chunk
+                current_chunk += sentence + " "
+
+            # Add the remaining chunk from the paragraph to the clean_chunks
+            if current_chunk:
+                clean_chunks.append(current_chunk.strip())
+                current_chunk = ""
+
+        return clean_chunks    
+    
+    
 class TextVectorizer:
     def __init__(
                     self, 
