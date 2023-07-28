@@ -6,9 +6,13 @@ import numpy as np
 from pathlib import Path
 import json
 import re
-import nltk
-from nltk.tokenize import sent_tokenize
 
+class PackageManager:
+    @staticmethod
+    def install_package(package_name):
+        import subprocess
+        import sys
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
 
 class TFIDFLoader:
     @staticmethod
@@ -28,22 +32,29 @@ class TFIDFLoader:
         return tfidf_info
     
 class DocumentDecomposer:
-    def __init__(self, max_chunk_size):
-        self.max_chunk_size = max_chunk_size
-
-    def clean_text(self, text):
+    @staticmethod
+    def clean_text(text):
         # Remove extra returns and leading/trailing spaces
         text = text.replace('\r', '').strip()
         return text
 
-    def split_into_paragraphs(self, text):
+    @staticmethod
+    def split_into_paragraphs(text):
         # Split the text into paragraphs using two or more consecutive newlines
-        paragraphs = re.split(r'\n{2,}', text)
+        paragraphs = [p+"\n" for p in re.split(r'\n{2,}', text)]
         return paragraphs
 
-    def decompose_document(self, text):
-        cleaned_text = self.clean_text(text)
-        paragraphs = self.split_into_paragraphs(cleaned_text)
+    @staticmethod
+    def tokenize_sentences(paragraph):
+        # Custom sentence tokenizer using simple regex-based approach
+        sentences = [s+"." for s in paragraph.split(".")]
+        sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+        return sentences
+
+    @staticmethod
+    def decompose_document(text, max_chunk_size):
+        cleaned_text = DocumentDecomposer.clean_text(text)
+        paragraphs = DocumentDecomposer.split_into_paragraphs(cleaned_text)
 
         # List to store the final clean chunks
         clean_chunks = []
@@ -51,13 +62,13 @@ class DocumentDecomposer:
         current_chunk = ""  # To store the current chunk being built
 
         for paragraph in paragraphs:
-            # Split the paragraph into sentences
-            sentences = sent_tokenize(paragraph)
+            # Tokenize the paragraph into sentences
+            sentences = DocumentDecomposer.tokenize_sentences(paragraph)
 
             for sentence in sentences:
                 # If adding the current sentence to the chunk exceeds the max_chunk_size,
                 # we add the current chunk to the list of clean chunks and start a new chunk
-                if len(current_chunk) + len(sentence) + 1 > self.max_chunk_size:
+                if len(current_chunk) + len(sentence) + 1 > max_chunk_size:
                     clean_chunks.append(current_chunk.strip())
                     current_chunk = ""
 
@@ -69,8 +80,7 @@ class DocumentDecomposer:
                 clean_chunks.append(current_chunk.strip())
                 current_chunk = ""
 
-        return clean_chunks    
-    
+        return clean_chunks
     
 class TextVectorizer:
     def __init__(
@@ -280,7 +290,17 @@ class TextVectorizer:
         if document_id in self.embeddings and not force_vectorize:
             print(f"Document {document_id} already exists. Skipping vectorization.")
             return
-
+        chunks_text = DocumentDecomposer.decompose_document(text, chunk_size)
+        self.chunks = []
+        for i, chunk in enumerate(chunks_text):
+            chunk_id = f"{document_id}_chunk_{i + 1}"
+            chunk_dict = {
+                "chunk_id": chunk_id,
+                "chunk_text": self.model.tokenize(chunk)
+            }
+            self.chunks.append(chunk_dict)               
+            
+        """
         # Split tokens into sentences
         sentences = text.split('. ')
         sentences = [sentence.strip() + '. ' if not sentence.endswith('.') else sentence for sentence in sentences]
@@ -323,7 +343,9 @@ class TextVectorizer:
                     "chunk_id": chunk_id,
                     "chunk_text": chunk_text
                 }
-                self.chunks.append(chunk_dict)
+                self.chunks.append(chunk_dict)        
+        """
+
         
     def index(self):
         if self.vectorization_method=="ftidf_vectorizer":
@@ -434,6 +456,7 @@ class TextVectorizer:
                     
                     
     def clear_database(self):
+        self.ready = False
         self.vectorizer=None
         self.embeddings = {}
         self.texts={}
@@ -442,32 +465,86 @@ class TextVectorizer:
             
       
 class GenericDataLoader:
-    @staticmethod
-    def install_package(package_name):
-        import subprocess
-        import sys
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
-
     @staticmethod        
     def read_pdf_file(file_path):
         try:
             import PyPDF2
+            from PIL import Image, UnidentifiedImageError
+            import pytesseract
+            import pdfminer
+            from pdfminer.high_level import extract_text
         except ImportError:
-            GenericDataLoader.install_package("PyPDF2")
+            PackageManager.install_package("PyPDF2")
+            PackageManager.install_package("pytesseract")
+            PackageManager.install_package("pillow")
+            PackageManager.install_package("pdfminer")
+            PackageManager.install_package("pdfminer.six")
+            
             import PyPDF2
-        with open(file_path, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            text = ""
+            from PIL import Image, UnidentifiedImageError
+            import pytesseract
+            from pdfminer.high_level import extract_text
+            
+        # Extract text from the PDF
+        text = extract_text(file_path)
+
+        # Convert to Markdown (You may need to implement custom logic based on your specific use case)
+        markdown_text = text.replace('\n', '  \n')  # Adding double spaces at the end of each line for Markdown line breaks
+        
+        return markdown_text
+        """
+
+                    
+        from io import BytesIO         
+        with open(file_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            all_text = []
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                if '/Resources' in page and '/XObject' in page['/Resources']:
+                    xObject = page['/Resources']['/XObject']
+                    if xObject is not None:
+                        for obj in xObject:
+                            # Check if the object is an image
+                            if xObject[obj]['/Subtype'] == '/Image':
+                                image_data = xObject[obj].get_object()
+                                image_stream = image_data.get_object()
+                                image_stream_data = image_stream.get_data()
+
+                                try:
+                                    # Extract text from the image using pytesseract
+                                    extracted_text = pytesseract.image_to_string(Image.open(BytesIO(image_stream_data)))
+                                    all_text.append(extracted_text)
+                                except pytesseract.TesseractNotFoundError:
+                                    ASCIIColors.error("Please install tesserract to enable ocr data extraction from your pdf file")
+                                except UnidentifiedImageError:
+                                    # Ignore images that cannot be identified
+                                    pass
+
+                # Extract regular text from the page using PyPDF2's text extraction
+                regular_text = page.extract_text()
+                if regular_text:
+                    all_text.append(regular_text)
+
+            return "\n\n".join(all_text)
+        """
+            
+        """
+        text = ""
+        with open(file_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
             for page in pdf_reader.pages:
                 text += page.extract_text()
+        
         return text
+        """
 
     @staticmethod
     def read_docx_file(file_path):
         try:
             from docx import Document
         except ImportError:
-            GenericDataLoader.install_package("python-docx")
+            PackageManager.install_package("python-docx")
             from docx import Document
         doc = Document(file_path)
         text = ""
@@ -487,7 +564,7 @@ class GenericDataLoader:
         try:
             import csv
         except ImportError:
-            GenericDataLoader.install_package("csv")
+            PackageManager.install_package("csv")
             import csv
         with open(file_path, 'r') as file:
             csv_reader = csv.reader(file)
@@ -499,7 +576,7 @@ class GenericDataLoader:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
-            GenericDataLoader.install_package("beautifulsoup4")
+            PackageManager.install_package("beautifulsoup4")
             from bs4 import BeautifulSoup
         with open(file_path, 'r') as file:
             soup = BeautifulSoup(file, 'html.parser')
@@ -511,7 +588,7 @@ class GenericDataLoader:
         try:
             from pptx import Presentation
         except ImportError:
-            GenericDataLoader.install_package("python-pptx")
+            PackageManager.install_package("python-pptx")
             from pptx import Presentation
         prs = Presentation(file_path)
         text = ""
