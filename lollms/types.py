@@ -25,6 +25,9 @@ class MSG_TYPE(Enum):
     MSG_TYPE_CODE                   = 13# A javascript code to execute
     MSG_TYPE_UI                     = 14# A vue.js component to show (we need to build some and parse the text to show it)
 
+    #Commands
+    MSG_TYPE_NEW_MESSAGE            = 15# A new message
+
 class GenerationPresets:
     """
     Class containing various generation presets.

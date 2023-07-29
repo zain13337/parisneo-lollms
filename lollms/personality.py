@@ -1280,7 +1280,20 @@ class APScript(StateMachine):
 
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_PROGRESS, {'progress':progress})
-            
+
+    def new_message(self, step_text:str, message_type:MSG_TYPE, callback: Callable[[str, int, dict], bool]=None):
+        """This sends step rogress to front end
+
+        Args:
+            step_text (dict): The step progress in %
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the progress to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, {'type':message_type})
+
     #Helper method to convert outputs path to url
     def path2url(file):
         file = str(file).replace("\\","/")
