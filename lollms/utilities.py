@@ -58,7 +58,8 @@ class Image64BitsManager:
             from PIL import Image
             import io
             import base64        
-        Image.open(io.BytesIO(base64.b64decode(b64img)))  
+        image_data = re.sub('^data:image/.+;base64,', '', b64img)
+        return Image.open(io.BytesIO(base64.b64decode(image_data)))  
 
 
 class TFIDFLoader:
