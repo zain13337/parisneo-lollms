@@ -947,7 +947,12 @@ class APScript(StateMachine):
         self.models_folder = self.personality.lollms_paths.personal_models_path / self.personality.personality_folder_name
         self.models_folder.mkdir(parents=True, exist_ok=True)
 
+    def setCallback(self, callback: Callable[[str, int, dict], bool]):
+        self.callback = callback
+        if self.process:
+            self.process.callback = callback
 
+            
     def load_personality_config(self):
         """
         Load the content of local_config.yaml file.

@@ -14,6 +14,53 @@ class PackageManager:
         import sys
         subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
 
+class Image64BitsManager:
+
+    @staticmethod
+    def raw_b64_img(image) -> str:
+        try:
+            from PIL import Image, PngImagePlugin
+            import io
+            import base64
+        except:
+            PackageManager.install_package("pillow")
+            from PIL import Image
+            import io
+            import base64
+
+        # XXX controlnet only accepts RAW base64 without headers
+        with io.BytesIO() as output_bytes:
+            metadata = None
+            for key, value in image.info.items():
+                if isinstance(key, str) and isinstance(value, str):
+                    if metadata is None:
+                        metadata = PngImagePlugin.PngInfo()
+                    metadata.add_text(key, value)
+            image.save(output_bytes, format="PNG", pnginfo=metadata)
+
+            bytes_data = output_bytes.getvalue()
+
+        return str(base64.b64encode(bytes_data), "utf-8")
+
+
+    @staticmethod
+    def img2b64(image) -> str:
+        return "data:image/png;base64," + Image64BitsManager.raw_b64_img(image)    
+
+    @staticmethod
+    def b642img(b64img) -> str:
+        try:
+            from PIL import Image, PngImagePlugin
+            import io
+            import base64
+        except:
+            PackageManager.install_package("pillow")
+            from PIL import Image
+            import io
+            import base64        
+        Image.open(io.BytesIO(base64.b64decode(b64img)))  
+
+
 class TFIDFLoader:
     @staticmethod
     def create_vectorizer_from_dict(tfidf_info):

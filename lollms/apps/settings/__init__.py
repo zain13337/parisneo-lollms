@@ -10,6 +10,7 @@ from tqdm import tqdm
 from lollms.personality import PersonalityBuilder
 from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
+from typing import Callable
 
 
 

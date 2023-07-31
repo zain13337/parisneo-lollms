@@ -6,6 +6,7 @@ from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.config import InstallOption
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
+from typing import Callable
 
 import subprocess
 
@@ -54,32 +55,33 @@ class LollmsApplication:
             if try_select_binding:
                 ASCIIColors.info("Please select a valid model or install a new one from a url")
                 self.menu.select_binding()
-        
+        else:
+            if load_binding:
+                try:
+                    self.binding            = self.load_binding()
+                except Exception as ex:
+                    ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
+                    trace_exception(ex)
 
-        if load_binding:
-            try:
-                self.binding            = self.load_binding()
-            except Exception as ex:
-                ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
-                trace_exception(ex)
-                self.binding            = None
+                if self.binding is not None:
+                    ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
+                    if load_model:
+                        if self.config.model_name is None:
+                            ASCIIColors.warning(f"No model selected")
+                            if try_select_model:
+                                print("Please select a valid model")
+                                self.menu.select_model()
+                                
+                        if self.config.model_name is not None:
+                            try:
+                                self.model          = self.load_model()
+                            except Exception as ex:
+                                ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                                trace_exception(ex)
+                else:
+                    ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
 
-            if self.binding is not None:
-                ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
-                if load_model:
-                    if self.config.model_name is None:
-                        ASCIIColors.warning(f"No model selected")
-                        if try_select_model:
-                            print("Please select a valid model")
-                            self.menu.select_model()
-                    if self.config.model_name is not None:
-                        try:
-                            self.model          = self.load_model()
-                        except Exception as ex:
-                            ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
-                            trace_exception(ex)
-            else:
-                ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
+            
         self.mount_personalities()
 
     def load_binding(self):
@@ -150,7 +152,11 @@ class LollmsApplication:
 
         self.personality = self.mounted_personalities[self.config.active_personality_id]
 
+    def set_personalities_callbacks(self, callback: Callable[[str, int, dict], bool]=None):
+        for personality in self.mount_personalities:
+            personality.setCallback(callback)
 
+            
     def unmount_personality(self, id:int)->bool:
         if id<len(self.config.personalities):
             del self.config.personalities[id]

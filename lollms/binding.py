@@ -147,9 +147,13 @@ class LLMBinding:
         
         if self.config.model_name.endswith(".reference"):
             ASCIIColors.yellow("Loading a reference model:")
-            with open(str(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}"), 'r') as f:
-                model_path = Path(f.read())
-            ASCIIColors.yellow(model_path)
+            file_path = self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}"
+            if file_path.exists():
+                with open(str(file_path), 'r') as f:
+                    model_path = Path(f.read())
+                ASCIIColors.yellow(model_path)
+            else:
+                return None
         else:
             model_path = Path(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}")
 

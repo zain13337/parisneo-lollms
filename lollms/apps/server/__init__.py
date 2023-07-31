@@ -14,6 +14,7 @@ from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
 from lollms.utilities import TextVectorizer
 from typing import List, Tuple
+from typing import Callable
 import importlib
 from pathlib import Path
 import argparse
