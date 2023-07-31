@@ -10,7 +10,17 @@ from lollms.terminal import MainMenu
 import subprocess
 
 class LollmsApplication:
-    def __init__(self, app_name:str, config:LOLLMSConfig, lollms_paths:LollmsPaths, load_binding=True, load_model=True, try_select_binding=False, try_select_model=False) -> None:
+    def __init__(
+                    self, 
+                    app_name:str, 
+                    config:LOLLMSConfig, 
+                    lollms_paths:LollmsPaths, 
+                    load_binding=True, 
+                    load_model=True, 
+                    try_select_binding=False, 
+                    try_select_model=False,
+                    callback=None
+                ) -> None:
         """
         Creates a LOLLMS Application
         """
@@ -18,7 +28,7 @@ class LollmsApplication:
         self.config                 = config
         self.lollms_paths           = lollms_paths
 
-        self.menu                   = MainMenu(self)
+        self.menu                   = MainMenu(self, callback)
         self.mounted_personalities  = []
         self.personality            = None
 
@@ -105,9 +115,9 @@ class LollmsApplication:
         return model
 
 
-    def mount_personality(self, id:int):
+    def mount_personality(self, id:int, callback=None):
         try:
-            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model).build_personality(id)
+            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, callback=callback).build_personality(id)
             if personality.model is not None:
                 self.cond_tk = personality.model.tokenize(personality.personality_conditioning)
                 self.n_cond_tk = len(self.cond_tk)
@@ -127,11 +137,11 @@ class LollmsApplication:
         self.mounted_personalities.append(personality)
         return personality
     
-    def mount_personalities(self):
+    def mount_personalities(self, callback = None):
         self.mounted_personalities = []
         to_remove = []
         for i in range(len(self.config["personalities"])):
-            p = self.mount_personality(i)
+            p = self.mount_personality(i, callback = None)
             if p is None:
                 to_remove.append(i)
         to_remove.sort(reverse=True)
@@ -164,9 +174,9 @@ class LollmsApplication:
             return False
 
 
-    def load_personality(self):
+    def load_personality(self, callback=None):
         try:
-            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model).build_personality()
+            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, callback=callback).build_personality()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")

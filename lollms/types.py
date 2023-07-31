@@ -27,6 +27,8 @@ class MSG_TYPE(Enum):
 
     #Commands
     MSG_TYPE_NEW_MESSAGE            = 15# A new message
+    MSG_TYPE_FINISHED_MESSAGE       = 17# End of current message
+
 
 class GenerationPresets:
     """

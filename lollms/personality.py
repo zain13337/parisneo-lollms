@@ -995,7 +995,9 @@ class APScript(StateMachine):
             else:
                 ASCIIColors.error("Pytorch installed successfully!!")
 
-    def add_file(self, path):
+    def add_file(self, path, callback=None):
+        if callback is not None:
+            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
         self.files.append(path)
         return True
 
@@ -1281,7 +1283,7 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_PROGRESS, {'progress':progress})
 
-    def new_message(self, step_text:str, message_type:MSG_TYPE, callback: Callable[[str, int, dict], bool]=None):
+    def new_message(self, message_text:str, message_type:MSG_TYPE, callback: Callable[[str, int, dict], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -1292,7 +1294,20 @@ class APScript(StateMachine):
             callback = self.callback
 
         if callback:
-            callback(step_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, {'type':message_type})
+            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, {'type':message_type})
+
+    def finished_message(self, message_text:str="", callback: Callable[[str, int, dict], bool]=None):
+        """This sends step rogress to front end
+
+        Args:
+            step_text (dict): The step progress in %
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the progress to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(message_text, MSG_TYPE.MSG_TYPE_FINISHED_MESSAGE)
 
     #Helper method to convert outputs path to url
     def path2url(file):
@@ -1315,12 +1330,14 @@ class PersonalityBuilder:
                     lollms_paths:LollmsPaths, 
                     config:LOLLMSConfig, 
                     model:LLMBinding, 
-                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
+                    callback=None
                 ):
         self.config = config
         self.lollms_paths = lollms_paths
         self.model = model
         self.installation_option = installation_option
+        self.callback = callback
 
 
     def build_personality(self, id:int=None):
@@ -1339,7 +1356,8 @@ class PersonalityBuilder:
                                             self.lollms_paths,
                                             self.config,
                                             self.model, 
-                                            installation_option=self.installation_option
+                                            installation_option=self.installation_option,
+                                            callback=self.callback
                                         )
         else:
             self.personality = AIPersonality(
@@ -1348,7 +1366,8 @@ class PersonalityBuilder:
                                             self.config,
                                             self.model,
                                             is_relative_path=False,
-                                            installation_option=self.installation_option
+                                            installation_option=self.installation_option,
+                                            callback=self.callback
                                         )
         return self.personality
     

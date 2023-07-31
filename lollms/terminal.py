@@ -121,9 +121,10 @@ class Menu:
                 print("Invalid response. Please answer with 'yes' or 'no' (or 'y'/'n').")
 
 class MainMenu(Menu):
-    def __init__(self, lollms_app:'LollmsApplication'):
+    def __init__(self, lollms_app:'LollmsApplication', callback=None):
         self.binding_infs = []
         self.lollms_app = lollms_app
+        self.callback = callback
         main_menu_options = [
             {'name': 'Main settings', 'fn': self.main_settings, 'help': "Show main settings."},
             {'name': 'Select Binding', 'fn': self.select_binding, 'help': "Choose a binding."},
@@ -316,7 +317,7 @@ class MainMenu(Menu):
                     name = personality_names[choice - 1]
                     print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
                     self.lollms_app.config["personalities"].append(f"{language}/{category}/{name}")
-                    self.lollms_app.mount_personality(len(self.lollms_app.config["personalities"])-1)
+                    self.lollms_app.mount_personality(len(self.lollms_app.config["personalities"])-1, callback = self.callback)
                     self.lollms_app.config.save_config()
                     print("Personality mounted successfully!")
                 elif 1 <= choice <= len(personality_names):
@@ -406,10 +407,10 @@ class MainMenu(Menu):
 
 
     
-    def reinstall_personality(self):
+    def reinstall_personality(self, callback=None):
         lollms_app = self.lollms_app
         try:
-            lollms_app.personality = PersonalityBuilder(lollms_app.lollms_paths, lollms_app.config, lollms_app.model, installation_option=InstallOption.FORCE_INSTALL).build_personality()
+            lollms_app.personality = PersonalityBuilder(lollms_app.lollms_paths, lollms_app.config, lollms_app.model, installation_option=InstallOption.FORCE_INSTALL, callback=callback).build_personality()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {lollms_app.configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
