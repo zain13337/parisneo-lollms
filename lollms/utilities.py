@@ -14,7 +14,7 @@ class PackageManager:
         import sys
         subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
 
-class Image64BitsManager:
+class File64BitsManager:
 
     @staticmethod
     def raw_b64_img(image) -> str:
@@ -45,7 +45,7 @@ class Image64BitsManager:
 
     @staticmethod
     def img2b64(image) -> str:
-        return "data:image/png;base64," + Image64BitsManager.raw_b64_img(image)    
+        return "data:image/png;base64," + File64BitsManager.raw_b64_img(image)    
 
     @staticmethod
     def b642img(b64img) -> str:
@@ -61,7 +61,38 @@ class Image64BitsManager:
         image_data = re.sub('^data:image/.+;base64,', '', b64img)
         return Image.open(io.BytesIO(base64.b64decode(image_data)))  
 
+    @staticmethod
+    def get_file_extension_from_base64(b64data):
+        # Extract the file extension from the base64 data
+        data_match = re.match(r'^data:(.*?);base64,', b64data)
+        if data_match:
+            mime_type = data_match.group(1)
+            extension = mime_type.split('/')[-1]
+            return extension
+        else:
+            raise ValueError("Invalid base64 data format.")
+        
+    @staticmethod
+    def extract_content_from_base64(b64data):
+        # Split the base64 data at the comma separator
+        header, content = b64data.split(',', 1)
 
+        # Extract only the content part and remove any white spaces and newlines
+        content = content.strip()
+
+        return content
+
+    @staticmethod
+    def b642file(b64data, filename):
+        import base64   
+        # Extract the file extension from the base64 data
+        
+        
+        # Save the file with the determined extension
+        with open(filename, 'wb') as file:
+            file.write(base64.b64decode(File64BitsManager.extract_content_from_base64(b64data)))
+
+        return filename
 class TFIDFLoader:
     @staticmethod
     def create_vectorizer_from_dict(tfidf_info):
