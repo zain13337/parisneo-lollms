@@ -6,13 +6,26 @@ import numpy as np
 from pathlib import Path
 import json
 import re
-
+import subprocess
 class PackageManager:
     @staticmethod
     def install_package(package_name):
         import subprocess
         import sys
         subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+
+class GitManager:
+    @staticmethod
+    def git_pull(folder_path):
+        try:
+            # Change the current working directory to the desired folder
+            subprocess.run(["git", "checkout", folder_path], check=True, cwd=folder_path)
+            # Run 'git pull' in the specified folder
+            subprocess.run(["git", "pull"], check=True, cwd=folder_path)
+            print("Git pull successful in", folder_path)
+        except subprocess.CalledProcessError as e:
+            print("Error occurred while executing Git pull:", e)
+            # Handle any specific error handling here if required
 
 class File64BitsManager:
 

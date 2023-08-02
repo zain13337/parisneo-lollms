@@ -30,6 +30,12 @@ class MSG_TYPE(Enum):
     MSG_TYPE_FINISHED_MESSAGE       = 17# End of current message
 
 
+
+class SENDER_TYPES(Enum):
+    SENDER_TYPES_USER               = 0 # Sent by user
+    SENDER_TYPES_AI                 = 1 # Sent by ai
+    SENDER_TYPES_SYSTEM             = 2 # Sent by athe system
+
 class GenerationPresets:
     """
     Class containing various generation presets.
