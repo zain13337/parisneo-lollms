@@ -1193,7 +1193,7 @@ class APScript(StateMachine):
         if callback:
             callback(info, MSG_TYPE.MSG_TYPE_INFO)
 
-    def json(self, json_infos:dict, callback: Callable[[str, int, dict], bool]=None):
+    def json(self, json_infos:dict, callback: Callable[[str, int, dict], bool]=None, indent=4):
         """This sends json data to front end
 
         Args:
@@ -1201,7 +1201,7 @@ class APScript(StateMachine):
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
         if callback:
-            callback(json.dumps(json_infos), MSG_TYPE.MSG_TYPE_JSON_INFOS)
+            callback(json.dumps(json_infos, indent=indent), MSG_TYPE.MSG_TYPE_JSON_INFOS)
 
     def ui(self, html_ui:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends ui elements to front end
