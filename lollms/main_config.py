@@ -175,10 +175,11 @@ class LOLLMSConfig(BaseConfig):
         # Check if file already exists in folder
         if model_full_path.exists():
             print("File already exists in folder")
+            return False
         else:
             # Create folder if it doesn't exist
             folder_path.mkdir(parents=True, exist_ok=True)
             with open(model_full_path,"w") as f:
                 f.write(path)
-            print("Reference created, please make sure you don't delete the file or you will have broken link")
-
+            ASCIIColors.warning("Reference created, please make sure you don't delete or move the referenced file. This can cause the link to be broken")
+            return True

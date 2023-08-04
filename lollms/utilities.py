@@ -7,6 +7,45 @@ from pathlib import Path
 import json
 import re
 import subprocess
+import gc
+
+class AdvancedGarbageCollector:
+    @staticmethod
+    def hardCollect(obj):
+        all_referrers = gc.get_referrers(obj)
+        for referrer in all_referrers:
+            if not isinstance(referrer, (list, tuple, dict, set)):
+                referrer = None
+        del obj
+
+    @staticmethod
+    def safeHardCollect(variable_name, instance=None):
+        if instance is not None:
+            if hasattr(instance, variable_name):
+                obj = getattr(instance, variable_name)
+                AdvancedGarbageCollector.hardCollect(obj)
+            else:
+                print(f"The variable '{variable_name}' does not exist in the instance.")
+        else:
+            if variable_name in locals():
+                obj = locals()[variable_name]
+                AdvancedGarbageCollector.hardCollect(obj)
+            elif variable_name in globals():
+                obj = globals()[variable_name]
+                AdvancedGarbageCollector.hardCollect(obj)
+            else:
+                print(f"The variable '{variable_name}' does not exist in the local or global namespace.")
+
+    @staticmethod
+    def safeHardCollectMultiple(variable_names, instance=None):
+        for variable_name in variable_names:
+            AdvancedGarbageCollector.safeHardCollect(variable_name, instance)
+
+    @staticmethod
+    def collect():
+        gc.collect()
+
+
 class PackageManager:
     @staticmethod
     def install_package(package_name):
