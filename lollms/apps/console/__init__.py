@@ -11,6 +11,7 @@ from typing import Callable
 from pathlib import Path
 import argparse
 import yaml
+import time
 import sys
 
 class Conversation(LollmsApplication):
@@ -178,6 +179,7 @@ Participating personalities:
                 ump = self.config.discussion_prompt_separator +self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
                 if self.config.use_user_name_in_discussions:
                     prompt = input(f"{ASCIIColors.color_green}{self.config.user_name}: {ASCIIColors.color_reset}")
+                    t0 = time.time() #Time at start of request
                 else:
                     prompt = input(f"{ASCIIColors.color_green}You: {ASCIIColors.color_reset}")
                 if prompt == "exit":
@@ -271,6 +273,8 @@ Participating personalities:
 
                 self.log(full_discussion)
                 
+                t1 = time.time() # Time at end of defense
+                print(f"{ASCIIColors.color_cyan}Response Time: {ASCIIColors.color_reset}",str(int((t1-t0)*1000)),"ms\n") # Total time elapsed since t0 in ms
             except KeyboardInterrupt:
                 print("Keyboard interrupt detected.\nBye")
                 break
