@@ -144,7 +144,6 @@ class MainMenu(Menu):
         self.show([
             {'name': 'Set user name', 'fn': self.set_user_name, 'help': "Sets the user name."},
             {'name': 'Set use user name in discussion', 'fn': self.set_use_user_name_in_discussions, 'help': "Sets the user name."},
-            {'name': 'Set show time elapsed', 'fn':self.set_time_elapsed, 'help': "Sets showing time taken for each complete response."}
         ])
 
     def set_user_name(self):
@@ -155,11 +154,6 @@ class MainMenu(Menu):
     def set_use_user_name_in_discussions(self):
         ASCIIColors.info(f"Current status: {self.lollms_app.config.use_user_name_in_discussions}")
         self.lollms_app.config.use_user_name_in_discussions = self.yes_no_question('Use user name in dicsussion')
-        self.lollms_app.config.save_config()
-
-    def set_time_elapsed(self):
-
-        self.lollms_app.config.show_time_elapsed = self.yes_no_question('Show time elapsed for each complete response')
         self.lollms_app.config.save_config()
 
     def show_logo(self):

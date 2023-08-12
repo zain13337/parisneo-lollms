@@ -22,13 +22,14 @@ class Conversation(LollmsApplication):
                     show_commands_list:bool=False, 
                     show_personality_infos:bool=True,
                     show_model_infos:bool=True,
-                    show_welcome_message:bool=True
+                    show_welcome_message:bool=True,
+                    show_time_elapsed:bool = False
                 ):
         # Fore it to be a path
         self.configuration_path = configuration_path
         self.is_logging = False
         self.log_file_path = ""
-        
+        self.show_time_elapsed = show_time_elapsed
         self.bot_says = ""
 
         # get paths
@@ -97,7 +98,7 @@ class Conversation(LollmsApplication):
             self.log_file_path = home_dir/file_name
             if self.log_file_path.exists():
                 if not self.ask_override_file():
-                    print("Canceled")
+                    print("Cancelled")
                     return
         try:
             with(open(self.log_file_path, "w") as f):
@@ -181,7 +182,7 @@ Participating personalities:
                     prompt = input(f"{ASCIIColors.color_green}{self.config.user_name}: {ASCIIColors.color_reset}")
                 else:
                     prompt = input(f"{ASCIIColors.color_green}You: {ASCIIColors.color_reset}")
-                if self.config.show_time_elapsed:
+                if self.show_time_elapsed:
                     t0 = time.time() #Time at start of request
                 if prompt == "exit":
                     return
@@ -274,7 +275,7 @@ Participating personalities:
 
                 self.log(full_discussion)
                 
-                if self.config.show_time_elapsed:
+                if self.show_time_elapsed:
                     t1 = time.time() # Time at end of response
                     print(f"{ASCIIColors.color_cyan}Time Elapsed: {ASCIIColors.color_reset}",str(int((t1-t0)*1000)),"ms\n") # Total time elapsed since t0 in ms
             except KeyboardInterrupt:
@@ -296,6 +297,8 @@ def main():
     parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
     parser.add_argument('--reset_config', action='store_true', help='Reset the configurations')
     parser.add_argument('--reset_installs', action='store_true', help='Reset all installation status')
+    parser.add_argument('--show_time_elapsed', action='store_true', help='Enables response time')
+
 
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -314,14 +317,15 @@ def main():
             ASCIIColors.success("LOLLMS configuration reset successfully")
         except:
             ASCIIColors.success("Couldn't reset LOLLMS configuration")
-
+    if args.show_time_elapsed:
+        show_time_elapsed = True
 
     # Parse the command-line arguments
     args = parser.parse_args()
             
     configuration_path = args.configuration_path
         
-    lollms_app = Conversation(configuration_path=configuration_path, show_commands_list=True)
+    lollms_app = Conversation(configuration_path=configuration_path, show_commands_list=True, show_time_elapsed=show_time_elapsed)
     lollms_app.start_conversation()
     
 
