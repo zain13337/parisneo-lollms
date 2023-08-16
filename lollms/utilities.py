@@ -736,3 +736,62 @@ class GenericDataLoader:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         return content
+
+
+
+
+class PromptReshaper:
+    def __init__(self, template):
+        self.template = template
+
+    def build(self, placeholders, tokenize, detokenize, max_nb_tokens, place_holders_to_sacrifice=[]):
+        # Tokenize the template without placeholders
+        template_text = self.template
+        for placeholder in placeholders:
+            template_text = template_text.replace("{{" + placeholder + "}}", "")
+        template_tokens = tokenize(template_text)
+        
+        # Calculate the number of tokens in the template without placeholders
+        template_tokens_count = len(template_tokens)
+        
+        # Calculate the number of tokens for each placeholder
+        placeholder_tokens_count = {}
+        all_count = template_tokens_count
+        for placeholder, text in placeholders.items():
+            text_tokens = tokenize(text)
+            placeholder_tokens_count[placeholder] = len(text_tokens)
+            all_count += placeholder_tokens_count[placeholder]
+
+        def fill_template(template, data):
+            for key, value in data.items():
+                placeholder = "{{" + key + "}}"
+                template = template.replace(placeholder, value)
+            return template
+        
+        if max_nb_tokens-all_count>0 or len(place_holders_to_sacrifice)==0:
+            return fill_template(self.template, placeholders)
+        else:
+            to_remove = -int((max_nb_tokens - all_count)/len(place_holders_to_sacrifice))
+            for placeholder, text in placeholders.items():
+                if placeholder in place_holders_to_sacrifice:
+                    text_tokens = tokenize(text)[to_remove:]
+                    placeholders[placeholder]=detokenize(text_tokens)
+            return fill_template(self.template, placeholders)
+
+if __name__=="__main__":
+    def tokenize(text):
+        return text.split()  # Simple tokenization by splitting on spaces
+
+    def detokenize(tokens):
+        return ' '.join(tokens)
+
+    template = "Hello, {{name}}! How are you feeling {{emotion}} really"
+    placeholders = {
+        "name": "Alice",
+        "emotion": "happy and very happy"
+    }
+    max_nb_tokens = 10
+
+    reshaper = PromptReshaper(template)
+    final_text = reshaper.build(placeholders, tokenize, detokenize, max_nb_tokens,["emotion"])
+    print(final_text)
