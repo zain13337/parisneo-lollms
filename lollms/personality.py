@@ -1140,6 +1140,9 @@ class APScript(StateMachine):
             step_text (str): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step start to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_START)
 
@@ -1150,6 +1153,9 @@ class APScript(StateMachine):
             step_text (str): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step end to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_END, {'status':status})
 
@@ -1160,6 +1166,9 @@ class APScript(StateMachine):
             step_text (str): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP)
 
@@ -1170,6 +1179,9 @@ class APScript(StateMachine):
             step_text (str): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(str(ex), MSG_TYPE.MSG_TYPE_EXCEPTION)
 
@@ -1180,6 +1192,9 @@ class APScript(StateMachine):
             step_text (str): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(warning, MSG_TYPE.MSG_TYPE_EXCEPTION)
 
@@ -1190,6 +1205,9 @@ class APScript(StateMachine):
             inf (str): The information to be sent
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(info, MSG_TYPE.MSG_TYPE_INFO)
 
@@ -1200,6 +1218,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(json.dumps(json_infos, indent=indent), MSG_TYPE.MSG_TYPE_JSON_INFOS)
 
@@ -1210,6 +1231,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(html_ui, MSG_TYPE.MSG_TYPE_UI)
 
@@ -1220,6 +1244,9 @@ class APScript(StateMachine):
             step_text (dict): The step text
             callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
         """
+        if not callback and self.callback:
+            callback = self.callback
+
         if callback:
             callback(code, MSG_TYPE.MSG_TYPE_CODE)
 
