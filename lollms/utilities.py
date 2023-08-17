@@ -778,20 +778,20 @@ class PromptReshaper:
                     placeholders[placeholder]=detokenize(text_tokens)
             return fill_template(self.template, placeholders)
 
-if __name__=="__main__":
-    def tokenize(text):
-        return text.split()  # Simple tokenization by splitting on spaces
 
-    def detokenize(tokens):
-        return ' '.join(tokens)
 
-    template = "Hello, {{name}}! How are you feeling {{emotion}} really"
-    placeholders = {
-        "name": "Alice",
-        "emotion": "happy and very happy"
-    }
-    max_nb_tokens = 10
+class LOLLMSLocalizer:
+    def __init__(self, dictionary):
+        self.dictionary = dictionary
 
-    reshaper = PromptReshaper(template)
-    final_text = reshaper.build(placeholders, tokenize, detokenize, max_nb_tokens,["emotion"])
-    print(final_text)
+    def localize(self, input_string):
+        def replace(match):
+            key = match.group(1)
+            return self.dictionary.get(key, match.group(0))
+        
+        import re
+        pattern = r'@<([^>]+)>@'
+        localized_string = re.sub(pattern, replace, input_string)
+        return localized_string
+
+

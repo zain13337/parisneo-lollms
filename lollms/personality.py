@@ -86,7 +86,6 @@ class AIPersonality:
         self._author: str = "ParisNeo"
         self._name: str = "lollms"
         self._user_name: str = "user"
-        self._language: str = "english"
         self._category: str = "General"
 
         # Conditionning
@@ -162,7 +161,7 @@ Date: {{date}}
 
 
     def __str__(self):
-        return f"{self.language}/{self.category}/{self.name}"
+        return f"{self.category}/{self.name}"
 
 
     def load_personality(self, package_path=None):
@@ -201,7 +200,6 @@ Date: {{date}}
         self._author = config.get("author", self._author)
         self._name = config.get("name", self._name)
         self._user_name = config.get("user_name", self._user_name)
-        self._language = config.get("language", self._language)
         self._category = config.get("category", self._category)
         self._personality_description = config.get("personality_description", self._personality_description)
         self._personality_conditioning = config.get("personality_conditioning", self._personality_conditioning)
@@ -294,7 +292,6 @@ Date: {{date}}
             "version": self._version,
             "name": self._name,
             "user_name": self._user_name,
-            "language": self._language,
             "category": self._category,
             "personality_description": self._personality_description,
             "personality_conditioning": self._personality_conditioning,
@@ -334,7 +331,6 @@ Date: {{date}}
             "version": self._version,
             "name": self._name,
             "user_name": self._user_name,
-            "language": self._language,
             "category": self._category,
             "personality_description": self._personality_description,
             "personality_conditioning": self._personality_conditioning,
@@ -417,16 +413,6 @@ Date: {{date}}
     def user_name(self, value: str):
         """Set the user name."""
         self._user_name = value
-
-    @property
-    def language(self) -> str:
-        """Get the language."""
-        return self._language
-
-    @language.setter
-    def language(self, value: str):
-        """Set the language."""
-        self._language = value
 
     @property
     def category(self) -> str:
@@ -939,7 +925,9 @@ class APScript(StateMachine):
         self.personality                        = personality
         self.personality_config                 = personality_config
         self.installation_option                = personality.installation_option
-        self.configuration_file_path            = self.personality.lollms_paths.personal_configuration_path/f"personality_{self.personality.personality_folder_name}.yaml"
+        self.configuration_file_path            = self.personality.lollms_paths.personal_configuration_path/self.personality.personality_folder_name/f"config.yaml"
+        self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         self.personality_config.config.file_path    = self.configuration_file_path
 
         self.callback = callback
@@ -1146,7 +1134,7 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_START)
 
-    def step_end(self, step_text, status=True, callback: Callable[[str, int, dict], bool]=None):
+    def step_end(self, step_text, status=True, callback: Callable[[str, int, dict, list], bool]=None):
         """This triggers a step end
 
         Args:
@@ -1211,7 +1199,7 @@ class APScript(StateMachine):
         if callback:
             callback(info, MSG_TYPE.MSG_TYPE_INFO)
 
-    def json(self, json_infos:dict, callback: Callable[[str, int, dict], bool]=None, indent=4):
+    def json(self, title:str, json_infos:dict, callback: Callable[[str, int, dict, list], bool]=None, indent=4):
         """This sends json data to front end
 
         Args:
@@ -1222,7 +1210,7 @@ class APScript(StateMachine):
             callback = self.callback
 
         if callback:
-            callback(json.dumps(json_infos, indent=indent), MSG_TYPE.MSG_TYPE_JSON_INFOS)
+            callback("", MSG_TYPE.MSG_TYPE_JSON_INFOS, metadata = [{"title":title, "content":json.dumps(json_infos, indent=indent)}])
 
     def ui(self, html_ui:str, callback: Callable[[str, int, dict], bool]=None):
         """This sends ui elements to front end
@@ -1316,7 +1304,7 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_PROGRESS, {'progress':progress})
 
-    def new_message(self, message_text:str, message_type:MSG_TYPE, metadata=None, callback: Callable[[str, int, dict], bool]=None):
+    def new_message(self, message_text:str, message_type:MSG_TYPE, metadata=[], callback: Callable[[str, int, dict, list], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -1327,7 +1315,7 @@ class APScript(StateMachine):
             callback = self.callback
 
         if callback:
-            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, {'type':message_type.value,'metadata':metadata})
+            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata})
 
     def finished_message(self, message_text:str="", callback: Callable[[str, int, dict], bool]=None):
         """This sends step rogress to front end
@@ -1383,7 +1371,7 @@ class PersonalityBuilder:
         else:
             if id>len(self.config["personalities"]):
                 id = len(self.config["personalities"])-1
-        if len(self.config["personalities"][id].split("/"))==3:
+        if len(self.config["personalities"][id].split("/"))==2:
             self.personality = AIPersonality(
                                             self.lollms_paths.personalities_zoo_path / self.config["personalities"][id],
                                             self.lollms_paths,

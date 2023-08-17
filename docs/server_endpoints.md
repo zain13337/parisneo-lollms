@@ -45,22 +45,18 @@ Events generated:
 - Actions:
   - Retrieves the path to the personalities folder from the server (`self.personalities_path`).
   - Initializes an empty dictionary to store the available personalities.
-  - Iterates over each language folder in the personalities folder.
+  - Iterates over each category folder within the language folder.
     - Checks if the current item is a directory.
-    - Initializes an empty dictionary to store the personalities within the language.
-    - Iterates over each category folder within the language folder.
+    - Initializes an empty list to store the personalities within the category.
+    - Iterates over each personality folder within the category folder.
       - Checks if the current item is a directory.
-      - Initializes an empty list to store the personalities within the category.
-      - Iterates over each personality folder within the category folder.
-        - Checks if the current item is a directory.
-        - Tries to load personality information from the config file (`config.yaml`) within the personality folder.
-          - Retrieves the name, description, author, and version from the config data.
-        - Checks if the `scripts` folder exists within the personality folder to determine if the personality has scripts.
-        - Checks for the existence of logo files named `logo.gif` or `logo.webp` or `logo.png` or `logo.jpg` or `logo.jpeg` or `logo.bmp` within the `assets` folder to determine if the personality has a logo.
-        - Sets the `avatar` field of the personality info based on the available logo file.
-        - Appends the personality info to the list of personalities within the category.
-      - Adds the list of personalities to the dictionary of the current category within the language.
-    - Adds the dictionary of categories to the dictionary of the current language.
+      - Tries to load personality information from the config file (`config.yaml`) within the personality folder.
+        - Retrieves the name, description, author, and version from the config data.
+      - Checks if the `scripts` folder exists within the personality folder to determine if the personality has scripts.
+      - Checks for the existence of logo files named `logo.gif` or `logo.webp` or `logo.png` or `logo.jpg` or `logo.jpeg` or `logo.bmp` within the `assets` folder to determine if the personality has a logo.
+      - Sets the `avatar` field of the personality info based on the available logo file.
+      - Appends the personality info to the list of personalities within the category.
+    - Adds the list of personalities to the dictionary of the current category within the language.
   - Sends a response to the client containing the dictionary of available personalities.
 
 Events generated:
@@ -84,32 +80,14 @@ Events generated:
 
 
 
-#### `list_available_personalities_languages`
-- Event: `'list_available_personalities_languages'`
-- Description: This event is triggered when a client requests a list of available personality languages.
-- Actions:
-  - Attempts to retrieve a list of available personality languages by iterating over the `self.personalities_path` directory.
-  - Sends a response to the client containing the success status and the list of available personality languages.
-
-Parameters: None
-
-Events:
-- `'available_personalities_languages_list'`: This event is emitted as a response to the client after listing the available personality languages.
-  - Data:
-    - `'success'` (boolean): Indicates whether the operation was successful or not.
-    - `'available_personalities_languages'` (list): Contains the available personality languages as a list of strings.
-
-
 #### `list_available_personalities_categories`
 - Event: `'list_available_personalities_categories'`
 - Description: This event is triggered when a client requests a list of available personality categories based on a specified language.
 - Parameters:
-  - `data`: A dictionary containing the following parameter:
-    - `language`: The language for which to retrieve available personality categories.
+  - `data`: An empty dictionary:
 
 - Actions:
-  - Extracts the `language` parameter from the request data.
-  - Attempts to retrieve the available personality categories for the specified language.
+  - Attempts to retrieve the available personality categories.
   - Emits an event `'available_personalities_categories_list'` to the client.
     - If successful, sends a response with a list of available personality categories in the `'available_personalities_categories'` field of the event data.
     - If an error occurs, sends a response with an error message in the `'error'` field of the event data.

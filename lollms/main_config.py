@@ -37,7 +37,7 @@ DEFAULT_CONFIG = {
     "n_threads": 8,
 
     #Personality parameters
-    "personalities": ["english/generic/lollms"],
+    "personalities": ["generic/lollms"],
     "active_personality_id": 0,
     "override_personality_model_parameters": False, #if true the personality parameters are overriden by those of the configuration (may affect personality behaviour) 
 

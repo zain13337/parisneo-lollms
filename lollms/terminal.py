@@ -298,37 +298,27 @@ class MainMenu(Menu):
                 ASCIIColors.green(personality)
             else:
                 ASCIIColors.yellow(personality)
-        personality_languages = [p.stem for p in self.lollms_app.lollms_paths.personalities_zoo_path.iterdir() if p.is_dir() and not p.name.startswith(".")] + ["Back"]
-        print("Select language")
-        choice = self.show_menu(personality_languages)
-        if 1 <= choice <= len(personality_languages)-1:
-            language = personality_languages[choice - 1]
-            print(f"You selected language: {ASCIIColors.color_green}{language}{ASCIIColors.color_reset}")
-            personality_categories = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/language).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
-            print("Select category")
-            choice = self.show_menu(personality_categories)
-            if 1 <= choice <= len(personality_categories)-1:
-                category = personality_categories[choice - 1]
-                print(f"You selected category: {ASCIIColors.color_green}{category}{ASCIIColors.color_reset}")
-                personality_names = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/language/category).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
-                print("Select personality")
-                choice = self.show_menu(personality_names)
-                if 1 <= choice <= len(personality_names)-1:
-                    name = personality_names[choice - 1]
-                    print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
-                    self.lollms_app.config["personalities"].append(f"{language}/{category}/{name}")
-                    self.lollms_app.mount_personality(len(self.lollms_app.config["personalities"])-1, callback = self.callback)
-                    self.lollms_app.config.save_config()
-                    print("Personality mounted successfully!")
-                elif 1 <= choice <= len(personality_names):
-                    return
-                else:
-                    print("Invalid choice!")
-            elif 1 <= choice <= len(personality_categories):
+        personality_categories = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
+        print("Select category")
+        choice = self.show_menu(personality_categories)
+        if 1 <= choice <= len(personality_categories)-1:
+            category = personality_categories[choice - 1]
+            print(f"You selected category: {ASCIIColors.color_green}{category}{ASCIIColors.color_reset}")
+            personality_names = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/category).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
+            print("Select personality")
+            choice = self.show_menu(personality_names)
+            if 1 <= choice <= len(personality_names)-1:
+                name = personality_names[choice - 1]
+                print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
+                self.lollms_app.config["personalities"].append(f"{category}/{name}")
+                self.lollms_app.mount_personality(len(self.lollms_app.config["personalities"])-1, callback = self.callback)
+                self.lollms_app.config.save_config()
+                print("Personality mounted successfully!")
+            elif 1 <= choice <= len(personality_names):
                 return
             else:
                 print("Invalid choice!")
-        elif 1 <= choice <= len(personality_languages):
+        elif 1 <= choice <= len(personality_categories):
             return
         else:
             print("Invalid choice!")

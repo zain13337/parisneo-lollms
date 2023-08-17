@@ -236,19 +236,11 @@ class LoLLMsServer(LollmsApplication):
                     print(f"Problem with model : {model}")
             emit('available_models_list', {'success':True, 'available_models': models}, room=request.sid)
 
-        @self.socketio.on('list_available_personalities_languages')
-        def handle_list_available_personalities_languages():
-            try:
-                languages = [l for l in self.personalities_path.iterdir()]
-                emit('available_personalities_languages_list', {'success': True, 'available_personalities_languages': languages})
-            except Exception as ex:
-                emit('available_personalities_languages_list', {'success': False, 'error':str(ex)})
 
         @self.socketio.on('list_available_personalities_categories')
         def handle_list_available_personalities_categories(data):
             try:
-                language = data["language"]
-                categories = [l for l in (self.personalities_path/language).iterdir()]
+                categories = [l for l in (self.personalities_path).iterdir()]
                 emit('available_personalities_categories_list', {'success': True, 'available_personalities_categories': categories})
             except Exception as ex:
                 emit('available_personalities_categories_list', {'success': False, 'error':str(ex)})
@@ -256,9 +248,8 @@ class LoLLMsServer(LollmsApplication):
         @self.socketio.on('list_available_personalities_names')
         def handle_list_available_personalities_names(data):
             try:
-                language = data["language"]
                 category = data["category"]
-                personalities = [l for l in (self.personalities_path/language/category).iterdir()]
+                personalities = [l for l in (self.personalities_path/category).iterdir()]
                 emit('list_available_personalities_names_list', {'success': True, 'list_available_personalities_names': personalities})
             except Exception as ex:
                 emit('list_available_personalities_names_list', {'success': False, 'error':str(ex)})
@@ -625,7 +616,7 @@ class LoLLMsServer(LollmsApplication):
         print(f"{ASCIIColors.color_red}Mounted personalities : {ASCIIColors.color_reset}{self.config.personalities}")
         if len(self.config.personalities)==0:
             ASCIIColors.warning("No personality selected. Selecting lollms. You can mount other personalities using lollms-settings application")
-            self.config.personalities = ["english/generic/lollms"]
+            self.config.personalities = ["generic/lollms"]
             self.config.save_config()
 
         if self.config.active_personality_id>=len(self.config.personalities):
