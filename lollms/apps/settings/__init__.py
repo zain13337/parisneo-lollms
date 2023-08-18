@@ -1,14 +1,8 @@
-from lollms.config import InstallOption
 from lollms.main_config import LOLLMSConfig
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
-from lollms.binding import BindingBuilder, ModelBuilder
-import shutil
 from pathlib import Path
 import argparse
-from tqdm import tqdm
-from lollms.personality import PersonalityBuilder
-from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
 from typing import Callable
 
