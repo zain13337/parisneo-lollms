@@ -43,7 +43,7 @@ class LoLLMsServer(LollmsApplication):
         self.model = None
         self.personalities = []
         self.answer = ['']
-        self.is_ready = True
+        self.busy = False
         
         
         parser = argparse.ArgumentParser()
@@ -431,48 +431,59 @@ class LoLLMsServer(LollmsApplication):
 
         @self.socketio.on('tokenize')
         def tokenize(data):
+            client_id = request.sid
             prompt = data['prompt']
             tk = self.model.tokenize(prompt)
-            emit("tokenized", {"tokens":tk})
+            emit("tokenized", {"tokens":tk}, room=client_id)
 
         @self.socketio.on('detokenize')
         def detokenize(data):
+            client_id = request.sid
             prompt = data['prompt']
             txt = self.model.detokenize(prompt)
-            emit("detokenized", {"text":txt})
+            emit("detokenized", {"text":txt}, room=client_id)
 
         @self.socketio.on('embed')
         def detokenize(data):
+            client_id = request.sid
             prompt = data['prompt']
             txt = self.model.embed(prompt)
-            emit("embeded", {"text":txt})
+            self.socketio.emit("embeded", {"text":txt}, room=client_id)
 
-        @self.socketio.on('cancel_generation')
-        def cancel_generation(data):
+        @self.socketio.on('cancel_text_generation')
+        def cancel_text_generation(data):
             client_id = request.sid
             self.clients[client_id]["requested_stop"]=True
             print(f"Client {client_id} requested canceling generation")
-            emit("generation_canceled", {"message":"Generation is canceled."})
+            self.socketio.emit("generation_canceled", {"message":"Generation is canceled."}, room=client_id)
             self.socketio.sleep(0)
+            self.busy = False
 
 
+        # A copy of the original lollms-server generation code needed for playground
         @self.socketio.on('generate_text')
         def handle_generate_text(data):
             client_id = request.sid
             ASCIIColors.info(f"Text generation requested by client: {client_id}")
-            if not self.is_ready:
-                emit("buzzy", {"message":"I am buzzy. Come back later."}, room=client_id)
+            if self.busy:
+                self.socketio.emit("busy", {"message":"I am busy. Come back later."}, room=client_id)
                 self.socketio.sleep(0)
-                ASCIIColors.warning(f"OOps request {client_id}  refused!! Server buzy")
+                ASCIIColors.warning(f"OOps request {client_id}  refused!! Server busy")
                 return
             def generate_text():
-                self.is_ready = False
+                self.busy = True
                 try:
                     model = self.model
                     self.clients[client_id]["is_generating"]=True
                     self.clients[client_id]["requested_stop"]=False
                     prompt          = data['prompt']
-                    personality_id  = data['personality']
+                    tokenized = model.tokenize(prompt)
+                    personality_id  = data.get('personality', -1)
+
+                    n_crop          = data.get('n_crop', len(tokenized))
+                    if n_crop!=-1:
+                        prompt          = model.detokenize(tokenized[-n_crop:])
+
                     n_predicts      = data["n_predicts"]
                     parameters      = data.get("parameters",{
                         "temperature":self.config["temperature"],
@@ -525,7 +536,7 @@ class LoLLMsServer(LollmsApplication):
                         except Exception as ex:
                             self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
                             ASCIIColors.error(f"\ndone")
-                        self.is_ready = True
+                        self.busy = False
                     else:
                         try:
                             personality: AIPersonality = self.personalities[personality_id]
@@ -598,11 +609,11 @@ class LoLLMsServer(LollmsApplication):
                         except Exception as ex:
                             self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
                             ASCIIColors.error(f"\ndone")
-                        self.is_ready = True
+                        self.busy = False
                 except Exception as ex:
                         trace_exception(ex)
                         self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
-                        self.is_ready = True
+                        self.busy = False
 
             # Start the text generation task in a separate thread
             task = self.socketio.start_background_task(target=generate_text)
