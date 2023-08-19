@@ -1,5 +1,5 @@
 from lollms.config import InstallOption
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from lollms.types import MSG_TYPE
@@ -12,7 +12,7 @@ from lollms.apps.console import MainMenu
 from lollms.paths import LollmsPaths
 from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
-from lollms.utilities import TextVectorizer
+from lollms.utilities import TextVectorizer, trace_exception
 from typing import List, Tuple
 from typing import Callable
 import importlib
@@ -84,7 +84,13 @@ class LoLLMsServer(LollmsApplication):
         self.app = Flask("LoLLMsServer")
         #self.app.config['SECRET_KEY'] = 'lollmssecret'
         CORS(self.app)  # Enable CORS for all routes
+        def get_config(self):
+            ASCIIColors.yellow("Requested configuration")
+            return jsonify(self.config.to_dict())
         
+        self.app.add_url_rule(
+            "/get_config", "get_config", get_config, methods=["GET"]
+        )        
         self.socketio = SocketIO(self.app, cors_allowed_origins='*', ping_timeout=1200, ping_interval=4000)
 
         # Set log level to warning
@@ -116,6 +122,7 @@ class LoLLMsServer(LollmsApplication):
             if client_id in self.clients:
                 del self.clients[client_id]
             print(f'Client disconnected with session ID: {client_id}')
+
 
 
         @self.socketio.on('list_available_bindings')
@@ -460,137 +467,143 @@ class LoLLMsServer(LollmsApplication):
                 return
             def generate_text():
                 self.is_ready = False
-                model = self.model
-                self.clients[client_id]["is_generating"]=True
-                self.clients[client_id]["requested_stop"]=False
-                prompt          = data['prompt']
-                personality_id  = data['personality']
-                n_predicts      = data["n_predicts"]
-                parameters      = data.get("parameters",{
-                    "temperature":self.config["temperature"],
-                    "top_k":self.config["top_k"],
-                    "top_p":self.config["top_p"],
-                    "repeat_penalty":self.config["repeat_penalty"],
-                    "repeat_last_n":self.config["repeat_last_n"],
-                    "seed":self.config["seed"]
-                })
+                try:
+                    model = self.model
+                    self.clients[client_id]["is_generating"]=True
+                    self.clients[client_id]["requested_stop"]=False
+                    prompt          = data['prompt']
+                    personality_id  = data['personality']
+                    n_predicts      = data["n_predicts"]
+                    parameters      = data.get("parameters",{
+                        "temperature":self.config["temperature"],
+                        "top_k":self.config["top_k"],
+                        "top_p":self.config["top_p"],
+                        "repeat_penalty":self.config["repeat_penalty"],
+                        "repeat_last_n":self.config["repeat_last_n"],
+                        "seed":self.config["seed"]
+                    })
 
-                if personality_id==-1:
-                    # Raw text generation
-                    self.answer = {"full_text":""}
-                    def callback(text, message_type: MSG_TYPE, metadata:dict={}):
-                        if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
-                            ASCIIColors.success(f"generated:{len(self.answer['full_text'].split())} words", end='\r')
-                            self.answer["full_text"] = self.answer["full_text"] + text
-                            self.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
-                            self.socketio.sleep(0)
-                        if client_id in self.clients:# Client disconnected                      
-                            if self.clients[client_id]["requested_stop"]:
-                                return False
-                            else:
-                                return True
-                        else:
-                            return False                            
-
-                    tk = model.tokenize(prompt)
-                    n_tokens = len(tk)
-                    fd = model.detokenize(tk[-min(self.config.ctx_size-n_predicts,n_tokens):])
-
-                    try:
-                        ASCIIColors.print("warming up", ASCIIColors.color_bright_cyan)
-                        generated_text = model.generate(fd, 
-                                                        n_predict=n_predicts, 
-                                                        callback=callback,
-                                                        temperature = parameters["temperature"],
-                                                        top_k = parameters["top_k"],
-                                                        top_p = parameters["top_p"],
-                                                        repeat_penalty = parameters["repeat_penalty"],
-                                                        repeat_last_n = parameters["repeat_last_n"],
-                                                        seed = parameters["seed"]                                                
-                                                        )
-                        ASCIIColors.success(f"\ndone")
-                        if client_id in self.clients:
-                            if not self.clients[client_id]["requested_stop"]:
-                                # Emit the generated text to the client
-                                self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)                
-                                self.socketio.sleep(0)
-                    except Exception as ex:
-                        self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
-                        ASCIIColors.error(f"\ndone")
-                    self.is_ready = True
-                else:
-                    try:
-                        personality: AIPersonality = self.personalities[personality_id]
-                        ump = self.config.discussion_prompt_separator +self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
-                        personality.model = model
-                        cond_tk = personality.model.tokenize(personality.personality_conditioning)
-                        n_cond_tk = len(cond_tk)
-                        # Placeholder code for text generation
-                        # Replace this with your actual text generation logic
-                        print(f"Text generation requested by client: {client_id}")
-
-                        self.answer["full_text"] = ''
-                        full_discussion_blocks = self.clients[client_id]["full_discussion_blocks"]
-
-                        if prompt != '':
-                            if personality.processor is not None and personality.processor_cfg["process_model_input"]:
-                                preprocessed_prompt = personality.processor.process_model_input(prompt)
-                            else:
-                                preprocessed_prompt = prompt
-                            
-                            if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                                full_discussion_blocks.append(ump)
-                                full_discussion_blocks.append(preprocessed_prompt)
-                        
-                            else:
-
-                                full_discussion_blocks.append(ump)
-                                full_discussion_blocks.append(preprocessed_prompt)
-                                full_discussion_blocks.append(personality.link_text)
-                                full_discussion_blocks.append(personality.ai_message_prefix)
-
-                        full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
-
+                    if personality_id==-1:
+                        # Raw text generation
+                        self.answer = {"full_text":""}
                         def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                             if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
+                                ASCIIColors.success(f"generated:{len(self.answer['full_text'].split())} words", end='\r')
                                 self.answer["full_text"] = self.answer["full_text"] + text
-                                self.socketio.emit('text_chunk', {'chunk': text}, room=client_id)
+                                self.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
                                 self.socketio.sleep(0)
-                            try:
+                            if client_id in self.clients:# Client disconnected                      
                                 if self.clients[client_id]["requested_stop"]:
                                     return False
                                 else:
                                     return True
-                            except: # If the client is disconnected then we stop talking to it
-                                return False
+                            else:
+                                return False                            
 
-                        tk = personality.model.tokenize(full_discussion)
+                        tk = model.tokenize(prompt)
                         n_tokens = len(tk)
-                        fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk-personality.model_n_predicts,n_tokens):])
-                        
-                        if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                            ASCIIColors.info("processing...")
-                            generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
-                        else:
-                            ASCIIColors.info("generating...")
-                            generated_text = personality.model.generate(
-                                                                        personality.personality_conditioning+fd, 
-                                                                        n_predict=personality.model_n_predicts, 
-                                                                        callback=callback)
+                        fd = model.detokenize(tk[-min(self.config.ctx_size-n_predicts,n_tokens):])
 
-                        if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
-                            generated_text = personality.processor.process_model_output(generated_text)
+                        try:
+                            ASCIIColors.print("warming up", ASCIIColors.color_bright_cyan)
+                            generated_text = model.generate(fd, 
+                                                            n_predict=n_predicts, 
+                                                            callback=callback,
+                                                            temperature = parameters["temperature"],
+                                                            top_k = parameters["top_k"],
+                                                            top_p = parameters["top_p"],
+                                                            repeat_penalty = parameters["repeat_penalty"],
+                                                            repeat_last_n = parameters["repeat_last_n"],
+                                                            seed = parameters["seed"]                                                
+                                                            )
+                            ASCIIColors.success(f"\ndone")
+                            if client_id in self.clients:
+                                if not self.clients[client_id]["requested_stop"]:
+                                    # Emit the generated text to the client
+                                    self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)                
+                                    self.socketio.sleep(0)
+                        except Exception as ex:
+                            self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                            ASCIIColors.error(f"\ndone")
+                        self.is_ready = True
+                    else:
+                        try:
+                            personality: AIPersonality = self.personalities[personality_id]
+                            ump = self.config.discussion_prompt_separator +self.config.user_name+": " if self.config.use_user_name_in_discussions else self.personality.user_message_prefix
+                            personality.model = model
+                            cond_tk = personality.model.tokenize(personality.personality_conditioning)
+                            n_cond_tk = len(cond_tk)
+                            # Placeholder code for text generation
+                            # Replace this with your actual text generation logic
+                            print(f"Text generation requested by client: {client_id}")
 
-                        full_discussion_blocks.append(generated_text.strip())
-                        ASCIIColors.success("\ndone")
+                            self.answer["full_text"] = ''
+                            full_discussion_blocks = self.clients[client_id]["full_discussion_blocks"]
 
-                        # Emit the generated text to the client
-                        self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)
-                        self.socketio.sleep(0)
-                    except Exception as ex:
+                            if prompt != '':
+                                if personality.processor is not None and personality.processor_cfg["process_model_input"]:
+                                    preprocessed_prompt = personality.processor.process_model_input(prompt)
+                                else:
+                                    preprocessed_prompt = prompt
+                                
+                                if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
+                                    full_discussion_blocks.append(ump)
+                                    full_discussion_blocks.append(preprocessed_prompt)
+                            
+                                else:
+
+                                    full_discussion_blocks.append(ump)
+                                    full_discussion_blocks.append(preprocessed_prompt)
+                                    full_discussion_blocks.append(personality.link_text)
+                                    full_discussion_blocks.append(personality.ai_message_prefix)
+
+                            full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
+
+                            def callback(text, message_type: MSG_TYPE, metadata:dict={}):
+                                if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
+                                    self.answer["full_text"] = self.answer["full_text"] + text
+                                    self.socketio.emit('text_chunk', {'chunk': text}, room=client_id)
+                                    self.socketio.sleep(0)
+                                try:
+                                    if self.clients[client_id]["requested_stop"]:
+                                        return False
+                                    else:
+                                        return True
+                                except: # If the client is disconnected then we stop talking to it
+                                    return False
+
+                            tk = personality.model.tokenize(full_discussion)
+                            n_tokens = len(tk)
+                            fd = personality.model.detokenize(tk[-min(self.config.ctx_size-n_cond_tk-personality.model_n_predicts,n_tokens):])
+                            
+                            if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
+                                ASCIIColors.info("processing...")
+                                generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
+                            else:
+                                ASCIIColors.info("generating...")
+                                generated_text = personality.model.generate(
+                                                                            personality.personality_conditioning+fd, 
+                                                                            n_predict=personality.model_n_predicts, 
+                                                                            callback=callback)
+
+                            if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
+                                generated_text = personality.processor.process_model_output(generated_text)
+
+                            full_discussion_blocks.append(generated_text.strip())
+                            ASCIIColors.success("\ndone")
+
+                            # Emit the generated text to the client
+                            self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)
+                            self.socketio.sleep(0)
+                        except Exception as ex:
+                            self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                            ASCIIColors.error(f"\ndone")
+                        self.is_ready = True
+                except Exception as ex:
+                        trace_exception(ex)
                         self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
-                        ASCIIColors.error(f"\ndone")
-                    self.is_ready = True
+                        self.is_ready = True
+
             # Start the text generation task in a separate thread
             task = self.socketio.start_background_task(target=generate_text)
             
