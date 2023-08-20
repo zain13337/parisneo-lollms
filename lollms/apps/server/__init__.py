@@ -23,6 +23,9 @@ import yaml
 import copy
 import gc
 import json
+import shutil
+
+
 def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
     ASCIIColors.info(f"Searching files from {lollms_paths.personal_configuration_path}")
@@ -84,13 +87,15 @@ class LoLLMsServer(LollmsApplication):
         self.app = Flask("LoLLMsServer")
         #self.app.config['SECRET_KEY'] = 'lollmssecret'
         CORS(self.app)  # Enable CORS for all routes
-        def get_config(self):
+
+        def get_config():
             ASCIIColors.yellow("Requested configuration")
             return jsonify(self.config.to_dict())
         
         self.app.add_url_rule(
             "/get_config", "get_config", get_config, methods=["GET"]
-        )        
+        )
+
         self.socketio = SocketIO(self.app, cors_allowed_origins='*', ping_timeout=1200, ping_interval=4000)
 
         # Set log level to warning
