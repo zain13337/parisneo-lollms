@@ -58,6 +58,7 @@ class LollmsApplication:
         else:
             if load_binding:
                 try:
+                    ASCIIColors.info(f">Loading binding {self.config.binding_name}. Please wait ...")
                     self.binding            = self.load_binding()
                 except Exception as ex:
                     ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
@@ -74,7 +75,11 @@ class LollmsApplication:
                                 
                         if self.config.model_name is not None:
                             try:
+                                ASCIIColors.info(f">Loading model {self.config.model_name}. Please wait ...")
                                 self.model          = self.load_model()
+                                if self.model is not None:
+                                    ASCIIColors.success(f"Model {self.config.model_name} loaded successfully.")
+
                             except Exception as ex:
                                 ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
                                 trace_exception(ex)
@@ -125,8 +130,10 @@ class LollmsApplication:
                 self.n_cond_tk = len(self.cond_tk)
                 ASCIIColors.success(f"Personality  {personality.name} mounted successfully")
             else:
-                ASCIIColors.success(f"Personality  {personality.name} mounted successfully but no model is selected")
-
+                if personality.selected_language is not None:
+                    ASCIIColors.success(f"Personality  {personality.name} : {personality.selected_language} mounted successfully but no model is selected")
+                else:
+                    ASCIIColors.success(f"Personality  {personality.name} mounted successfully but no model is selected")
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
@@ -178,7 +185,7 @@ class LollmsApplication:
     def select_personality(self, id:int):
         if id<len(self.config.personalities):
             self.config.active_personality_id = id
-            self.personality = self.mount_personalities[id]
+            self.personality = self.mounted_personalities[id]
             self.config.save_config()
             return True
         else:

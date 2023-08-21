@@ -44,9 +44,7 @@ def install_package(package_name):
 
 class AIPersonality:
 
-    # Extra 
-
-    
+    # Extra     
     def __init__(
                     self, 
                     personality_package_path: str|Path, 
@@ -54,6 +52,7 @@ class AIPersonality:
                     config:LOLLMSConfig,
                     model:LLMBinding=None, 
                     run_scripts=True, 
+                    selected_language=None,
                     is_relative_path=True,
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
                     callback: Callable[[str, int, dict], bool]=None
@@ -87,6 +86,8 @@ class AIPersonality:
         self._name: str = "lollms"
         self._user_name: str = "user"
         self._category: str = "General"
+        self._supported_languages: str = []
+        self._selected_language: str = selected_language
 
         # Conditionning
         self._personality_description: str = "This personality is a helpful and Kind AI ready to help you solve your problems"
@@ -194,6 +195,19 @@ Date: {{date}}
         else:
             self._secret_cfg = None
 
+        languages = package_path / "languages"
+
+        if languages.exists():
+            self._supported_languages = []
+            for lang in [l for l in languages.iterdir()]:
+                self._supported_languages.append(lang.stem)
+
+            if self._selected_language is not None and self._selected_language in self._supported_languages:
+                config_file = languages / (self._selected_language+".yaml")
+                with open(config_file, "r", encoding='utf-8') as f:
+                    config = yaml.safe_load(f)
+
+
 
         # Load parameters from the configuration file
         self._version = config.get("version", self._version)
@@ -201,6 +215,7 @@ Date: {{date}}
         self._name = config.get("name", self._name)
         self._user_name = config.get("user_name", self._user_name)
         self._category = config.get("category", self._category)
+
         self._personality_description = config.get("personality_description", self._personality_description)
         self._personality_conditioning = config.get("personality_conditioning", self._personality_conditioning)
         self._welcome_message = config.get("welcome_message", self._welcome_message)
@@ -293,6 +308,8 @@ Date: {{date}}
             "name": self._name,
             "user_name": self._user_name,
             "category": self._category,
+            "supported_languages": self._supported_languages,
+            "selected_language": self._selected_language,
             "personality_description": self._personality_description,
             "personality_conditioning": self._personality_conditioning,
             "welcome_message": self._welcome_message,
@@ -332,6 +349,8 @@ Date: {{date}}
             "name": self._name,
             "user_name": self._user_name,
             "category": self._category,
+            "supported_languages": self._supported_languages,
+            "selected_language": self._selected_language,
             "personality_description": self._personality_description,
             "personality_conditioning": self._personality_conditioning,
             "welcome_message": self._welcome_message,
@@ -423,6 +442,28 @@ Date: {{date}}
     def category(self, value: str):
         """Set the category."""
         self._category = value
+
+
+    @property
+    def supported_languages(self) -> str:
+        """Get the supported_languages."""
+        return self._supported_languages
+
+    @supported_languages.setter
+    def supported_languages(self, value: str):
+        """Set the supported_languages."""
+        self._supported_languages = value
+
+
+    @property
+    def selected_language(self) -> str:
+        """Get the selected_language."""
+        return self._selected_language
+
+    @selected_language.setter
+    def selected_language(self, value: str):
+        """Set the selected_language."""
+        self._selected_language = value
 
     @property
     def personality_description(self) -> str:
@@ -1371,22 +1412,33 @@ class PersonalityBuilder:
         else:
             if id>len(self.config["personalities"]):
                 id = len(self.config["personalities"])-1
+
+        if ":" in self.config["personalities"][id]:
+            elements = self.config["personalities"][id].split(":")
+            personality_folder = elements[0]
+            personality_language = elements[1]
+        else:
+            personality_folder = self.config["personalities"][id]
+            personality_language = None
+
         if len(self.config["personalities"][id].split("/"))==2:
             self.personality = AIPersonality(
-                                            self.lollms_paths.personalities_zoo_path / self.config["personalities"][id],
+                                            self.lollms_paths.personalities_zoo_path / personality_folder,
                                             self.lollms_paths,
                                             self.config,
                                             self.model, 
+                                            selected_language=personality_language,
                                             installation_option=self.installation_option,
                                             callback=self.callback
                                         )
         else:
             self.personality = AIPersonality(
-                                            self.config["personalities"][id],
+                                            personality_folder,
                                             self.lollms_paths,
                                             self.config,
                                             self.model,
                                             is_relative_path=False,
+                                            selected_language=personality_language,
                                             installation_option=self.installation_option,
                                             callback=self.callback
                                         )

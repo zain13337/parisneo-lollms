@@ -319,6 +319,8 @@ def main():
             ASCIIColors.success("Couldn't reset LOLLMS configuration")
     if args.show_time_elapsed:
         show_time_elapsed = True
+    else:
+        show_time_elapsed = False
 
     # Parse the command-line arguments
     args = parser.parse_args()

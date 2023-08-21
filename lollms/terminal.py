@@ -310,7 +310,18 @@ class MainMenu(Menu):
             if 1 <= choice <= len(personality_names)-1:
                 name = personality_names[choice - 1]
                 print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
-                self.lollms_app.config["personalities"].append(f"{category}/{name}")
+                langs_dir = self.lollms_app.lollms_paths.personalities_zoo_path/category/name/"languages"
+                if langs_dir.exists():
+                    langs = [f.stem for f in langs_dir.iterdir()]
+                    print("Select language")
+                    choice = self.show_menu(langs)
+                    if 1 <= choice <= len(langs):
+                        lang = langs[choice - 1]
+                        self.lollms_app.config["personalities"].append(f"{category}/{name}:{lang}")
+                    else:
+                        print("Invalid choice!")
+                else:
+                    self.lollms_app.config["personalities"].append(f"{category}/{name}")
                 self.lollms_app.mount_personality(len(self.lollms_app.config["personalities"])-1, callback = self.callback)
                 self.lollms_app.config.save_config()
                 print("Personality mounted successfully!")
@@ -351,8 +362,10 @@ class MainMenu(Menu):
             choice = int(self.show_menu(entries, self.lollms_app.config['active_personality_id']))-1
             if choice<len(entries)-1:
                 self.lollms_app.select_personality(choice)
+                ASCIIColors.success(f"Selected personality: {self.personality.name}")
         except Exception as ex:
             ASCIIColors.error(f"Couldn't set personality.\nGot this exception:{ex}")
+            trace_exception(ex)
 
     def reinstall_binding(self):
         lollms_app = self.lollms_app
