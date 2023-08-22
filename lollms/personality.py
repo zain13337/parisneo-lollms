@@ -281,6 +281,14 @@ Date: {{date}}
         self._assets_list = contents
         return config
 
+    def add_file(self, path, callback=None):
+        if callback is not None:
+            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+        self.files.append(path)
+        
+        return True
+
+
     def save_personality(self, package_path=None):
         """
         Save the personality parameters to a YAML configuration file.
