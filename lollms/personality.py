@@ -993,7 +993,7 @@ class APScript(StateMachine):
         self.personality                        = personality
         self.personality_config                 = personality_config
         self.installation_option                = personality.installation_option
-        self.configuration_file_path            = self.personality.lollms_paths.personal_configuration_path/self.personality.personality_folder_name/f"config.yaml"
+        self.configuration_file_path            = self.personality.lollms_paths.personal_configuration_path/"personalities"/self.personality.personality_folder_name/f"config.yaml"
         self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         self.personality_config.config.file_path    = self.configuration_file_path

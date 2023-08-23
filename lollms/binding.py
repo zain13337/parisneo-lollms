@@ -51,7 +51,7 @@ class LLMBinding:
         self.file_extension         = file_extension
         self.seed                   = config["seed"]
 
-        self.configuration_file_path = lollms_paths.personal_configuration_path/self.binding_folder_name/f"config.yaml"
+        self.configuration_file_path = lollms_paths.personal_configuration_path/"bindings"/self.binding_folder_name/f"config.yaml"
         self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
         self.binding_config.config.file_path = self.configuration_file_path
 
