@@ -19,6 +19,7 @@ from lollms.helpers import ASCIIColors
 from lollms.types import MSG_TYPE
 from typing import Callable
 import json
+from lollms.utilities import TextVectorizer, GenericDataLoader
 
 
 def is_package_installed(package_name):
@@ -72,6 +73,7 @@ class AIPersonality:
         self.callback = callback
 
         self.files = []
+        self.vectorizer = None
 
         self.installation_option = installation_option
 
@@ -282,13 +284,30 @@ Date: {{date}}
         return config
 
     def add_file(self, path, callback=None):
-        if callback is not None:
-            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+
         self.files.append(path)
-        
-        return True
-
-
+        db_path = self.lollms_paths.personal_databases_path / self.name / "db.json"
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        if self.vectorizer is None:
+            self.vectorizer = TextVectorizer(self.config.data_vectorization_method, # supported "model_embedding" or "ftidf_vectorizer"
+                        model=self.model, #needed in case of using model_embedding
+                        database_path=db_path,
+                        save_db=self.config.data_vectorization_save_db,
+                        visualize_data_at_startup=False,
+                        visualize_data_at_add_file=False,
+                        visualize_data_at_generate=False,
+                        data_visualization_method="PCA",
+                        database_dict=None)
+        try:
+            data = GenericDataLoader.read_file(path)
+            self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size)
+            self.vectorizer.index()
+            if callback is not None:
+                callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+            return True
+        except ValueError as ve:
+            ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+            return False
     def save_personality(self, package_path=None):
         """
         Save the personality parameters to a YAML configuration file.

@@ -1,6 +1,4 @@
-from lollms.personality import APScript
 from lollms.helpers import ASCIIColors, trace_exception
-from lollms.paths import LollmsPaths
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from pathlib import Path
@@ -597,6 +595,24 @@ class TextVectorizer:
       
 class GenericDataLoader:
     @staticmethod        
+    def read_file(file_path:Path):
+        if file_path.suffix ==".pdf":
+            return GenericDataLoader.read_pdf_file(file_path)
+        elif file_path.suffix == ".txt":
+            return GenericDataLoader.read_text_file(file_path)
+        elif file_path.suffix == ".docx":
+            return GenericDataLoader.read_docx_file(file_path)
+        elif file_path.suffix == ".json":
+            return GenericDataLoader.read_json_file(file_path)
+        elif file_path.suffix == ".html":
+            return GenericDataLoader.read_html_file(file_path)
+        elif file_path.suffix == ".pptx":
+            return GenericDataLoader.read_pptx_file(file_path)
+        else:
+            raise ValueError("Unknown file type")
+    def get_supported_file_types():
+        return ["pdf", "txt", "docx", "json", "html", "pptx"]    
+    @staticmethod        
     def read_pdf_file(file_path):
         try:
             import PyPDF2
@@ -623,52 +639,6 @@ class GenericDataLoader:
         markdown_text = text.replace('\n', '  \n')  # Adding double spaces at the end of each line for Markdown line breaks
         
         return markdown_text
-        """
-
-                    
-        from io import BytesIO         
-        with open(file_path, 'rb') as pdf_file:
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            all_text = []
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                if '/Resources' in page and '/XObject' in page['/Resources']:
-                    xObject = page['/Resources']['/XObject']
-                    if xObject is not None:
-                        for obj in xObject:
-                            # Check if the object is an image
-                            if xObject[obj]['/Subtype'] == '/Image':
-                                image_data = xObject[obj].get_object()
-                                image_stream = image_data.get_object()
-                                image_stream_data = image_stream.get_data()
-
-                                try:
-                                    # Extract text from the image using pytesseract
-                                    extracted_text = pytesseract.image_to_string(Image.open(BytesIO(image_stream_data)))
-                                    all_text.append(extracted_text)
-                                except pytesseract.TesseractNotFoundError:
-                                    ASCIIColors.error("Please install tesserract to enable ocr data extraction from your pdf file")
-                                except UnidentifiedImageError:
-                                    # Ignore images that cannot be identified
-                                    pass
-
-                # Extract regular text from the page using PyPDF2's text extraction
-                regular_text = page.extract_text()
-                if regular_text:
-                    all_text.append(regular_text)
-
-            return "\n\n".join(all_text)
-        """
-            
-        """
-        text = ""
-        with open(file_path, 'rb') as pdf_file:
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            for page in pdf_reader.pages:
-                text += page.extract_text()
-        
-        return text
-        """
 
     @staticmethod
     def read_docx_file(file_path):
