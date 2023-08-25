@@ -40,7 +40,7 @@ class LLMBinding:
                     config:LOLLMSConfig, 
                     binding_config:TypedConfig,
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
-                    file_extension='*.bin'
+                    supported_file_extensions='*.bin'
                 ) -> None:
         
         self.binding_dir            = binding_dir
@@ -48,7 +48,7 @@ class LLMBinding:
         self.lollms_paths           = lollms_paths
         self.config                 = config
         self.binding_config         = binding_config
-        self.file_extension         = file_extension
+        self.supported_file_extensions         = supported_file_extensions
         self.seed                   = config["seed"]
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/"bindings"/self.binding_folder_name/f"config.yaml"
@@ -254,7 +254,7 @@ class LLMBinding:
         """Lists the models for this binding
         """
         models_dir = self.lollms_paths.personal_models_path/config["binding_name"]  # replace with the actual path to the models folder
-        return [f.name for f in models_dir.iterdir() if f.suffix == self.file_extension.replace("*","") or f.suffix==".reference"]
+        return [f.name for f in models_dir.iterdir() if f.suffix in self.supported_file_extensions or f.suffix==".reference"]
 
     @staticmethod
     def reinstall_pytorch_with_cuda():

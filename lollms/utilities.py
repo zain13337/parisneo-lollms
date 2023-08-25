@@ -112,7 +112,7 @@ class File64BitsManager:
         return Image.open(io.BytesIO(base64.b64decode(image_data)))  
 
     @staticmethod
-    def get_file_extension_from_base64(b64data):
+    def get_supported_file_extensions_from_base64(b64data):
         # Extract the file extension from the base64 data
         data_match = re.match(r'^data:(.*?);base64,', b64data)
         if data_match:

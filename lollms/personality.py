@@ -1006,9 +1006,6 @@ class APScript(StateMachine):
         else:
             self.load_personality_config()
 
-        self.models_folder = self.personality.lollms_paths.personal_models_path / self.personality.personality_folder_name
-        self.models_folder.mkdir(parents=True, exist_ok=True)
-
            
     def load_personality_config(self):
         """
