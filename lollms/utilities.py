@@ -181,7 +181,7 @@ class DocumentDecomposer:
         return sentences
 
     @staticmethod
-    def decompose_document(text, max_chunk_size):
+    def decompose_document(text, max_chunk_size, tokenize):
         cleaned_text = DocumentDecomposer.clean_text(text)
         paragraphs = DocumentDecomposer.split_into_paragraphs(cleaned_text)
 
@@ -189,7 +189,7 @@ class DocumentDecomposer:
         clean_chunks = []
 
         current_chunk = ""  # To store the current chunk being built
-
+        l=0
         for paragraph in paragraphs:
             # Tokenize the paragraph into sentences
             sentences = DocumentDecomposer.tokenize_sentences(paragraph)
@@ -197,17 +197,20 @@ class DocumentDecomposer:
             for sentence in sentences:
                 # If adding the current sentence to the chunk exceeds the max_chunk_size,
                 # we add the current chunk to the list of clean chunks and start a new chunk
-                if len(current_chunk) + len(sentence) + 1 > max_chunk_size:
+                nb_tokens = len(tokenize(sentence))
+                if l + nb_tokens + 1 > max_chunk_size:
                     clean_chunks.append(current_chunk.strip())
                     current_chunk = ""
+                    l=0
 
                 # Add the current sentence to the chunk
                 current_chunk += sentence + " "
+                l += nb_tokens
 
-            # Add the remaining chunk from the paragraph to the clean_chunks
-            if current_chunk:
-                clean_chunks.append(current_chunk.strip())
-                current_chunk = ""
+        # Add the remaining chunk from the paragraph to the clean_chunks
+        if current_chunk:
+            clean_chunks.append(current_chunk.strip())
+            current_chunk = ""
 
         return clean_chunks
     
@@ -419,7 +422,7 @@ class TextVectorizer:
         if document_id in self.embeddings and not force_vectorize:
             print(f"Document {document_id} already exists. Skipping vectorization.")
             return
-        chunks_text = DocumentDecomposer.decompose_document(text, chunk_size)
+        chunks_text = DocumentDecomposer.decompose_document(text, chunk_size, self.model.tokenize)
         self.chunks = []
         for i, chunk in enumerate(chunks_text):
             chunk_id = f"{document_id}_chunk_{i + 1}"
@@ -598,8 +601,6 @@ class GenericDataLoader:
     def read_file(file_path:Path):
         if file_path.suffix ==".pdf":
             return GenericDataLoader.read_pdf_file(file_path)
-        elif file_path.suffix == ".txt":
-            return GenericDataLoader.read_text_file(file_path)
         elif file_path.suffix == ".docx":
             return GenericDataLoader.read_docx_file(file_path)
         elif file_path.suffix == ".json":
@@ -608,10 +609,12 @@ class GenericDataLoader:
             return GenericDataLoader.read_html_file(file_path)
         elif file_path.suffix == ".pptx":
             return GenericDataLoader.read_pptx_file(file_path)
+        if file_path.suffix in [".txt", ".md", ".log", ".cpp", ".java", ".js", ".py", ".rb", ".sh", ".sql", ".css", ".html", ".php", ".json", ".xml", ".yaml", ".yml", ".h", ".hh", ".hpp", ".inc", ".snippet", ".snippets", ".asm", ".s", ".se", ".sym", ".ini", ".inf", ".map", ".bat"]:
+            return GenericDataLoader.read_text_file(file_path)
         else:
             raise ValueError("Unknown file type")
     def get_supported_file_types():
-        return ["pdf", "txt", "docx", "json", "html", "pptx"]    
+        return ["pdf", "txt", "docx", "json", "html", "pptx",".txt", ".md", ".log", ".cpp", ".java", ".js", ".py", ".rb", ".sh", ".sql", ".css", ".html", ".php", ".json", ".xml", ".yaml", ".yml", ".h", ".hh", ".hpp", ".inc", ".snippet", ".snippets", ".asm", ".s", ".se", ".sym", ".ini", ".inf", ".map", ".bat"]    
     @staticmethod        
     def read_pdf_file(file_path):
         try:
