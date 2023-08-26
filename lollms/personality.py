@@ -284,7 +284,7 @@ Date: {{date}}
     def add_file(self, path, callback=None):
 
         self.files.append(path)
-        db_path = self.lollms_paths.personal_databases_path / self.name / "db.json"
+        db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         if self.vectorizer is None:
             self.vectorizer = TextVectorizer(self.config.data_vectorization_method, # supported "model_embedding" or "ftidf_vectorizer"

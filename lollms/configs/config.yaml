@@ -8,7 +8,7 @@ enable_gpu: true
 
 # Host information
 host: localhost
-port: 9600
+port: 9601
 
 # Genreration parameters 
 discussion_prompt_separator: "!@>"

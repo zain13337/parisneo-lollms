@@ -142,9 +142,21 @@ class MainMenu(Menu):
 
     def main_settings(self):
         self.show([
-            {'name': 'Set user name', 'fn': self.set_user_name, 'help': "Sets the user name."},
+            {'name': 'Set host', 'fn': self.set_host, 'help': "Sets the host name."},
+            {'name': 'Set port', 'fn': self.set_port, 'help': "Sets the port number."},
+            {'name': 'Set user name', 'fn': self.set_user_name, 'help': "Sets t1he user name."},
             {'name': 'Set use user name in discussion', 'fn': self.set_use_user_name_in_discussions, 'help': "Sets the user name."},
         ])
+    def set_host(self):
+        print(f"Current host name : {self.lollms_app.config.host}")
+        self.lollms_app.config.host = input("New host name:")
+        self.lollms_app.config.save_config()
+
+    def set_port(self):
+        print(f"Current port number : {self.lollms_app.config.port}")
+        self.lollms_app.config.port = int(input("New port number:"))
+        self.lollms_app.config.save_config()
+
 
     def set_user_name(self):
         print(f"Current user name : {self.lollms_app.config.user_name}")

@@ -23,6 +23,7 @@ import yaml
 import copy
 import gc
 import json
+import traceback
 import shutil
 
 
@@ -38,9 +39,6 @@ def reset_all_installs(lollms_paths:LollmsPaths):
 class LoLLMsServer(LollmsApplication):
     def __init__(self):
         
-
-        host = "localhost"
-        port = "9601"
         self.clients = {}
         self.current_binding = None
         self.model = None
@@ -50,8 +48,8 @@ class LoLLMsServer(LollmsApplication):
         
         
         parser = argparse.ArgumentParser()
-        parser.add_argument('--host', '-hst', default=host, help='Host name')
-        parser.add_argument('--port', '-prt', default=port, help='Port number')
+        parser.add_argument('--host', '-hst', default=None, help='Host name')
+        parser.add_argument('--port', '-prt', default=None, help='Port number')
 
         
         parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
@@ -81,6 +79,12 @@ class LoLLMsServer(LollmsApplication):
         # Configuration loading part
         config = LOLLMSConfig.autoload(lollms_paths, None)
 
+        if args.host is not None:
+            config.host = args.host
+
+        if args.port is not None:
+            config.port = args.port
+
         super().__init__("lollms-server", config, lollms_paths)
 
         self.menu.show_logo()        
@@ -96,6 +100,87 @@ class LoLLMsServer(LollmsApplication):
             "/get_config", "get_config", get_config, methods=["GET"]
         )
 
+        def list_models():
+            if self.binding is not None:
+                models = self.binding.list_models(self.config)
+                ASCIIColors.yellow("Listing models")
+                return jsonify(models)
+            else:
+                return jsonify([])
+        
+        self.app.add_url_rule(
+            "/list_models", "list_models", list_models, methods=["GET"]
+        )
+
+        def get_active_model():
+            if self.binding is not None:
+                models = self.binding.list_models(self.config)
+                index = models.index(self.config.model_name)
+                ASCIIColors.yellow(f"Recovering active model: {models[index]}")
+                return jsonify({"model":models[index],"index":index})
+            else:
+                return jsonify(None)
+
+
+
+        self.app.add_url_rule(
+            "/get_active_model", "get_active_model", get_active_model, methods=["GET"]
+        )
+
+
+        def update_setting():
+            data = request.get_json()
+            setting_name = data['setting_name']
+
+            if setting_name== "model_name":
+                self.config["model_name"]=data['setting_value']
+                if self.config["model_name"] is not None:
+                    try:
+                        self.model = None
+                        if self.binding:
+                            del self.binding
+
+                        self.binding = None
+                        for per in self.mounted_personalities:
+                            per.model = None
+                        gc.collect()
+                        self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
+                        self.model = self.binding.build_model()
+                        for per in self.mounted_personalities:
+                            per.model = self.model
+                    except Exception as ex:
+                        # Catch the exception and get the traceback as a list of strings
+                        traceback_lines = traceback.format_exception(type(ex), ex, ex.__traceback__)
+
+                        # Join the traceback lines into a single string
+                        traceback_text = ''.join(traceback_lines)
+                        ASCIIColors.error(f"Couldn't load model: [{ex}]")
+                        ASCIIColors.error(traceback_text)
+                        return jsonify({ "status":False, 'error':str(ex)})
+                else:
+                    ASCIIColors.warning("Trying to set a None model. Please select a model for the binding")
+                print("update_settings : New model selected")
+
+            return jsonify({'setting_name': data['setting_name'], "status":True})
+
+        self.app.add_url_rule(
+            "/update_setting", "update_setting", update_setting, methods=["POST"]
+        )
+
+
+
+        def list_mounted_personalities():
+            if self.binding is not None:
+                ASCIIColors.yellow("Listing mounted personalities")
+                return jsonify(self.config.personalities)
+            else:
+                return jsonify([])
+        
+        self.app.add_url_rule(
+            "/list_mounted_personalities", "list_mounted_personalities", list_mounted_personalities, methods=["GET"]
+        )
+
+
         self.socketio = SocketIO(self.app, cors_allowed_origins='*', ping_timeout=1200, ping_interval=4000)
 
         # Set log level to warning
@@ -106,7 +191,7 @@ class LoLLMsServer(LollmsApplication):
         self.socketio_log.addHandler(logging.StreamHandler())
 
         self.initialize_routes()
-        self.run(args.host, args.port)
+        self.run(self.config.host, self.config.port)
 
 
     def initialize_routes(self):

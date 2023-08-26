@@ -1,5 +1,8 @@
 recursive-include lollms/configs *
-recursive-include lollms/apps/playground *
+recursive-include lollms/apps/playground/dist *
+recursive-include lollms/apps/playground/public *
+recursive-include lollms/apps/playground/presets *
+global-exclude *.bin
 global-exclude *.bin
 global-exclude *.pyc
 global-exclude local_config.yaml
