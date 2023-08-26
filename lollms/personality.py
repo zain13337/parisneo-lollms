@@ -131,8 +131,6 @@ Date: {{date}}
         self._logo: Optional[Image.Image] = None
         self._processor = None
 
-
-
         if personality_package_path is None:
             self.config = {}
             self.assets_list = []
@@ -146,16 +144,16 @@ Date: {{date}}
 
             # Validate that the path exists
             if not self.personality_package_path.exists():
-                raise ValueError("The provided path does not exist.")
+                raise ValueError(f"Could not find the personality package:{self.personality_package_path}")
 
             # Validate that the path format is OK with at least a config.yaml file present in the folder
             if not self.personality_package_path.is_dir():
-                raise ValueError("The provided path is not a folder.")
+                raise ValueError(f"Personality package path is not a folder:{self.personality_package_path}")
 
             self.personality_folder_name = self.personality_package_path.stem
 
             # Open and store the personality
-            self.load_personality(personality_package_path)
+            self.load_personality()
 
     def setCallback(self, callback: Callable[[str, int, dict], bool]):
         self.callback = callback
@@ -1447,7 +1445,7 @@ class PersonalityBuilder:
 
         if len(self.config["personalities"][id].split("/"))==2:
             self.personality = AIPersonality(
-                                            self.lollms_paths.personalities_zoo_path / personality_folder,
+                                            personality_folder,
                                             self.lollms_paths,
                                             self.config,
                                             self.model, 
