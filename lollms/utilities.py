@@ -7,6 +7,17 @@ import re
 import subprocess
 import gc
 
+def git_pull(folder_path):
+    try:
+        # Change the current working directory to the desired folder
+        subprocess.run(["git", "checkout", folder_path], check=True, cwd=folder_path)
+        # Run 'git pull' in the specified folder
+        subprocess.run(["git", "pull"], check=True, cwd=folder_path)
+        print("Git pull successful in", folder_path)
+    except subprocess.CalledProcessError as e:
+        print("Error occurred while executing Git pull:", e)
+        # Handle any specific error handling here if required
+
 class AdvancedGarbageCollector:
     @staticmethod
     def hardCollect(obj):

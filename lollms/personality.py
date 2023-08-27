@@ -1052,6 +1052,7 @@ class APScript(StateMachine):
             else:
                 ASCIIColors.error("Pytorch installed successfully!!")
 
+
     def add_file(self, path, callback=None):
         if callback is not None:
             callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
