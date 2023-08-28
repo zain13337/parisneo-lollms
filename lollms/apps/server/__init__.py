@@ -402,7 +402,8 @@ class LoLLMsServer(LollmsApplication):
                                                 personality_path, 
                                                 self.lollms_paths, 
                                                 self.config,
-                                                self.model
+                                                self.model,
+                                                self
                                             )
                 self.personalities.append(personality)
                 self.config["personalities"].append(personality_path)

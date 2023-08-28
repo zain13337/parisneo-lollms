@@ -124,7 +124,7 @@ class LollmsApplication:
 
     def mount_personality(self, id:int, callback=None):
         try:
-            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, callback=callback).build_personality(id)
+            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, self, callback=callback).build_personality(id)
             if personality.model is not None:
                 self.cond_tk = personality.model.tokenize(personality.personality_conditioning)
                 self.n_cond_tk = len(self.cond_tk)
@@ -194,7 +194,7 @@ class LollmsApplication:
 
     def load_personality(self, callback=None):
         try:
-            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, callback=callback).build_personality()
+            personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, self, callback=callback).build_personality()
         except Exception as ex:
             ASCIIColors.error(f"Couldn't load personality. Please verify your configuration file at {self.configuration_path} or use the next menu to select a valid personality")
             ASCIIColors.error(f"Binding returned this exception : {ex}")

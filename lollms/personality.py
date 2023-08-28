@@ -51,7 +51,8 @@ class AIPersonality:
                     personality_package_path: str|Path, 
                     lollms_paths:LollmsPaths, 
                     config:LOLLMSConfig,
-                    model:LLMBinding=None, 
+                    model:LLMBinding=None,
+                    app=None,
                     run_scripts=True, 
                     selected_language=None,
                     is_relative_path=True,
@@ -71,6 +72,7 @@ class AIPersonality:
         self.model = model
         self.config = config
         self.callback = callback
+        self.app = app
 
         self.files = []
         self.vectorizer = None
@@ -1415,12 +1417,14 @@ class PersonalityBuilder:
                     lollms_paths:LollmsPaths, 
                     config:LOLLMSConfig, 
                     model:LLMBinding, 
+                    app=None,
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
                     callback=None
                 ):
         self.config = config
         self.lollms_paths = lollms_paths
         self.model = model
+        self.app = app
         self.installation_option = installation_option
         self.callback = callback
 
@@ -1449,7 +1453,8 @@ class PersonalityBuilder:
                                             personality_folder,
                                             self.lollms_paths,
                                             self.config,
-                                            self.model, 
+                                            self.model,
+                                            app=self.app,
                                             selected_language=personality_language,
                                             installation_option=self.installation_option,
                                             callback=self.callback
@@ -1460,6 +1465,7 @@ class PersonalityBuilder:
                                             self.lollms_paths,
                                             self.config,
                                             self.model,
+                                            app=self.app,
                                             is_relative_path=False,
                                             selected_language=personality_language,
                                             installation_option=self.installation_option,
