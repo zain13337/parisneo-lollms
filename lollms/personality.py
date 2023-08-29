@@ -1185,6 +1185,8 @@ class APScript(StateMachine):
             None
         """
         return None
+    
+    # ================================================= Sending commands to ui ===========================================
 
     def step_start(self, step_text, callback: Callable[[str, int, dict], bool]=None):
         """This triggers a step start

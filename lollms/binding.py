@@ -24,6 +24,7 @@ from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
 import traceback
 import urllib
+import inspect
 
 __author__ = "parisneo"
 __github__ = "https://github.com/ParisNeo/lollms_bindings_zoo"
@@ -64,6 +65,24 @@ class LLMBinding:
 
         self.models_folder = config.lollms_paths.personal_models_path / self.binding_folder_name
         self.models_folder.mkdir(parents=True, exist_ok=True)
+
+    def print_class_attributes(self, cls):
+        for attr in cls.__dict__:
+            if isinstance(attr, property) or isinstance(attr, type):
+                continue
+            value = getattr(cls, attr)
+            ASCIIColors.yellow("{}: {}".format(attr, value))
+
+    def get_parameter_info(self, cls):
+        # Get the signature of the class
+        sig = inspect.signature(cls)
+        
+        # Print each parameter name and value
+        for name, param in sig.parameters.items():
+            if param.default is not None:
+                print(f"{name}: {param.default}")
+            else:
+                print(f"{name}: Not specified")
 
     def __str__(self) -> str:
         return self.config["binding_name"]+f"({self.config['model_name']})"
