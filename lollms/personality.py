@@ -1006,7 +1006,6 @@ class APScript(StateMachine):
         else:
             self.load_personality_config()
 
-           
     def load_personality_config(self):
         """
         Load the content of local_config.yaml file.
