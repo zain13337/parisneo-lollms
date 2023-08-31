@@ -34,22 +34,35 @@ class LollmsPaths:
         else:
             self.default_cfg_path   = lollms_path / "configs/config.yaml"
 
-        self.personal_path                  = personal_path
-        self.personal_configuration_path    = personal_path / "configs"
-        self.personal_data_path             = personal_path / "data"
-        self.personal_databases_path        = personal_path / "databases"
-        self.personal_models_path           = personal_path / "models"
-        self.personal_uploads_path          = personal_path / "uploads"
-        self.personal_log_path              = personal_path / "logs"
-        self.personal_outputs_path          = personal_path / "outputs"
-        self.personal_user_infos_path       = personal_path / "user_infos"
+        self.personal_path                  = personal_path.resolve()
+        self.personal_configuration_path    = self.personal_path / "configs"
+        self.personal_data_path             = self.personal_path / "data"
+        self.personal_databases_path        = self.personal_path / "databases"
+        self.personal_models_path           = self.personal_path / "models"
+        self.personal_uploads_path          = self.personal_path / "uploads"
+        self.personal_log_path              = self.personal_path / "logs"
+        self.personal_outputs_path          = self.personal_path / "outputs"
+        self.personal_user_infos_path       = self.personal_path / "user_infos"
 
 
-        self.bindings_zoo_path              = personal_path / "bindings_zoo"
-        self.personalities_zoo_path         = personal_path / "personalities_zoo"
-        self.extensions_zoo_path            = personal_path / "extensions_zoo_path"
+        self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
+        self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
+        self.extensions_zoo_path            = self.personal_path / "extensions_zoo_path"
 
-
+        ASCIIColors.green("----------------------Paths information-----------------------")
+        ASCIIColors.yellow("personal_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_path}")
+        ASCIIColors.yellow("personal_configuration_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_configuration_path}")
+        ASCIIColors.yellow("personal_databases_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_databases_path}")
+        ASCIIColors.yellow("personal_models_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_models_path}")
+        ASCIIColors.yellow("personal_user_infos_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_user_infos_path}")
+        ASCIIColors.yellow("personal_data_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_data_path}")
+        ASCIIColors.green("-------------------------------------------------------------")
         self.create_directories()
         self.copy_default_config()
 
