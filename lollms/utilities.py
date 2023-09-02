@@ -779,3 +779,19 @@ class LOLLMSLocalizer:
         return localized_string
 
 
+class File_Path_Generator:
+    @staticmethod
+    def generate_unique_file_path(folder_path, file_base_name, file_extension):
+        folder_path = Path(folder_path)
+        index = 0
+        while True:
+            # Construct the full file path with the current index
+            file_name = f"{file_base_name}_{index}.{file_extension}"
+            full_file_path = folder_path / file_name
+            
+            # Check if the file already exists in the folder
+            if not full_file_path.exists():
+                return full_file_path
+            
+            # If the file exists, increment the index and try again
+            index += 1
