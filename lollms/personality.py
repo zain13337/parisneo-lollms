@@ -57,7 +57,7 @@ class AIPersonality:
                     selected_language=None,
                     is_relative_path=True,
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
-                    callback: Callable[[str, int, dict], bool]=None
+                    callback: Callable[[str, MSG_TYPE, dict, list], bool]=None
                 ):
         """
         Initialize an AIPersonality instance.
@@ -157,7 +157,7 @@ Date: {{date}}
             # Open and store the personality
             self.load_personality()
 
-    def setCallback(self, callback: Callable[[str, int, dict], bool]):
+    def setCallback(self, callback: Callable[[str, MSG_TYPE, dict, list], bool]):
         self.callback = callback
         if self._processor:
             self._processor.callback = callback
@@ -944,7 +944,7 @@ class StateMachine:
 
 
 
-    def process_state(self, command, full_context, callback: Callable[[str, int, dict], bool]=None):
+    def process_state(self, command, full_context, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """
         Process the given command based on the current state.
 
@@ -1169,7 +1169,7 @@ class APScript(StateMachine):
         else:
             return False
 
-    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, int, dict], bool]=None):
+    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """
         Runs the workflow for processing the model input and output.
 
@@ -1188,7 +1188,7 @@ class APScript(StateMachine):
     
     # ================================================= Sending commands to ui ===========================================
 
-    def step_start(self, step_text, callback: Callable[[str, int, dict], bool]=None):
+    def step_start(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This triggers a step start
 
         Args:
@@ -1214,12 +1214,17 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_END, {'status':status})
 
-    def step(self, step_text, callback: Callable[[str, int, dict], bool]=None):
+    def step(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This triggers a step information
 
         Args:
             step_text (str): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1227,12 +1232,17 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP)
 
-    def exception(self, ex, callback: Callable[[str, int, dict], bool]=None):
+    def exception(self, ex, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends exception to the client
 
         Args:
             step_text (str): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1240,12 +1250,17 @@ class APScript(StateMachine):
         if callback:
             callback(str(ex), MSG_TYPE.MSG_TYPE_EXCEPTION)
 
-    def warning(self, warning:str, callback: Callable[[str, int, dict], bool]=None):
+    def warning(self, warning:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends exception to the client
 
         Args:
             step_text (str): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1253,12 +1268,17 @@ class APScript(StateMachine):
         if callback:
             callback(warning, MSG_TYPE.MSG_TYPE_EXCEPTION)
 
-    def info(self, info:str, callback: Callable[[str, int, dict], bool]=None):
+    def info(self, info:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends exception to the client
 
         Args:
             inf (str): The information to be sent
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1271,7 +1291,12 @@ class APScript(StateMachine):
 
         Args:
             step_text (dict): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1279,12 +1304,17 @@ class APScript(StateMachine):
         if callback:
             callback("", MSG_TYPE.MSG_TYPE_JSON_INFOS, metadata = [{"title":title, "content":json.dumps(json_infos, indent=indent)}])
 
-    def ui(self, html_ui:str, callback: Callable[[str, int, dict], bool]=None):
+    def ui(self, html_ui:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends ui elements to front end
 
         Args:
             step_text (dict): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1292,12 +1322,17 @@ class APScript(StateMachine):
         if callback:
             callback(html_ui, MSG_TYPE.MSG_TYPE_UI)
 
-    def code(self, code:str, callback: Callable[[str, int, dict], bool]=None):
+    def code(self, code:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends code to front end
 
         Args:
             step_text (dict): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step to. Defaults to None.
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
         """
         if not callback and self.callback:
             callback = self.callback
@@ -1305,7 +1340,7 @@ class APScript(StateMachine):
         if callback:
             callback(code, MSG_TYPE.MSG_TYPE_CODE)
 
-    def full(self, full_text:str, callback: Callable[[str, int, dict], bool]=None):
+    def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end
 
         Args:
@@ -1318,7 +1353,7 @@ class APScript(StateMachine):
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
 
-    def full_invisible_to_ai(self, full_text:str, callback: Callable[[str, int, dict], bool]=None):
+    def full_invisible_to_ai(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end (INVISIBLE to AI)
 
         Args:
@@ -1331,7 +1366,7 @@ class APScript(StateMachine):
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI)
 
-    def full_invisible_to_user(self, full_text:str, callback: Callable[[str, int, dict], bool]=None):
+    def full_invisible_to_user(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end (INVISIBLE to user)
 
         Args:
@@ -1345,7 +1380,7 @@ class APScript(StateMachine):
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
 
 
-    def info(self, info_text:str, callback: Callable[[str, int, dict], bool]=None):
+    def info(self, info_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends info text to front end
 
         Args:
@@ -1358,7 +1393,7 @@ class APScript(StateMachine):
         if callback:
             callback(info_text, MSG_TYPE.MSG_TYPE_FULL)
 
-    def step_progress(self, step_text:str, progress:float, callback: Callable[[str, int, dict], bool]=None):
+    def step_progress(self, step_text:str, progress:float, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -1384,7 +1419,7 @@ class APScript(StateMachine):
         if callback:
             callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata})
 
-    def finished_message(self, message_text:str="", callback: Callable[[str, int, dict], bool]=None):
+    def finished_message(self, message_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends step rogress to front end
 
         Args:

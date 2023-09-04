@@ -25,7 +25,9 @@ import gc
 import json
 import traceback
 import shutil
-
+import psutil
+import subprocess
+import pkg_resources
 
 def reset_all_installs(lollms_paths:LollmsPaths):
     ASCIIColors.info("Removeing all configuration files to force reinstall")
@@ -127,6 +129,74 @@ class LoLLMsServer(LollmsApplication):
             "/get_active_model", "get_active_model", get_active_model, methods=["GET"]
         )
 
+            
+        def get_server_ifos(self):
+            """
+            Returns information about the server.
+            """
+            server_infos = {}
+            if self.binding is not None:
+                models = self.binding.list_models(self.config)
+                index = models.index(self.config.model_name)
+                ASCIIColors.yellow(f"Recovering active model: {models[index]}")
+                server_infos["binding"]=self.binding.name
+                server_infos["models_list"]=models
+                server_infos["model"]=models[index]
+                server_infos["model_index"]=index
+            else:
+                server_infos["models_list"]=[]
+                server_infos["model"]=""
+                server_infos["model_index"]=-1
+
+            ram = psutil.virtual_memory()
+            server_infos["lollms_version"]= pkg_resources.get_distribution('lollms').version
+            server_infos["total_space"]=ram.total
+            server_infos["available_space"]=ram.free
+
+            server_infos["percent_usage"]=ram.percent
+            server_infos["ram_usage"]=ram.used
+
+            try:
+                output = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.total,memory.used,gpu_name', '--format=csv,nounits,noheader'])
+                lines = output.decode().strip().split('\n')
+                vram_info = [line.split(',') for line in lines]
+                server_infos["nb_gpus"]= len(vram_info)
+                if vram_info is not None:
+                    for i, gpu in enumerate(vram_info):
+                        server_infos[f"gpu_{i}_total_vram"] = int(gpu[0])*1024*1024
+                        server_infos[f"gpu_{i}_used_vram"] = int(gpu[1])*1024*1024
+                        server_infos[f"gpu_{i}_model"] = gpu[2].strip()
+                else:
+                    # Set all VRAM-related entries to None
+                    server_infos["gpu_0_total_vram"] = None
+                    server_infos["gpu_0_used_vram"] = None
+                    server_infos["gpu_0_model"] = None
+
+
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                server_infos["nb_gpus"]= 0
+                server_infos["gpu_0_total_vram"] = None
+                server_infos["gpu_0_used_vram"] = None
+                server_infos["gpu_0_model"] = None            
+
+            current_drive = Path.cwd().anchor
+            drive_disk_usage = psutil.disk_usage(current_drive)
+            server_infos["system_disk_total_space"]=drive_disk_usage.total
+            server_infos["system_disk_available_space"]=drive_disk_usage.free
+            try:
+                models_folder_disk_usage = psutil.disk_usage(str(self.lollms_paths.personal_models_path/f'{self.config["binding_name"]}'))
+                server_infos["binding_disk_total_space"]=models_folder_disk_usage.total
+                server_infos["binding_disk_available_space"]=models_folder_disk_usage.free
+                             
+            except Exception as ex:
+                server_infos["binding_disk_total_space"]=None
+                server_infos["binding_disk_available_space"]=None
+
+            return jsonify(server_infos)
+
+        self.app.add_url_rule(
+            "/get_server_ifos", "get_server_ifos", get_server_ifos, methods=["GET"]
+        )        
 
         def update_setting():
             data = request.get_json()
