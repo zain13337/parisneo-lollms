@@ -124,11 +124,12 @@ class LollmsPaths:
             ASCIIColors.info("No extensions found in your personal space.\nCloning the extensions zoo")
             subprocess.run(["git", "clone", extensions_zoo_repo, self.extensions_zoo_path])
 
-        if not self.gptqlora_path.exists():
+        # QLora should be installed by the application
+        #if not self.gptqlora_path.exists():
             # Clone the repository to the target path
-            ASCIIColors.info("No gptqlora found in your personal space.\nCloning the gptqlora repo")
-            subprocess.run(["git", "clone", gptqlora_repo, self.gptqlora_path])
-            subprocess.run(["pip", "install", "-r", "requirements.txt"], cwd=self.gptqlora_path)
+            #ASCIIColors.info("No gptqlora found in your personal space.\nCloning the gptqlora repo")
+            #subprocess.run(["git", "clone", gptqlora_repo, self.gptqlora_path])
+            #subprocess.run(["pip", "install", "-r", "requirements.txt"], cwd=self.gptqlora_path)
 
 
     def copy_default_config(self):
