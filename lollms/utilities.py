@@ -725,10 +725,15 @@ class GenericDataLoader:
 
 
 class PromptReshaper:
-    def __init__(self, template):
+    def __init__(self, template:str):
         self.template = template
-
-    def build(self, placeholders, tokenize, detokenize, max_nb_tokens, place_holders_to_sacrifice=[]):
+    def replace(self, placeholders:dict)->str:
+        template = self.template
+        # Calculate the number of tokens for each placeholder
+        for placeholder, text in placeholders.items():
+            template = template.replace(placeholder, text)
+        return template
+    def build(self, placeholders:dict, tokenize, detokenize, max_nb_tokens:int, place_holders_to_sacrifice:list=[])->str:
         # Tokenize the template without placeholders
         template_text = self.template
         for placeholder in placeholders:

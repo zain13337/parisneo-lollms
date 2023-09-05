@@ -14,6 +14,7 @@ lollms_extensions_zoo_path = lollms_path / "extensions_zoo"
 personalities_zoo_repo = "https://github.com/ParisNeo/lollms_personalities_zoo.git"
 bindings_zoo_repo = "https://github.com/ParisNeo/lollms_bindings_zoo.git"
 extensions_zoo_repo = "https://github.com/ParisNeo/lollms_extensions_zoo.git"
+gptqlora_repo = "https://github.com/ParisNeo/gptqlora.git"
 
 # Now we speify the personal folders
 class LollmsPaths:
@@ -44,6 +45,9 @@ class LollmsPaths:
         self.personal_outputs_path          = self.personal_path / "outputs"
         self.personal_user_infos_path       = self.personal_path / "user_infos"
 
+        self.personal_trainers_path         = self.personal_path / "trainers"
+        self.gptqlora_path            = self.personal_trainers_path / "gptqlora"
+
 
         self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
         self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
@@ -60,6 +64,10 @@ class LollmsPaths:
         ASCIIColors.yellow(f"{self.personal_models_path}")
         ASCIIColors.yellow("personal_user_infos_path:",end="")
         ASCIIColors.yellow(f"{self.personal_user_infos_path}")
+        ASCIIColors.yellow("personal_trainers_path:",end="")
+        ASCIIColors.yellow(f"{self.personal_trainers_path}")
+        ASCIIColors.yellow("personal_trainers_path:",end="")
+        ASCIIColors.yellow(f"{self.gptqlora_path}")
         ASCIIColors.yellow("personal_data_path:",end="")
         ASCIIColors.yellow(f"{self.personal_data_path}")
         ASCIIColors.green("-------------------------------------------------------------")
@@ -79,7 +87,9 @@ class LollmsPaths:
             "Bindings Zoo Path": self.bindings_zoo_path,
             "Personalities Zoo Path": self.personalities_zoo_path,
             "Extensions zoo path": self.extensions_zoo_path,
-            "Personal user infos path": self.personal_user_infos_path
+            "Personal user infos path": self.personal_user_infos_path,
+            "Personal trainers path": self.personal_trainers_path,
+            "Personal gptqlora trainer path": self.gptqlora_path,
         }
         return "\n".join([f"{category}: {path}" for category, path in directories.items()])
 
@@ -96,6 +106,8 @@ class LollmsPaths:
         self.personal_outputs_path.mkdir(parents=True, exist_ok=True)
         self.personal_uploads_path.mkdir(parents=True, exist_ok=True)
         self.personal_user_infos_path.mkdir(parents=True, exist_ok=True)
+        self.personal_trainers_path.mkdir(parents=True, exist_ok=True)
+        
         
         if not self.bindings_zoo_path.exists():
             # Clone the repository to the target path
@@ -111,6 +123,12 @@ class LollmsPaths:
             # Clone the repository to the target path
             ASCIIColors.info("No extensions found in your personal space.\nCloning the extensions zoo")
             subprocess.run(["git", "clone", extensions_zoo_repo, self.extensions_zoo_path])
+
+        if not self.gptqlora_path.exists():
+            # Clone the repository to the target path
+            ASCIIColors.info("No gptqlora found in your personal space.\nCloning the gptqlora repo")
+            subprocess.run(["git", "clone", gptqlora_repo, self.gptqlora_path])
+            subprocess.run(["pip", "install", "-r", "requirements.txt"], cwd=self.gptqlora_path)
 
 
     def copy_default_config(self):
