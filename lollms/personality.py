@@ -20,7 +20,7 @@ from lollms.types import MSG_TYPE
 from typing import Callable
 import json
 from lollms.utilities import TextVectorizer, GenericDataLoader
-
+from functools import partial
 
 def is_package_installed(package_name):
     try:
@@ -1128,24 +1128,27 @@ class APScript(StateMachine):
 
         return string
     
-    def process(self, text:str, message_type:MSG_TYPE):
+    def process(self, text:str, message_type:MSG_TYPE, callback=None):
         bot_says = self.bot_says + text
+
         antiprompt = self.personality.detect_antiprompt(bot_says)
         if antiprompt:
             self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
             ASCIIColors.warning(f"\nDetected hallucination with antiprompt: {antiprompt}")
             return False
         else:
+            if callback:
+                callback(text,MSG_TYPE.MSG_TYPE_CHUNK)
             self.bot_says = bot_says
             return True
 
-    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None ):
+    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None ):
         self.bot_says = ""
         ASCIIColors.info("Text generation started: Warming up")
         self.personality.model.generate(
                                 prompt, 
                                 max_size, 
-                                self.process,
+                                partial(self.process, callback=callback),
                                 temperature=self.personality.model_temperature if temperature is None else temperature,
                                 top_k=self.personality.model_top_k if top_k is None else top_k,
                                 top_p=self.personality.model_top_p if top_p is None else top_p,
