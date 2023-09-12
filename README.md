@@ -11,6 +11,9 @@
 [![Follow me on Twitter](https://img.shields.io/twitter/follow/SpaceNerduino?style=social)](https://twitter.com/SpaceNerduino)
 [![Follow Me on YouTube](https://img.shields.io/badge/Follow%20Me%20on-YouTube-red?style=flat&logo=youtube)](https://www.youtube.com/user/Parisneo)
 [![Downloads](https://static.pepy.tech/badge/lollms)](https://pepy.tech/project/lollms)
+[![Downloads](https://static.pepy.tech/badge/lollms/month)](https://pepy.tech/project/lollms)
+[![Downloads](https://static.pepy.tech/badge/lollms/week)](https://pepy.tech/project/lollms)
+
 Lord of Large Language Models (LoLLMs) Server is a text generation server based on large language models. It provides a Flask-based API for generating text using various pre-trained language models. This server is designed to be easy to install and use, allowing developers to integrate powerful text generation capabilities into their applications.
 
 ## Features
