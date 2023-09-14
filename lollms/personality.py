@@ -282,9 +282,34 @@ Date: {{date}}
 
         self._assets_list = contents
         return config
+    def remove_file(self, path, callback=None):
+        try:
+            self.files.remove(path)
+            Path(path).unlink()
+            if len(self.files)>0:
+                try:
+                    self.vectorizer.remove_document(path)
+                    if callback is not None:
+                        callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                    return True
+                except ValueError as ve:
+                    ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                    return False
+            else:
+                self.vectorizer = None
+        except Exception as ex:
+            ASCIIColors.warning(f"Couldn't remove the file {path}")
 
+    def remove_all_files(self, callback=None):
+        for file in self.files:
+            try:
+                Path(file).unlink()
+            except Exception as ex:
+                ASCIIColors.warning(f"Couldn't remove the file {file}")
+        self.files=[]  
+        self.vectorizer = None
+        return True     
     def add_file(self, path, callback=None):
-
         self.files.append(path)
         db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)

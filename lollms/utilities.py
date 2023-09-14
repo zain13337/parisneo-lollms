@@ -7,6 +7,19 @@ import re
 import subprocess
 import gc
 
+class NumpyEncoderDecoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return {'__numpy_array__': True, 'data': obj.tolist()}
+        return super(NumpyEncoderDecoder, self).default(obj)
+
+    @staticmethod
+    def as_numpy_array(dct):
+        if '__numpy_array__' in dct:
+            return np.array(dct['data'])
+        return dct
+
+
 def git_pull(folder_path):
     try:
         # Change the current working directory to the desired folder
@@ -192,14 +205,14 @@ class DocumentDecomposer:
         return sentences
 
     @staticmethod
-    def decompose_document(text, max_chunk_size, tokenize):
+    def decompose_document(text, max_chunk_size, overlap_size, tokenize, detokenize):
         cleaned_text = DocumentDecomposer.clean_text(text)
         paragraphs = DocumentDecomposer.split_into_paragraphs(cleaned_text)
 
         # List to store the final clean chunks
         clean_chunks = []
 
-        current_chunk = ""  # To store the current chunk being built
+        current_chunk = []  # To store the current chunk being built
         l=0
         for paragraph in paragraphs:
             # Tokenize the paragraph into sentences
@@ -208,19 +221,33 @@ class DocumentDecomposer:
             for sentence in sentences:
                 # If adding the current sentence to the chunk exceeds the max_chunk_size,
                 # we add the current chunk to the list of clean chunks and start a new chunk
-                nb_tokens = len(tokenize(sentence))
-                if l + nb_tokens + 1 > max_chunk_size:
-                    clean_chunks.append(current_chunk.strip())
-                    current_chunk = ""
-                    l=0
+                tokens = tokenize(sentence)
+                nb_tokens = len(tokens)
+                if nb_tokens>max_chunk_size:
+                    while nb_tokens>max_chunk_size:
+                        current_chunk += tokens[:max_chunk_size-l-1]
+                        clean_chunks.append(current_chunk)
+                        tokens = tokens[max_chunk_size-l-1-overlap_size:]
+                        nb_tokens -= max_chunk_size-l-1-overlap_size
+                        l=0
+                        current_chunk = current_chunk[-overlap_size:]
+                else:
+                    if l + nb_tokens + 1 > max_chunk_size:
 
-                # Add the current sentence to the chunk
-                current_chunk += sentence + " "
-                l += nb_tokens
+                        clean_chunks.append(current_chunk)
+                        if overlap_size==0:
+                            current_chunk = []
+                        else:
+                            current_chunk = current_chunk[-overlap_size:]
+                        l=0
+
+                    # Add the current sentence to the chunk
+                    current_chunk += tokens
+                    l += nb_tokens
 
         # Add the remaining chunk from the paragraph to the clean_chunks
         if current_chunk:
-            clean_chunks.append(current_chunk.strip())
+            clean_chunks.append(current_chunk)
             current_chunk = ""
 
         return clean_chunks
@@ -251,16 +278,12 @@ class TextVectorizer:
         self.data_visualization_method = data_visualization_method
         
         if database_dict is not None:
-            self.chunks = []
-            self.embeddings = database_dict["embeddings"]
-            self.texts =  database_dict["text"]
+            self.chunks =  database_dict["chunks"]
+            self.vectorizer = database_dict["vectorizer"]
             self.infos =   database_dict["infos"]
             self.ready = True
-            self.vectorizer = database_dict["vectorizer"]
         else:
-            self.chunks = []
-            self.embeddings = {}
-            self.texts = {}
+            self.chunks = {}
             self.ready = False
             self.vectorizer = None
         
@@ -313,8 +336,8 @@ class TextVectorizer:
             print("Showing pca representation :")
         else:
             print("Showing t-sne representation :")
-        texts = list(self.texts.values())
-        embeddings = self.embeddings
+
+        embeddings = {key:chunk["embeddings"] for key, chunk in self.chunks.items()}
         emb = list(embeddings.values())
         ref = list(embeddings.keys())
         if len(emb)>=2:
@@ -329,11 +352,11 @@ class TextVectorizer:
                 query_embedding = query_embedding.detach().squeeze().numpy()
                 query_normalized_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-                # Combine the query embedding with the document embeddings
+                # Combine the query embeddings with the document embeddings
                 combined_embeddings = np.vstack((normalized_embeddings, query_normalized_embedding))
                 ref.append("Quey_chunk_0")
             else:
-                # Combine the query embedding with the document embeddings
+                # Combine the query embeddings with the document embeddings
                 combined_embeddings = normalized_embeddings
 
             if use_pca:
@@ -383,7 +406,7 @@ class TextVectorizer:
             def on_hover(sel):
                 index = sel.target.index
                 if index > 0:
-                    text = texts[index]
+                    text = self.chunks[index]["chunk_text"]
                     wrapped_text = textwrap.fill(text, width=50)  # Wrap the text into multiple lines
                     sel.annotation.set_text(f"Index: {index}\nText:\n{wrapped_text}")
                 else:
@@ -395,7 +418,7 @@ class TextVectorizer:
                     x, y = event.xdata, event.ydata
                     distances = ((embeddings_2d[:, 0] - x) ** 2 + (embeddings_2d[:, 1] - y) ** 2)
                     index = distances.argmin()
-                    text = texts[index] if index < len(texts) else query_text
+                    text = self.chunks[index]["chunk_text"] if index < len(self.chunks) else query_text
 
                     # Open a new Tkinter window with the content of the text
                     root = Tk()
@@ -428,67 +451,42 @@ class TextVectorizer:
                     trace_exception(ex)
             if show_interactive_form:
                 plt.show()
+    
+    def file_exists(self, document_name:str)->bool:
+        # Loop through the list of dictionaries
+        for dictionary in self.chunks:
+            if 'document_name' in dictionary and dictionary['document_name'] == document_name:
+                # If the document_name is found in the current dictionary, set the flag to True and break the loop
+                document_name_found = True
+                return True
+        return False
+    
+    def remove_document(self, document_name:str):
+        for dictionary in self.chunks:
+            if 'document_name' in dictionary and dictionary['document_name'] == document_name:
+                # If the document_name is found in the current dictionary, set the flag to True and break the loop
+                self.chunks.remove(dictionary)
+                return True
+        return False
+
+
+
+    def add_document(self, document_name:Path, text:str, chunk_size: int, overlap_size:int, force_vectorize=False):
         
-    def add_document(self, document_id, text, chunk_size, overlap_size, force_vectorize=False):
-        if document_id in self.embeddings and not force_vectorize:
-            print(f"Document {document_id} already exists. Skipping vectorization.")
+        if self.file_exists(document_name) and not force_vectorize:
+            print(f"Document {document_name} already exists. Skipping vectorization.")
             return
-        chunks_text = DocumentDecomposer.decompose_document(text, chunk_size, self.model.tokenize)
-        self.chunks = []
+        chunks_text = DocumentDecomposer.decompose_document(text, chunk_size, overlap_size, self.model.tokenize, self.model.detokenize)
         for i, chunk in enumerate(chunks_text):
-            chunk_id = f"{document_id}_chunk_{i + 1}"
+            chunk_id = f"{document_name}_chunk_{i + 1}"
             chunk_dict = {
-                "chunk_id": chunk_id,
-                "chunk_text": self.model.tokenize(chunk)
+                "document_name": document_name,
+                "chunk_index": i+1,
+                "chunk_text":self.model.detokenize(chunk),
+                "chunk_tokens": chunk,
+                "embeddings":[]
             }
-            self.chunks.append(chunk_dict)               
-            
-        """
-        # Split tokens into sentences
-        sentences = text.split('. ')
-        sentences = [sentence.strip() + '. ' if not sentence.endswith('.') else sentence for sentence in sentences]
-        import regex as re
-
-        def remove_special_characters(input_string):
-            # Define a regex pattern to match non-alphanumeric characters and also keep Arabic and Chinese characters
-            pattern = r'[^\p{L}\p{N}\p{Zs}\u0600-\u06FF\u4E00-\u9FFF]+'
-            # Remove special characters using the regex pattern
-            cleaned_string = re.sub(pattern, '', input_string)
-            return cleaned_string
-                
-        def remove_empty_sentences(sentences):
-            return [self.model.tokenize(remove_special_characters(sentence)) for sentence in sentences if sentence.strip() != '']
-        sentences = remove_empty_sentences(sentences)
-        # Generate chunks with overlap and sentence boundaries
-        chunks = []
-        current_chunk = []
-        for i in range(len(sentences)):
-            sentence_tokens = sentences[i]
-
-            # ASCIIColors.yellow(len(sentence_tokens))
-            if len(current_chunk) + len(sentence_tokens) <= chunk_size:
-                current_chunk.extend(sentence_tokens)
-            else:
-                if current_chunk:
-                    print(f"Chunk size:{len(current_chunk)}")
-                    chunks.append(current_chunk)
-                    
-                current_chunk=[]
-                for j in reversed(range(overlap_size)):
-                    current_chunk.extend(sentences[i-j-1])
-                current_chunk.extend(sentence_tokens)
-            
-
-        if current_chunk:
-            for i, chunk_text in enumerate(chunks):
-                chunk_id = f"{document_id}_chunk_{i + 1}"
-                chunk_dict = {
-                    "chunk_id": chunk_id,
-                    "chunk_text": chunk_text
-                }
-                self.chunks.append(chunk_dict)        
-        """
-
+            self.chunks[chunk_id] = chunk_dict
         
     def index(self):
         if self.vectorization_method=="ftidf_vectorizer":
@@ -496,25 +494,21 @@ class TextVectorizer:
             #if self.debug:
             #    ASCIIColors.yellow(','.join([len(chunk) for chunk in chunks]))
             data=[]
-            for chunk in self.chunks:
+            for k,chunk in self.chunks.items():
                 try:
-                    data.append(self.model.detokenize(chunk["chunk_text"]).replace("<s>","").replace("</s>","") ) 
+                    data.append(chunk["chunk_text"]) 
                 except Exception as ex:
                     print("oups")
             self.vectorizer.fit(data)
 
-        self.embeddings = {}
         # Generate embeddings for each chunk
-        for i, chunk in enumerate(self.chunks):
-            # Store chunk ID, embedding, and original text
-            chunk_id = chunk["chunk_id"]
-            chunk_text = chunk["chunk_text"]
+        for chunk_id, chunk in self.chunks.items():
+            # Store chunk ID, embeddings, and original text
             try:
-                self.texts[chunk_id] = self.model.detokenize(chunk_text)
                 if self.vectorization_method=="ftidf_vectorizer":
-                    self.embeddings[chunk_id] = self.vectorizer.transform([self.texts[chunk_id]]).toarray()
+                    chunk["embeddings"] = self.vectorizer.transform([chunk["chunk_text"]]).toarray()
                 else:
-                    self.embeddings[chunk_id] = self.model.embed(self.texts[chunk_id])
+                    chunk["embeddings"] = self.model.embed(chunk["chunk_text"])
             except Exception as ex:
                 print("oups")
 
@@ -527,13 +521,13 @@ class TextVectorizer:
 
 
     def embed_query(self, query_text):
-        # Generate query embedding
+        # Generate query embeddings
         if self.vectorization_method=="ftidf_vectorizer":
             query_embedding = self.vectorizer.transform([query_text]).toarray()
         else:
             query_embedding = self.model.embed(query_text)
             if query_embedding is None:
-                ASCIIColors.warning("The model doesn't implement embedding extraction")
+                ASCIIColors.warning("The model doesn't implement embeddings extraction")
                 self.vectorization_method="ftidf_vectorizer"
                 query_embedding = self.vectorizer.transform([query_text]).toarray()
 
@@ -542,15 +536,15 @@ class TextVectorizer:
     def recover_text(self, query_embedding, top_k=1):
         from sklearn.metrics.pairwise import cosine_similarity
         similarities = {}
-        for chunk_id, chunk_embedding in self.embeddings.items():
-            similarity = cosine_similarity(query_embedding, chunk_embedding)
+        for chunk_id, chunk in self.chunks.items():
+            similarity = cosine_similarity(query_embedding, chunk["embeddings"])
             similarities[chunk_id] = similarity
 
         # Sort the similarities and retrieve the top-k most similar embeddings
         sorted_similarities = sorted(similarities.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
         # Retrieve the original text associated with the most similar embeddings
-        texts = [self.texts[chunk_id] for chunk_id, _ in sorted_similarities]
+        texts = [self.chunks[chunk_id]["chunk_text"] for chunk_id, _ in sorted_similarities]
 
         if self.visualize_data_at_generate:
             self.show_document()
@@ -559,8 +553,7 @@ class TextVectorizer:
 
     def toJson(self):
         state = {
-            "embeddings": {str(k): v.tolist()  if type(v)!=list else v for k, v in self.embeddings.items() },
-            "texts": self.texts,
+            "chunks": self.chunks,
             "infos": self.infos,
             "vectorizer": TFIDFLoader.create_vectorizer_from_dict(self.vectorizer) if self.vectorization_method=="ftidf_vectorizer" else None
         }
@@ -571,38 +564,37 @@ class TextVectorizer:
 
     def save_to_json(self):
         state = {
-            "embeddings": {str(k): v.tolist()  if type(v)!=list else v for k, v in self.embeddings.items() },
-            "texts": self.texts,
-            "infos": self.infos
+            "chunks": self.chunks,
+            "infos": self.infos,
+            "vectorizer": TFIDFLoader.create_vectorizer_from_dict(self.vectorizer) if self.vectorization_method=="ftidf_vectorizer" else None
         }
         with open(self.database_file, "w") as f:
-            json.dump(state, f)
+            json.dump(state, f, cls=NumpyEncoderDecoder, indent=4)
 
     def load_from_json(self):
 
         ASCIIColors.info("Loading vectorized documents")
         with open(self.database_file, "r") as f:
-            state = json.load(f)
-            self.embeddings = {k: v for k, v in state["embeddings"].items()}
-            self.texts = state["texts"]
-            self.infos= state["infos"]
+            database = json.load(f, object_hook=NumpyEncoderDecoder.as_numpy_array)
+            self.chunks = database["chunks"]
+            self.infos= database["infos"]
             self.ready = True
         if self.vectorization_method=="ftidf_vectorizer":
             from sklearn.feature_extraction.text import TfidfVectorizer
-            data = list(self.texts.values())
+            data = [c["chunk_text"] for k,c in self.chunks.items()]
             if len(data)>0:
                 self.vectorizer = TfidfVectorizer()
                 self.vectorizer.fit(data)
                 self.embeddings={}
-                for k,v in self.texts.items():
-                    self.embeddings[k]= self.vectorizer.transform([v]).toarray()
+                for k,chunk in self.chunks.items():
+                    chunk["embeddings"][k]= self.vectorizer.transform([chunk["embeddings"]]).toarray()
                     
                     
     def clear_database(self):
         self.ready = False
         self.vectorizer=None
-        self.embeddings = {}
-        self.texts={}
+        self.chunks = {}
+        self.infos={}
         if self.save_db:
             self.save_to_json()
             
@@ -620,12 +612,12 @@ class GenericDataLoader:
             return GenericDataLoader.read_html_file(file_path)
         elif file_path.suffix == ".pptx":
             return GenericDataLoader.read_pptx_file(file_path)
-        if file_path.suffix in [".txt", ".md", ".log", ".cpp", ".java", ".js", ".py", ".rb", ".sh", ".sql", ".css", ".html", ".php", ".json", ".xml", ".yaml", ".yml", ".h", ".hh", ".hpp", ".inc", ".snippet", ".snippets", ".asm", ".s", ".se", ".sym", ".ini", ".inf", ".map", ".bat"]:
+        if file_path.suffix in [".txt", ".rtf", ".md", ".log", ".cpp", ".java", ".js", ".py", ".rb", ".sh", ".sql", ".css", ".html", ".php", ".json", ".xml", ".yaml", ".yml", ".h", ".hh", ".hpp", ".inc", ".snippet", ".snippets", ".asm", ".s", ".se", ".sym", ".ini", ".inf", ".map", ".bat"]:
             return GenericDataLoader.read_text_file(file_path)
         else:
             raise ValueError("Unknown file type")
     def get_supported_file_types():
-        return ["pdf", "txt", "docx", "json", "html", "pptx",".txt", ".md", ".log", ".cpp", ".java", ".js", ".py", ".rb", ".sh", ".sql", ".css", ".html", ".php", ".json", ".xml", ".yaml", ".yml", ".h", ".hh", ".hpp", ".inc", ".snippet", ".snippets", ".asm", ".s", ".se", ".sym", ".ini", ".inf", ".map", ".bat"]    
+        return ["pdf", "txt", "docx", "json", "html", "pptx",".txt", ".md", ".log", ".cpp", ".java", ".js", ".py", ".rb", ".sh", ".sql", ".css", ".html", ".php", ".json", ".xml", ".yaml", ".yml", ".h", ".hh", ".hpp", ".inc", ".snippet", ".snippets", ".asm", ".s", ".se", ".sym", ".ini", ".inf", ".map", ".bat", ".rtf"]    
     @staticmethod        
     def read_pdf_file(file_path):
         try:
