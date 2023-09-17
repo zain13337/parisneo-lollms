@@ -106,6 +106,7 @@ private:
 
         // Event handler for receiving generated text
         client_.socket()->on("text_generated", [&](const sio::event& event) {
+            ASCIIColors::yellow("\nText generated:");
             sio::message::ptr message = event.get_message();
             if (message->get_map().find("text") != message->get_map().end()) {
                 sio::message::ptr chunkMessage = message->get_map()["text"];
@@ -205,6 +206,7 @@ int main()
     }
     std::cout<<"Opened"<<std::endl;
 
+    ASCIIColors::yellow("Starting Reception of chunks:");
     // Trigger the "generate_text" event when needed
     std::string prompt = "SYSTEM:Act as assiatant, a great and helpful AI agent that does multiple tasks. Help user do what he needs to do.\nUser:write a python hello word code\nAssistant:";
     client.generateText(prompt,1024);
