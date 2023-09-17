@@ -471,22 +471,34 @@ class TextVectorizer:
 
 
 
-    def add_document(self, document_name:Path, text:str, chunk_size: int, overlap_size:int, force_vectorize=False):
-        
+    def add_document(self, document_name:Path, text:str, chunk_size: int, overlap_size:int, force_vectorize=False,add_as_a_bloc=False):
         if self.file_exists(document_name) and not force_vectorize:
             print(f"Document {document_name} already exists. Skipping vectorization.")
             return
-        chunks_text = DocumentDecomposer.decompose_document(text, chunk_size, overlap_size, self.model.tokenize, self.model.detokenize)
-        for i, chunk in enumerate(chunks_text):
-            chunk_id = f"{document_name}_chunk_{i + 1}"
-            chunk_dict = {
-                "document_name": document_name,
-                "chunk_index": i+1,
-                "chunk_text":self.model.detokenize(chunk),
-                "chunk_tokens": chunk,
-                "embeddings":[]
-            }
-            self.chunks[chunk_id] = chunk_dict
+        if add_as_a_bloc:
+            chunks_text = [self.model.tokenize(text)]
+            for i, chunk in enumerate(chunks_text):
+                chunk_id = f"{document_name}_chunk_{i + 1}"
+                chunk_dict = {
+                    "document_name": document_name,
+                    "chunk_index": i+1,
+                    "chunk_text":self.model.detokenize(chunk),
+                    "chunk_tokens": chunk,
+                    "embeddings":[]
+                }
+                self.chunks[chunk_id] = chunk_dict
+        else:
+            chunks_text = DocumentDecomposer.decompose_document(text, chunk_size, overlap_size, self.model.tokenize, self.model.detokenize)
+            for i, chunk in enumerate(chunks_text):
+                chunk_id = f"{document_name}_chunk_{i + 1}"
+                chunk_dict = {
+                    "document_name": document_name,
+                    "chunk_index": i+1,
+                    "chunk_text":self.model.detokenize(chunk),
+                    "chunk_tokens": chunk,
+                    "embeddings":[]
+                }
+                self.chunks[chunk_id] = chunk_dict
         
     def index(self):
         if self.vectorization_method=="ftidf_vectorizer":
