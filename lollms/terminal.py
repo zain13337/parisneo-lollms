@@ -373,7 +373,7 @@ class MainMenu(Menu):
         entries = self.lollms_app.config['personalities']+["Back"]
         try:
             choice = int(self.show_menu(entries, self.lollms_app.config['active_personality_id']))-1
-            if choice<len(entries)-1:
+            if choice<len(entries)-1 and choice>=0:
                 if self.lollms_app.select_personality(choice):
                     ASCIIColors.success(f"Selected personality: {self.lollms_app.personality.name}")
         except Exception as ex:
