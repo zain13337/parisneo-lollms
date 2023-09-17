@@ -196,7 +196,7 @@ int main()
     
     ASCIIColors::red("Lollms c++ Client V 1.0");
     // Create a lollmsClient instance and connect to the server
-    lollmsClient client("http://localhost:9600");
+    lollmsClient client("http://localhost:9601");
     std::cout<<"Created"<<std::endl;
     // Wait for the connection to be established before sending events
     while (!client.getClient().opened())
