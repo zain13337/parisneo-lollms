@@ -201,8 +201,8 @@ Date: {{date}}
 
         if languages.exists():
             self._supported_languages = []
-            for lang in [l for l in languages.iterdir()]:
-                self._supported_languages.append(lang.stem)
+            for language in [l for l in languages.iterdir()]:
+                self._supported_languages.append(language.stem)
 
             if self._selected_language is not None and self._selected_language in self._supported_languages:
                 config_file = languages / (self._selected_language+".yaml")

@@ -325,12 +325,12 @@ class MainMenu(Menu):
                 print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
                 langs_dir = self.lollms_app.lollms_paths.personalities_zoo_path/category/name/"languages"
                 if langs_dir.exists():
-                    langs = [f.stem for f in langs_dir.iterdir()]
+                    languages = [f.stem for f in langs_dir.iterdir()]
                     print("Select language")
-                    choice = self.show_menu(langs)
-                    if 1 <= choice <= len(langs):
-                        lang = langs[choice - 1]
-                        self.lollms_app.config["personalities"].append(f"{category}/{name}:{lang}")
+                    choice = self.show_menu(languages)
+                    if 1 <= choice <= len(languages):
+                        language = languages[choice - 1]
+                        self.lollms_app.config["personalities"].append(f"{category}/{name}:{language}")
                     else:
                         print("Invalid choice!")
                 else:
