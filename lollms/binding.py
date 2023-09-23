@@ -7,6 +7,7 @@
 # Description   : 
 # This is an interface class for lollms bindings.
 ######
+from typing import Dict, Any
 from pathlib import Path
 from typing import Callable
 from lollms.paths import LollmsPaths
@@ -65,6 +66,27 @@ class LLMBinding:
 
         self.models_folder = config.lollms_paths.personal_models_path / self.binding_folder_name
         self.models_folder.mkdir(parents=True, exist_ok=True)
+
+    def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle client requests.
+
+        Args:
+            data (dict): A dictionary containing the request data.
+
+        Returns:
+            dict: A dictionary containing the response, including at least a "status" key.
+
+        This method should be implemented by a class that inherits from this one.
+
+        Example usage:
+        ```
+        handler = YourHandlerClass()
+        request_data = {"command": "some_command", "parameters": {...}}
+        response = handler.handle_request(request_data)
+        ```
+        """        
+        return {"status":True}
 
     def print_class_attributes(self, cls):
         for attr in cls.__dict__:
@@ -149,6 +171,14 @@ class LLMBinding:
         """
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
         ASCIIColors.red(f"Installing {self.binding_folder_name}")
+        ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+
+    def uninstall(self):
+        """
+        UnInstallation procedure (to be implemented)
+        """
+        ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+        ASCIIColors.red(f"UnInstalling {self.binding_folder_name}")
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
 
 
@@ -301,6 +331,20 @@ class BindingBuilder:
                         lollms_paths:LollmsPaths,
                         installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
                     )->LLMBinding:
+
+        binding:LLMBinding = self.getBinding(config, lollms_paths, installation_option)
+        return binding(
+                config,
+                lollms_paths=lollms_paths,
+                installation_option = installation_option
+                )
+    
+    def getBinding(
+                        self, 
+                        config: LOLLMSConfig, 
+                        lollms_paths:LollmsPaths,
+                        installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                    )->LLMBinding:
         
         if len(str(config.binding_name).split("/"))>1:
             binding_path = Path(config.binding_name)
@@ -315,11 +359,7 @@ class BindingBuilder:
         loader = importlib.machinery.SourceFileLoader(module_name, str(absolute_path / "__init__.py"))
         binding_module = loader.load_module()
         binding:LLMBinding = getattr(binding_module, binding_module.binding_name)
-        return binding(
-                config,
-                lollms_paths=lollms_paths,
-                installation_option = installation_option
-                )
+        return binding
     
 class ModelBuilder:
     def __init__(self, binding:LLMBinding):

@@ -21,6 +21,7 @@ from typing import Callable
 import json
 from lollms.utilities import TextVectorizer, GenericDataLoader
 from functools import partial
+from typing import Dict, Any
 
 def is_package_installed(package_name):
     try:
@@ -1030,6 +1031,28 @@ class APScript(StateMachine):
             self.personality_config.config.save_config()
         else:
             self.load_personality_config()
+
+    def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle client requests.
+
+        Args:
+            data (dict): A dictionary containing the request data.
+
+        Returns:
+            dict: A dictionary containing the response, including at least a "status" key.
+
+        This method should be implemented by a class that inherits from this one.
+
+        Example usage:
+        ```
+        handler = YourHandlerClass()
+        request_data = {"command": "some_command", "parameters": {...}}
+        response = handler.handle_request(request_data)
+        ```
+        """        
+        return {"status":True}
+    
 
     def load_personality_config(self):
         """
