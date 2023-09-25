@@ -38,6 +38,7 @@ setuptools.setup(
     install_requires=requirements,
     entry_points={
         'console_scripts': [
+            'lollms-gandalf = lollms.apps.gandalf:main',
             'lollms-server = lollms.apps.server:main',
             'lollms-console = lollms.apps.console:main',
             'lollms-settings = lollms.apps.settings:main',
