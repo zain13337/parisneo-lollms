@@ -47,8 +47,8 @@ class LollmsApplication:
                 ASCIIColors.info("Extensions zoo found in your personal space.\nPulling last Extensions zoo")
                 subprocess.run(["git", "-C", self.lollms_paths.extensions_zoo_path, "pull"])            
                 # Pull the repository if it already exists
-                ASCIIColors.info("Qlora found in your personal space.\nPulling last qlora code")
-                subprocess.run(["git", "-C", self.lollms_paths.gptqlora_path, "pull"])            
+                # ASCIIColors.info("Qlora found in your personal space.\nPulling last qlora code")
+                # subprocess.run(["git", "-C", self.lollms_paths.gptqlora_path, "pull"])            
         except Exception as ex:
             ASCIIColors.error("Couldn't pull zoos. Please contact the main dev on our discord channel and report the problem.")
             trace_exception(ex)
