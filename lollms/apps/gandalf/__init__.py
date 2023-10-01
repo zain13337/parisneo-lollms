@@ -1,28 +1,27 @@
-from lollms.apps.console import Conversation
 from lollms.app import LollmsApplication
 from lollms.paths import LollmsPaths
+from lollms.main_config import LOLLMSConfig
 import sys
 import time
 maxtry=10
-import streamlit as st
-from collections import deque
 from pathlib import Path
 import json
 import re
 import random
-import pwd, os
 from flask import Flask, make_response, request, abort
 from flask.json import jsonify
 from typing import Callable
 import string
+
 
 BUNDLES=4
 MAXWORDS=1048
 DEBUG=True
 class Gandalf(LollmsApplication):
     def __init__(self, cfg=None):
-        lollms_paths = LollmsPaths.find_paths(tool_prefix="gandalf_")
-        super().__init__("Gandalf", cfg, lollms_paths)
+        lollms_paths = LollmsPaths.find_paths(tool_prefix="lollms_server_")
+        config = LOLLMSConfig.autoload(lollms_paths, None)
+        super().__init__("Gandalf", config, lollms_paths)
 
     def split_fibers(self,fibers, max_words=MAXWORDS):
         # Split each fiber into chunks of up to max_words words
@@ -372,5 +371,10 @@ def providers():
   #todo : implement
   return jsonify({})
 
-if __name__ == "__main__":
+
+def main():
     app.run()
+
+
+if __name__ == "__main__":
+    main()

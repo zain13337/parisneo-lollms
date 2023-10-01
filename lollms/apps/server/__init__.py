@@ -637,22 +637,22 @@ class LoLLMsServer(LollmsApplication):
                     model = self.model
                     self.clients[client_id]["is_generating"]=True
                     self.clients[client_id]["requested_stop"]=False
-                    prompt          = data['prompt']
-                    tokenized = model.tokenize(prompt)
-                    personality_id  = data.get('personality', -1)
+                    prompt              = data['prompt']
+                    tokenized           = model.tokenize(prompt)
+                    personality_id      = int(data.get('personality', -1))
 
-                    n_crop          = data.get('n_crop', len(tokenized))
+                    n_crop              = int(data.get('n_crop', len(tokenized)))
                     if n_crop!=-1:
                         prompt          = model.detokenize(tokenized[-n_crop:])
 
-                    n_predicts      = data["n_predicts"]
-                    parameters      = data.get("parameters",{
-                        "temperature":self.config["temperature"],
-                        "top_k":self.config["top_k"],
-                        "top_p":self.config["top_p"],
-                        "repeat_penalty":self.config["repeat_penalty"],
-                        "repeat_last_n":self.config["repeat_last_n"],
-                        "seed":self.config["seed"]
+                    n_predicts          = int(data.get("n_predicts",1024))
+                    parameters          = data.get("parameters",{
+                        "temperature":data.get("temperature",self.config["temperature"]),
+                        "top_k":data.get("top_k",self.config["top_k"]),
+                        "top_p":data.get("top_p",self.config["top_p"]),
+                        "repeat_penalty":data.get("repeat_penalty",self.config["repeat_penalty"]),
+                        "repeat_last_n":data.get("repeat_last_n",self.config["repeat_last_n"]),
+                        "seed":data.get("seed",self.config["seed"])
                     })
 
                     if personality_id==-1:
