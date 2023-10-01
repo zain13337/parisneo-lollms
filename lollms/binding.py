@@ -26,12 +26,26 @@ from lollms.main_config import LOLLMSConfig
 import traceback
 import urllib
 import inspect
+from enum import Enum
 
 __author__ = "parisneo"
 __github__ = "https://github.com/ParisNeo/lollms_bindings_zoo"
 __copyright__ = "Copyright 2023, "
 __license__ = "Apache 2.0"
+class BindingType(Enum):
+    """Binding types."""
+    
+    TEXT_ONLY = 0
+    """This binding only supports text."""
+    
+    TEXT_IMAGE = 1
+    """This binding supports text and image."""
 
+    TEXT_IMAGE_VIDEO = 2
+    """This binding supports text, image and video."""
+
+    TEXT_AUDIO = 3
+    """This binding supports text and audio."""
 
 class LLMBinding:
     
@@ -42,9 +56,12 @@ class LLMBinding:
                     config:LOLLMSConfig, 
                     binding_config:TypedConfig,
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
-                    supported_file_extensions='*.bin'
+                    supported_file_extensions='*.bin',
+                    binding_type:BindingType=BindingType.TEXT_ONLY
                 ) -> None:
         
+        self.binding_type           = binding_type
+
         self.binding_dir            = binding_dir
         self.binding_folder_name    = binding_dir.stem
         self.lollms_paths           = lollms_paths
