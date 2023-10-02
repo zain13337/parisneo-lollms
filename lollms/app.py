@@ -3,13 +3,14 @@ from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
 from lollms.personality import PersonalityBuilder
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
+from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
 from typing import Callable
 
 import subprocess
-
+import importlib
 class LollmsApplication:
     def __init__(
                     self, 
@@ -32,6 +33,8 @@ class LollmsApplication:
         self.menu                   = MainMenu(self, callback)
         self.mounted_personalities  = []
         self.personality            = None
+
+        self.mounted_extensions     = []
 
         self.binding=None
         self.model=None
@@ -91,6 +94,7 @@ class LollmsApplication:
 
             
         self.mount_personalities()
+        self.mount_extensions()
 
     def load_binding(self):
         try:
@@ -123,6 +127,17 @@ class LollmsApplication:
             model = None
 
         return model
+
+
+    def mount_extension(self, id:int, callback=None):
+        try:
+            extension = ExtensionBuilder(self.lollms_paths, self.config, self.model, self, callback=callback).build_extension(self.config["extensions"][id], self.lollms_paths, self)
+            self.mounted_extensions.append(extension)
+            return extension
+        except Exception as ex:
+            ASCIIColors.error(f"Couldn't load extension. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid personality")
+            trace_exception(ex)
+        return None
 
 
     def mount_personality(self, id:int, callback=None):
@@ -167,9 +182,31 @@ class LollmsApplication:
             self.mount_personality(0, callback = None)
             self.config.active_personality_id = 0
             self.personality = self.mounted_personalities[self.config.active_personality_id]
+
+    def mount_extensions(self, callback = None):
+        self.mounted_extensions = []
+        to_remove = []
+        for i in range(len(self.config["extensions"])):
+            p = self.mount_extension(i, callback = None)
+            if p is None:
+                to_remove.append(i)
+        to_remove.sort(reverse=True)
+        for i in to_remove:
+            self.unmount_extension(i)
+
+
     def set_personalities_callbacks(self, callback: Callable[[str, int, dict], bool]=None):
         for personality in self.mount_personalities:
             personality.setCallback(callback)
+
+    def unmount_extension(self, id:int)->bool:
+        if id<len(self.config.extensions):
+            del self.config.extensions[id]
+            del self.mounted_extensions[id]
+            self.config.save_config()
+            return True
+        else:
+            return False
 
             
     def unmount_personality(self, id:int)->bool:
