@@ -324,7 +324,7 @@ class LLMBinding:
 
     @staticmethod
     def reinstall_pytorch_with_cuda():
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu117"])
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu118"])
         if result.returncode != 0:
             ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
             result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
