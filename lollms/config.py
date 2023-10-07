@@ -1,5 +1,6 @@
 from pathlib import Path
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
+
 
 import yaml
 from enum import Enum

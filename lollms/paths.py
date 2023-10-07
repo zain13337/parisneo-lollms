@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
 from lollms.config import BaseConfig
 import subprocess
 

@@ -7,12 +7,12 @@ from lollms.personality import AIPersonality
 from lollms.main_config import LOLLMSConfig
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.personality import PersonalityBuilder
-from lollms.helpers import ASCIIColors
 from lollms.apps.console import MainMenu
 from lollms.paths import LollmsPaths
 from lollms.apps.console import MainMenu
 from lollms.app import LollmsApplication
-from lollms.utilities import TextVectorizer, trace_exception
+from safe_store import TextVectorizer
+from ascii_colors import ASCIIColors, trace_exception
 from typing import List, Tuple
 from typing import Callable
 import importlib

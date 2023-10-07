@@ -1,5 +1,6 @@
 
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from lollms.app import LollmsApplication

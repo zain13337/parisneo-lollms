@@ -3,7 +3,7 @@ __github__ = "https://github.com/ParisNeo/lollms"
 __copyright__ = "Copyright 2023, "
 __license__ = "Apache 2.0"
 
-from lollms.helpers     import ASCIIColors
+from ascii_colors       import ASCIIColors
 from lollms.paths       import LollmsPaths
 from lollms.config      import BaseConfig
 #from lollms.binding import  LLMBinding

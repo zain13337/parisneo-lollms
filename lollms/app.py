@@ -1,5 +1,4 @@
 from lollms.main_config import LOLLMSConfig
-from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
 from lollms.personality import PersonalityBuilder
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
@@ -8,6 +7,7 @@ from lollms.config import InstallOption
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
 from typing import Callable
+from ascii_colors import ASCIIColors
 
 import subprocess
 import importlib

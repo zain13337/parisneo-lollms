@@ -8,3 +8,4 @@ simple-websocket
 wget
 setuptools
 requests
+safe_store

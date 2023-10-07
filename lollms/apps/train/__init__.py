@@ -2,10 +2,10 @@ from lollms.config import InstallOption
 from lollms.binding import BindingBuilder, ModelBuilder
 from lollms.personality import MSG_TYPE, PersonalityBuilder
 from lollms.main_config import LOLLMSConfig
-from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
 from lollms.app import LollmsApplication
 from lollms.terminal import MainMenu
+from ascii_colors import ASCIIColors
 
 from typing import Callable
 from pathlib import Path

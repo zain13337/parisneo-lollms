@@ -3,7 +3,8 @@
 # Description :
 # This is the main class to be imported by the extension
 # it gives your code access to the model, the callback functions, the model conditionning etc
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
+
 from lollms.config import InstallOption, TypedConfig, BaseConfig, ConfigTemplate
 from lollms.paths import LollmsPaths
 from enum import Enum

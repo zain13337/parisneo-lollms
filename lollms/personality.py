@@ -15,11 +15,12 @@ import importlib
 import shutil
 import subprocess
 import yaml
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
+
 from lollms.types import MSG_TYPE
 from typing import Callable
 import json
-from lollms.utilities import TextVectorizer, GenericDataLoader
+from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
 from functools import partial
 from typing import Dict, Any
 
@@ -315,14 +316,11 @@ Date: {{date}}
         db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         if self.vectorizer is None:
-            self.vectorizer = TextVectorizer(self.config.data_vectorization_method, # supported "model_embedding" or "ftidf_vectorizer"
+            self.vectorizer = TextVectorizer(VectorizationMethod(self.config.data_vectorization_method), # supported "model_embedding" or "ftidf_vectorizer"
                         model=self.model, #needed in case of using model_embedding
                         database_path=db_path,
                         save_db=self.config.data_vectorization_save_db,
-                        visualize_data_at_startup=False,
-                        visualize_data_at_add_file=False,
-                        visualize_data_at_generate=False,
-                        data_visualization_method="PCA",
+                        data_visualization_method=VisualizationMethod.PCA,
                         database_dict=None)
         try:
             data = GenericDataLoader.read_file(path)

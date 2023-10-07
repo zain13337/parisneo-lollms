@@ -1,5 +1,6 @@
 from lollms.main_config import LOLLMSConfig
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
+
 from lollms.paths import LollmsPaths
 from pathlib import Path
 import argparse

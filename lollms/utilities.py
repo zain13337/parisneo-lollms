@@ -1,4 +1,4 @@
-from lollms.helpers import ASCIIColors, trace_exception
+from ascii_colors import ASCIIColors, trace_exception
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from pathlib import Path

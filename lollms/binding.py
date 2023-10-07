@@ -11,7 +11,8 @@ from typing import Dict, Any
 from pathlib import Path
 from typing import Callable
 from lollms.paths import LollmsPaths
-from lollms.helpers import ASCIIColors
+from ascii_colors import ASCIIColors
+
 
 import tempfile
 import requests
