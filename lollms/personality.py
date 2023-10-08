@@ -316,7 +316,8 @@ Date: {{date}}
         db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         if self.vectorizer is None:
-            self.vectorizer = TextVectorizer(VectorizationMethod(self.config.data_vectorization_method), # supported "model_embedding" or "ftidf_vectorizer"
+            self.vectorizer = TextVectorizer(
+                        self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
                         model=self.model, #needed in case of using model_embedding
                         database_path=db_path,
                         save_db=self.config.data_vectorization_save_db,
