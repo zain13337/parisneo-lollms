@@ -187,7 +187,11 @@ class LollmsPaths:
                 cfg.load_config(global_paths_cfg_path)
                 lollms_path = cfg.lollms_path
                 lollms_personal_path = cfg.lollms_personal_path
-                if(not Path(lollms_path).exists() or not Path(lollms_personal_path).exists()):
+
+                if(not Path(lollms_personal_path).exists()):
+                    ASCIIColors.warning("One of the paths does not exist lollms_path or lollms_personal_path")
+                    ASCIIColors.warning(f"{lollms_path}")
+                    ASCIIColors.warning(f"{lollms_personal_path}")
                     raise Exception("Wrong configuration file")
                 return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
             except Exception as ex:
