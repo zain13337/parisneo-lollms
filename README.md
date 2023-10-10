@@ -42,6 +42,30 @@ Or if you want to get the latest version from the git:
 pip install --upgrade git+https://github.com/ParisNeo/lollms.git
 ```
 
+## GPU support
+If you want to use cuda. Either install it directly or use conda to install everything:
+```bash
+conda create --name lollms python=3.10
+```
+Activate the environment
+
+```bash
+conda activate lollms
+```
+
+Install cudatoolkit
+
+```bash
+conda install -c anaconda cudatoolkit
+```
+
+Install lollms
+
+```bash
+pip install --upgrade lollms
+```
+
+Now you are ready.
 
 To simply configure your environment run the settings app:
 

@@ -30,10 +30,24 @@ def git_pull(folder_path):
     except subprocess.CalledProcessError as e:
         print("Error occurred while executing Git pull:", e)
         # Handle any specific error handling here if required
-
 class AdvancedGarbageCollector:
     @staticmethod
     def hardCollect(obj):
+        """
+        Remove a reference to the specified object and attempt to collect it.
+
+        Parameters:
+        - obj: The object to be collected.
+
+        This method first identifies all the referrers (objects referencing the 'obj')
+        using Python's garbage collector (gc.get_referrers). It then iterates through
+        the referrers and attempts to break their reference to 'obj' by setting them
+        to None. Finally, it deletes the 'obj' reference.
+
+        Note: This method is designed to handle circular references and can be used
+        to forcefully collect objects that might not be collected automatically.
+
+        """
         all_referrers = gc.get_referrers(obj)
         for referrer in all_referrers:
             if not isinstance(referrer, (list, tuple, dict, set)):
@@ -42,6 +56,20 @@ class AdvancedGarbageCollector:
 
     @staticmethod
     def safeHardCollect(variable_name, instance=None):
+        """
+        Safely remove a reference to a variable and attempt to collect its object.
+
+        Parameters:
+        - variable_name: The name of the variable to be collected.
+        - instance: An optional instance (object) to search for the variable if it
+          belongs to an object.
+
+        This method provides a way to safely break references to a variable by name.
+        It first checks if the variable exists either in the local or global namespace
+        or within the provided instance. If found, it calls the 'hardCollect' method
+        to remove the reference and attempt to collect the associated object.
+
+        """
         if instance is not None:
             if hasattr(instance, variable_name):
                 obj = getattr(instance, variable_name)
@@ -60,11 +88,32 @@ class AdvancedGarbageCollector:
 
     @staticmethod
     def safeHardCollectMultiple(variable_names, instance=None):
+        """
+        Safely remove references to multiple variables and attempt to collect their objects.
+
+        Parameters:
+        - variable_names: A list of variable names to be collected.
+        - instance: An optional instance (object) to search for the variables if they
+          belong to an object.
+
+        This method iterates through a list of variable names and calls 'safeHardCollect'
+        for each variable, effectively removing references and attempting to collect
+        their associated objects.
+
+        """
         for variable_name in variable_names:
             AdvancedGarbageCollector.safeHardCollect(variable_name, instance)
 
     @staticmethod
     def collect():
+        """
+        Perform a manual garbage collection using Python's built-in 'gc.collect' method.
+
+        This method triggers a manual garbage collection, attempting to clean up
+        any unreferenced objects in memory. It can be used to free up memory and
+        resources that are no longer in use.
+
+        """
         gc.collect()
 
 

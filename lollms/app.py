@@ -96,6 +96,12 @@ class LollmsApplication:
         self.mount_personalities()
         self.mount_extensions()
 
+    def notify(self, content, is_success, client_id=None):
+        if is_success:
+            ASCIIColors.yellow(content)
+        else:
+            ASCIIColors.red(content)
+
     def load_binding(self):
         try:
             binding = BindingBuilder().build_binding(self.config, self.lollms_paths)

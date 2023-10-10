@@ -187,6 +187,8 @@ class LollmsPaths:
                 cfg.load_config(global_paths_cfg_path)
                 lollms_path = cfg.lollms_path
                 lollms_personal_path = cfg.lollms_personal_path
+                if(not Path(lollms_path).exists() or not Path(lollms_personal_path).exists()):
+                    raise Exception("Wrong configuration file")
                 return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
             except Exception as ex:
                 print(f"{ASCIIColors.color_red}Global paths configuration file found but seems to be corrupted{ASCIIColors.color_reset}")
