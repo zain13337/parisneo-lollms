@@ -4,7 +4,7 @@ from lollms.config import InstallOption, TypedConfig, BaseConfig
 from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.binding import LLMBinding
-
+from lollms.utilities import PromptReshaper
 import pkg_resources
 from pathlib import Path
 from PIL import Image
@@ -1481,6 +1481,28 @@ class APScript(StateMachine):
 
         if callback:
             callback(message_text, MSG_TYPE.MSG_TYPE_FINISHED_MESSAGE)
+
+    def print_prompt(self, title, prompt):
+        ASCIIColors.red("*-*-*-*-*-*-*-* ", end="")
+        ASCIIColors.red(title, end="")
+        ASCIIColors.red(" *-*-*-*-*-*-*-*")
+        ASCIIColors.yellow(prompt)
+        ASCIIColors.red(" *-*-*-*-*-*-*-*")        
+
+    def fast_gen(self, prompt, max_generation_size, placeholders={}, debug=False):
+            """
+            Fast way to generate code
+            """
+            pr  = PromptReshaper(prompt)
+            prompt = pr.build(placeholders, 
+                    self.personality.model.tokenize, 
+                    self.personality.model.detokenize, 
+                    self.personality.model.config.ctx_size,
+                    ["previous_discussion"]
+                    )
+            self.print_prompt("Ask to build keywords",prompt)
+            return self.generate(prompt, max_generation_size).strip().replace("</s>","").replace("<s>","")
+    
 
     #Helper method to convert outputs path to url
     def path2url(file):
