@@ -147,7 +147,7 @@ class LollmsPaths:
                 force_local = False
         print(f"To make it clear where your data are stored, we now give the user the choice where to put its data.")
         print(f"This allows you to mutualize models which are heavy, between multiple lollms compatible apps.")
-        print(f"You can change this at any tome using the lollms-settings script or by simply change the content of the global_paths_cfg.yaml file.")
+        print(f"You can change this at any time using the lollms-settings script or by simply change the content of the global_paths_cfg.yaml file.")
         found = False
         while not found:
             print(f"Please provide a folder to store your configurations files, your models and your personal data (database, custom personalities etc).")
@@ -229,7 +229,7 @@ class LollmsPaths:
                 print(f"{ASCIIColors.color_green}Welcome! It seems this is your first use of the new lollms app.{ASCIIColors.color_reset}")
                 print(f"To make it clear where your data are stored, we now give the user the choice where to put its data.")
                 print(f"This allows you to mutualize models which are heavy, between multiple lollms compatible apps.")
-                print(f"You can change this at any tome using the lollms-settings script or by simply change the content of the global_paths_cfg.yaml file.")
+                print(f"You can change this at any time using the lollms-settings script or by simply change the content of the global_paths_cfg.yaml file.")
                 found = False
                 while not found:
                     print(f"Please provide a folder to store your configurations files, your models and your personal data (database, custom personalities etc).")
