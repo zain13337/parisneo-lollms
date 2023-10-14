@@ -3,6 +3,7 @@ import shutil
 from ascii_colors import ASCIIColors
 from lollms.config import BaseConfig
 import subprocess
+import os
 
 lollms_path = Path(__file__).parent
 lollms_default_cfg_path = lollms_path / "configs/config.yaml"
@@ -48,10 +49,16 @@ class LollmsPaths:
         self.personal_trainers_path         = self.personal_path / "trainers"
         self.gptqlora_path            = self.personal_trainers_path / "gptqlora"
 
+        self.execution_path = Path(os.getcwd())
+        if (self.execution_path/"zoos").exists():
+            self.bindings_zoo_path              = self.execution_path/"zoos" / "bindings_zoo"
+            self.personalities_zoo_path         = self.execution_path/"zoos" / "personalities_zoo"
+            self.extensions_zoo_path            = self.execution_path/"zoos" / "extensions_zoo"
+        else:
 
-        self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
-        self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
-        self.extensions_zoo_path            = self.personal_path / "extensions_zoo"
+            self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
+            self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
+            self.extensions_zoo_path            = self.personal_path / "extensions_zoo"
 
         ASCIIColors.green("----------------------Paths information-----------------------")
         ASCIIColors.yellow("personal_path:",end="")
@@ -124,12 +131,6 @@ class LollmsPaths:
             ASCIIColors.info("No extensions found in your personal space.\nCloning the extensions zoo")
             subprocess.run(["git", "clone", extensions_zoo_repo, self.extensions_zoo_path])
 
-        # QLora should be installed by the application
-        #if not self.gptqlora_path.exists():
-            # Clone the repository to the target path
-            #ASCIIColors.info("No gptqlora found in your personal space.\nCloning the gptqlora repo")
-            #subprocess.run(["git", "clone", gptqlora_repo, self.gptqlora_path])
-            #subprocess.run(["pip", "install", "-r", "requirements.txt"], cwd=self.gptqlora_path)
 
 
     def copy_default_config(self):

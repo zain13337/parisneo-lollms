@@ -334,7 +334,50 @@ class LLMBinding:
             else:
                 ASCIIColors.error("Pytorch installed successfully!!")
 
+    @staticmethod
+    def vram_usage():
+        try:
+            output = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.total,memory.used,gpu_name', '--format=csv,nounits,noheader'])
+            lines = output.decode().strip().split('\n')
+            vram_info = [line.split(',') for line in lines]
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return {
+            "nb_gpus": 0
+            }
+        
+        ram_usage = {
+            "nb_gpus": len(vram_info)
+        }
+        
+        if vram_info is not None:
+            for i, gpu in enumerate(vram_info):
+                ram_usage[f"gpu_{i}_total_vram"] = int(gpu[0])*1024*1024
+                ram_usage[f"gpu_{i}_used_vram"] = int(gpu[1])*1024*1024
+                ram_usage[f"gpu_{i}_model"] = gpu[2].strip()
+        else:
+            # Set all VRAM-related entries to None
+            ram_usage["gpu_0_total_vram"] = None
+            ram_usage["gpu_0_used_vram"] = None
+            ram_usage["gpu_0_model"] = None
+        
+        return ram_usage
 
+    @staticmethod
+    def clear_cuda():
+        import torch
+        ASCIIColors.red("*-*-*-*-*-*-*-*")
+        ASCIIColors.red("Cuda VRAM usage")
+        ASCIIColors.red("*-*-*-*-*-*-*-*")
+        print(LLMBinding.vram_usage())
+        try:
+            torch.cuda.empty_cache()
+        except Exception as ex:
+            ASCIIColors.error("Couldn't clear cuda memory")
+        ASCIIColors.red("Cleared cache")
+        ASCIIColors.red("*-*-*-*-*-*-*-*")
+        ASCIIColors.red("Cuda VRAM usage")
+        ASCIIColors.red("*-*-*-*-*-*-*-*")
+        print(LLMBinding.vram_usage())
     # To implement by children
     # @staticmethod
     # def get_available_models():
