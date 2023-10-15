@@ -116,6 +116,7 @@ class LOLLMSConfig(BaseConfig):
                 del self.config[key]
                 removed_entries.append(key)
 
+        ASCIIColors.yellow(default_config.config)
         self["version"]=default_config["version"]
         
         return self, added_entries, removed_entries

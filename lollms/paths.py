@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from ascii_colors import ASCIIColors
+from ascii_colors import ASCIIColors, trace_exception
 from lollms.config import BaseConfig
 import subprocess
 import os
@@ -176,12 +176,15 @@ class LollmsPaths:
             cfg.save_config(global_paths_cfg_path)
             found = True
         
-        return LollmsPaths(global_paths_cfg_path, cfg.lollms_path, cfg.lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path)        
+        return LollmsPaths(global_paths_cfg_path, cfg.lollms_path, cfg.lollms_personal_path, custom_default_cfg_path=self.default_cfg_path)        
 
     @staticmethod
     def find_paths(force_local=False, custom_default_cfg_path=None, tool_prefix=""):
         lollms_path = Path(__file__).parent
-        global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
+        if custom_default_cfg_path is None:
+            global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
+        else:
+            global_paths_cfg_path = Path(custom_default_cfg_path)
         if global_paths_cfg_path.exists():
             try:
                 cfg = BaseConfig()
@@ -194,9 +197,10 @@ class LollmsPaths:
                     ASCIIColors.warning(f"{lollms_path}")
                     ASCIIColors.warning(f"{lollms_personal_path}")
                     raise Exception("Wrong configuration file")
-                return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
+                return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, tool_prefix=tool_prefix)
             except Exception as ex:
-                print(f"{ASCIIColors.color_red}Global paths configuration file found but seems to be corrupted{ASCIIColors.color_reset}")
+                ASCIIColors.error(f"Global paths configuration file found but seems to be corrupted")
+                trace_exception(ex)
                 print("Couldn't find your personal data path!")
                 cfg.lollms_path = lollms_path
                 cfg["lollms_personal_path"] = str(Path.home()/"Documents/lollms")
@@ -238,7 +242,6 @@ class LollmsPaths:
                         "lollms_path":str(Path(__file__).parent),
                         "lollms_personal_path":str(Path.home()/"Documents/lollms")
                     })
-
                     cfg.lollms_personal_path = input(f"Folder path: ({cfg.lollms_personal_path}):")
                     if cfg.lollms_personal_path=="":
                         cfg.lollms_personal_path = str(Path.home()/"Documents/lollms")

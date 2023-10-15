@@ -17,3 +17,4 @@ scikit-learn
 
 ascii_colors
 safe_store
+ascii_colors

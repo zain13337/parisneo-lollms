@@ -12,16 +12,18 @@ from flask import Flask, make_response, request, abort
 from flask.json import jsonify
 from typing import Callable
 import string
-
-
+import argparse
+from ascii_colors import ASCIIColors
 BUNDLES=4
 MAXWORDS=1048
 DEBUG=True
-class Gandalf(LollmsApplication):
-    def __init__(self, cfg=None):
-        lollms_paths = LollmsPaths.find_paths(tool_prefix="lollms_server_")
+class Elf(LollmsApplication):
+    def __init__(self):
+        pass
+    def init(self, custom_default_cfg_path):
+        lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=custom_default_cfg_path, tool_prefix="lollms_elf_")
         config = LOLLMSConfig.autoload(lollms_paths, None)
-        super().__init__("Gandalf", config, lollms_paths)
+        super().__init__("Elf", config, lollms_paths)
 
     def split_fibers(self,fibers, max_words=MAXWORDS):
         # Split each fiber into chunks of up to max_words words
@@ -144,9 +146,8 @@ class Gandalf(LollmsApplication):
 # set up the Flask application
 app = Flask(__name__)
 
-#if __name__ == "__main__":
 
-cv = Gandalf(Path("config.yaml"))
+cv = Elf()
     # input_file_path = "user_input.txt"
     # try:
     #     cv.read_input_file(input_file_path)
@@ -373,6 +374,46 @@ def providers():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', '-hst', default=None, help='Host name')
+    parser.add_argument('--port', '-prt', default=None, help='Port number')
+
+    
+    parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
+    parser.add_argument('--reset_config', action='store_true', help='Reset the configurations')
+    parser.add_argument('--reset_installs', action='store_true', help='Reset all installation status')
+    parser.add_argument('--default_cfg_path', type=str, default=None, help='Reset all installation status')
+
+    ASCIIColors.yellow("         _             _            _             _            _   _         _        ")
+    ASCIIColors.yellow("        _\ \          /\ \         _\ \          _\ \         /\_\/\_\ _    / /\      ")
+    ASCIIColors.yellow("       /\__ \        /  \ \       /\__ \        /\__ \       / / / / //\_\ / /  \     ")
+    ASCIIColors.yellow("      / /_ \_\      / /\ \ \     / /_ \_\      / /_ \_\     /\ \/ \ \/ / // / /\ \__  ")
+    ASCIIColors.yellow("     / / /\/_/     / / /\ \ \   / / /\/_/     / / /\/_/    /  \____\__/ // / /\ \___\ ")
+    ASCIIColors.yellow("    / / /         / / /  \ \_\ / / /         / / /        / /\/________/ \ \ \ \/___/ ")
+    ASCIIColors.yellow("   / / /         / / /   / / // / /         / / /        / / /\/_// / /   \ \ \       ")
+    ASCIIColors.yellow("  / / / ____    / / /   / / // / / ____    / / / ____   / / /    / / /_    \ \ \      ")
+    ASCIIColors.yellow(" / /_/_/ ___/\ / / /___/ / // /_/_/ ___/\ / /_/_/ ___/\/ / /    / / //_/\__/ / /      ")
+    ASCIIColors.yellow("/_______/\__\// / /____\/ //_______/\__\//_______/\__\/\/_/    / / / \ \/___/ /       ")
+    ASCIIColors.yellow("\_______\/    \/_________/ \_______\/    \_______\/            \/_/   \_____\/        ")
+    ASCIIColors.yellow("         _            _             _                                                 ")
+    ASCIIColors.yellow("        /\ \         _\ \          /\ \                                               ")
+    ASCIIColors.yellow("       /  \ \       /\__ \        /  \ \                                              ")
+    ASCIIColors.yellow("      / /\ \ \     / /_ \_\      / /\ \ \                                             ")
+    ASCIIColors.yellow("     / / /\ \_\   / / /\/_/     / / /\ \_\                                            ")
+    ASCIIColors.yellow("    / /_/_ \/_/  / / /         / /_/_ \/_/                                            ")
+    ASCIIColors.yellow("   / /____/\    / / /         / /____/\                                               ")
+    ASCIIColors.yellow("  / /\____\/   / / / ____    / /\____\/                                               ")
+    ASCIIColors.yellow(" / / /______  / /_/_/ ___/\ / / /                                                     ")
+    ASCIIColors.yellow("/ / /_______\/_______/\__\// / /                                                      ")
+    ASCIIColors.yellow("\/__________/\_______\/    \/_/                                                       ")
+                                                                                      
+
+    args = parser.parse_args()
+
+    if args.reset_personal_path:
+        LollmsPaths.reset_configs()
+
+    cv.init(args.default_cfg_path)
     app.run()
 
 

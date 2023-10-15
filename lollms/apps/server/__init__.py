@@ -57,6 +57,7 @@ class LoLLMsServer(LollmsApplication):
         parser.add_argument('--reset_personal_path', action='store_true', help='Reset the personal path')
         parser.add_argument('--reset_config', action='store_true', help='Reset the configurations')
         parser.add_argument('--reset_installs', action='store_true', help='Reset all installation status')
+        parser.add_argument('--default_cfg_path', type=str, default=None, help='Reset all installation status')
 
 
         args = parser.parse_args()
@@ -68,7 +69,7 @@ class LoLLMsServer(LollmsApplication):
             LollmsPaths.reset_configs()
 
         if args.reset_config:
-            lollms_paths = LollmsPaths.find_paths(tool_prefix="lollms_server_")
+            lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=args.default_cfg_path, tool_prefix="lollms_server_")
             cfg_path = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
             try:
                 cfg_path.unlink()
