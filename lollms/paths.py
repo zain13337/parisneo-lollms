@@ -179,17 +179,17 @@ class LollmsPaths:
         return LollmsPaths(global_paths_cfg_path, cfg.lollms_path, cfg.lollms_personal_path, custom_default_cfg_path=self.default_cfg_path)        
 
     @staticmethod
-    def find_paths(force_local=False, custom_default_cfg_path=None, tool_prefix=""):
+    def find_paths(force_local=False, custom_default_cfg_path=None, custom_global_paths_cfg_path=None, tool_prefix=""):
         lollms_path = Path(__file__).parent
-        if custom_default_cfg_path is None:
+        if custom_global_paths_cfg_path is None:
             global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
         else:
-            global_paths_cfg_path = Path(custom_default_cfg_path)
+            global_paths_cfg_path = Path(custom_global_paths_cfg_path)
         if global_paths_cfg_path.exists():
             try:
                 cfg = BaseConfig()
                 cfg.load_config(global_paths_cfg_path)
-                lollms_path = cfg.lollms_path
+                #lollms_path = cfg.lollms_path
                 lollms_personal_path = cfg.lollms_personal_path
 
                 if(not Path(lollms_personal_path).exists()):
