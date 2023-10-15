@@ -21,7 +21,7 @@ class Elf(LollmsApplication):
     def __init__(self):
         pass
     def init(self, custom_default_cfg_path):
-        lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=custom_default_cfg_path, tool_prefix="lollms_elf_")
+        lollms_paths = LollmsPaths.find_paths(custom_global_paths_cfg_path=custom_default_cfg_path, tool_prefix="lollms_elf_")
         config = LOLLMSConfig.autoload(lollms_paths, None)
         super().__init__("Elf", config, lollms_paths)
 
