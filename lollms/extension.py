@@ -72,12 +72,7 @@ class ExtensionBuilder:
                     )->LOLLMSExtension:
 
         extension, script_path = self.getExtension(extension_path, lollms_paths, app)
-        return extension(
-                extension_path.split[1],
-                script_path,
-                lollms_paths=lollms_paths,
-                app = app
-                )
+        return extension(app = app)
     
     def getExtension(
                         self, 
