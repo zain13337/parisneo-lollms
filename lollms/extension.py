@@ -71,7 +71,7 @@ class ExtensionBuilder:
                         app
                     )->LOLLMSExtension:
 
-        extension, script_path = self.getBinding(extension_path, lollms_paths, app)
+        extension, script_path = self.getExtension(extension_path, lollms_paths, app)
         return extension(
                 extension_path.split[1],
                 script_path,
@@ -86,7 +86,7 @@ class ExtensionBuilder:
                         app
                     )->LOLLMSExtension:
         
-        extension_path = lollms_paths.bindings_zoo_path / extension_path
+        extension_path = lollms_paths.extensions_zoo_path / extension_path
 
         # define the full absolute path to the module
         absolute_path = extension_path.resolve()

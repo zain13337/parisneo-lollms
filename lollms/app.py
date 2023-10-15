@@ -134,7 +134,7 @@ class LollmsApplication:
 
     def mount_extension(self, id:int, callback=None):
         try:
-            extension = ExtensionBuilder(self.lollms_paths, self.config, self.model, self, callback=callback).build_extension(self.config["extensions"][id], self.lollms_paths, self)
+            extension = ExtensionBuilder().build_extension(self.config["extensions"][id], self.lollms_paths, self)
             self.mounted_extensions.append(extension)
             return extension
         except Exception as ex:
@@ -205,7 +205,8 @@ class LollmsApplication:
     def unmount_extension(self, id:int)->bool:
         if id<len(self.config.extensions):
             del self.config.extensions[id]
-            del self.mounted_extensions[id]
+            if id>=0 and id<len(self.mounted_extensions):
+                del self.mounted_extensions[id]
             self.config.save_config()
             return True
         else:
