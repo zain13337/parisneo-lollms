@@ -414,7 +414,7 @@ def main():
         LollmsPaths.reset_configs()
 
     cv.init(args.default_cfg_path)
-    app.run()
+    app.run(host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

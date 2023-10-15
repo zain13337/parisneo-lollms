@@ -27,5 +27,5 @@ COPY ./zoos /app/zoos
 COPY ./configs /app/configs
 RUN pip install -e .
 # Run app.py when the container launches
-CMD ["lollms-elf","--host","0.0.0.0", "--default_cfg_path", "/app/elf_docker_cfg/config_paths.yaml"]
+CMD ["lollms-elf","--host","0.0.0.0", "--port", "9601", "--default_cfg_path", "/app/elf_docker_cfg/config_paths.yaml"]
 
