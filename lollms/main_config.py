@@ -141,8 +141,8 @@ class LOLLMSConfig(BaseConfig):
             return False 
            
     def download_model(self, url, binding, callback = None):
-        folder_path = self.lollms_paths.personal_models_path/self.binding_name
         model_name  = url.split("/")[-1]
+        folder_path = binding.config.searchModelPath(model_name)
         model_full_path = (folder_path / model_name)
         if binding is not None and hasattr(binding,'download_model'):
             binding.download_model(url, model_full_path, callback)

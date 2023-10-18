@@ -49,16 +49,20 @@ class LollmsPaths:
         self.personal_trainers_path         = self.personal_path / "trainers"
         self.gptqlora_path            = self.personal_trainers_path / "gptqlora"
 
+        self.binding_models_paths   = []
+
         self.execution_path = Path(os.getcwd())
         if (self.execution_path/"zoos").exists():
             self.bindings_zoo_path              = self.execution_path/"zoos" / "bindings_zoo"
             self.personalities_zoo_path         = self.execution_path/"zoos" / "personalities_zoo"
             self.extensions_zoo_path            = self.execution_path/"zoos" / "extensions_zoo"
+            self.models_zoo_path                = self.execution_path/"zoos" / "models_zoo"
         else:
 
             self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
             self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
             self.extensions_zoo_path            = self.personal_path / "extensions_zoo"
+            self.models_zoo_path                = self.execution_path/ "models_zoo"
 
         ASCIIColors.green("----------------------Paths information-----------------------")
         ASCIIColors.yellow("personal_path:",end="")

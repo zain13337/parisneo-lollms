@@ -58,7 +58,8 @@ class LLMBinding:
                     binding_config:TypedConfig,
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
                     supported_file_extensions='*.bin',
-                    binding_type:BindingType=BindingType.TEXT_ONLY
+                    binding_type:BindingType=BindingType.TEXT_ONLY,
+                    models_dir_names:list=None
                 ) -> None:
         
         self.binding_type           = binding_type
@@ -82,8 +83,15 @@ class LLMBinding:
         else:
             self.load_binding_config()
 
-        self.models_folder = config.lollms_paths.personal_models_path / self.binding_folder_name
-        self.models_folder.mkdir(parents=True, exist_ok=True)
+        if models_dir_names is not None:
+            config.lollms_paths.binding_models_paths=[config.lollms_paths.personal_models_path / models_dir_name for models_dir_name in models_dir_names]
+            self.models_folders = config.lollms_paths.binding_models_paths
+            self.models_dir_names = models_dir_names
+        else:
+            self.models_folders = [config.lollms_paths.personal_models_path / self.binding_folder_name]
+            self.models_dir_names = [self.binding_folder_name]
+        for models_folder in self.models_folders:
+            models_folder.mkdir(parents=True, exist_ok=True)
 
     def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -199,7 +207,16 @@ class LLMBinding:
         ASCIIColors.red(f"UnInstalling {self.binding_folder_name}")
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
 
-
+    def searchModelPath(self, model_name:str):
+        model_path=None
+        for mn in self.models_folders:
+            if mn.name in model_name.lower():
+                model_path = mn/model_name
+                break
+        if model_path is None:
+            model_path = self.models_folders[0]/model_name
+        return model_path
+    
     def get_model_path(self):
         """
         Retrieves the path of the model based on the configuration.
@@ -215,15 +232,15 @@ class LLMBinding:
         
         if self.config.model_name.endswith(".reference"):
             ASCIIColors.yellow("Loading a reference model:")
-            file_path = self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}"
-            if file_path.exists():
-                with open(str(file_path), 'r') as f:
+            ref_path = self.searchModelPath(self.config.model_name)
+            if ref_path.exists():
+                with open(str(ref_path), 'r') as f:
                     model_path = Path(f.read())
                 ASCIIColors.yellow(model_path)
             else:
                 return None
         else:
-            model_path = Path(self.lollms_paths.personal_models_path / f"{self.binding_folder_name}/{self.config.model_name}")
+            model_path = self.searchModelPath(self.config.model_name)
 
         return model_path
 
@@ -317,11 +334,29 @@ class LLMBinding:
         """
         pass
 
+
     def list_models(self, config:dict):
         """Lists the models for this binding
         """
-        models_dir = self.lollms_paths.personal_models_path/config["binding_name"]  # replace with the actual path to the models folder
-        return [f.name for f in models_dir.iterdir() if f.suffix in self.supported_file_extensions or f.suffix==".reference"]
+        models = []
+        for models_folder in self.models_folders:
+            if models_folder in ["ggml","gguf"]:
+                models+=[f.name for f in models_folder.iterdir() if f.suffix in self.supported_file_extensions or f.suffix==".reference"]
+            else:
+                models+=[f.name for f in models_folder.iterdir() if f.is_dir() and not f.stem.startswith(".") or f.suffix==".reference"]
+        return models
+
+    def get_available_models(self):
+        # Create the file path relative to the child class's directory
+        full_data = []
+        for models_dir_name in self.models_dir_names:
+            file_path = self.lollms_paths.models_zoo_path/f"{models_dir_name}.yaml"
+            with open(file_path, 'r') as file:
+                yaml_data = yaml.safe_load(file)
+                full_data+=yaml_data
+        
+        return full_data
+    
 
     @staticmethod
     def reinstall_pytorch_with_cuda():
@@ -378,9 +413,6 @@ class LLMBinding:
         ASCIIColors.red("Cuda VRAM usage")
         ASCIIColors.red("*-*-*-*-*-*-*-*")
         print(LLMBinding.vram_usage())
-    # To implement by children
-    # @staticmethod
-    # def get_available_models():
 
 
 # ===============================

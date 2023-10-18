@@ -185,7 +185,7 @@ class LoLLMsServer(LollmsApplication):
             server_infos["system_disk_total_space"]=drive_disk_usage.total
             server_infos["system_disk_available_space"]=drive_disk_usage.free
             try:
-                models_folder_disk_usage = psutil.disk_usage(str(self.lollms_paths.personal_models_path/f'{self.config["binding_name"]}'))
+                models_folder_disk_usage = psutil.disk_usage(str(self.lollms_paths.binding_models_paths[0]))
                 server_infos["binding_disk_total_space"]=models_folder_disk_usage.total
                 server_infos["binding_disk_available_space"]=models_folder_disk_usage.free
                              
