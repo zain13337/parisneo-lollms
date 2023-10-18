@@ -10,3 +10,7 @@
 	path = zoos/extensions_zoo
 	url = https://github.com/ParisNeo/lollms_extensions_zoo
 	branch = main
+[submodule "zoos/models_zoo"]
+	path = zoos/models_zoo
+	url = https://github.com/ParisNeo/models_zoo.git
+	branch = main
