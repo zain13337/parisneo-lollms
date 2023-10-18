@@ -1497,7 +1497,7 @@ class APScript(StateMachine):
             prompt = pr.build(placeholders, 
                     self.personality.model.tokenize, 
                     self.personality.model.detokenize, 
-                    self.personality.model.config.ctx_size,
+                    self.personality.model.config.ctx_size-max_generation_size,
                     ["previous_discussion"]
                     )
             self.print_prompt("Ask to build keywords",prompt)
