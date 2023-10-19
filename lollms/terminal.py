@@ -318,13 +318,20 @@ class MainMenu(Menu):
         if 1 <= choice <= len(personality_categories)-1:
             category = personality_categories[choice - 1]
             print(f"You selected category: {ASCIIColors.color_green}{category}{ASCIIColors.color_reset}")
-            personality_names = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/category).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
+            if category == "Custom personalities":
+                personality_names = [p.stem for p in (self.lollms_app.lollms_paths.custom_personalities_path).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
+            else:
+                personality_names = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path/category).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
             print("Select personality")
             choice = self.show_menu(personality_names)
             if 1 <= choice <= len(personality_names)-1:
                 name = personality_names[choice - 1]
-                print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
-                langs_dir = self.lollms_app.lollms_paths.personalities_zoo_path/category/name/"languages"
+                if category == "Custom personalities":
+                    print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
+                    langs_dir = self.lollms_app.lollms_paths.custom_personalities_path/name/"languages"
+                else:
+                    print(f"You selected personality: {ASCIIColors.color_green}{name}{ASCIIColors.color_reset}")
+                    langs_dir = self.lollms_app.lollms_paths.personalities_zoo_path/category/name/"languages"
                 if langs_dir.exists():
                     languages = [f.stem for f in langs_dir.iterdir()]
                     print("Select language")

@@ -141,10 +141,14 @@ Date: {{date}}
             self.personality_package_path = None
             return
         else:
-            if is_relative_path:
-                self.personality_package_path = self.lollms_paths.personalities_zoo_path/personality_package_path
+            parts = personality_package_path.split("/")
+            if parts[0]=="Custom personalities":
+                self.personality_package_path = self.lollms_paths.custom_personalities_path/parts[1]
             else:
-                self.personality_package_path = Path(personality_package_path)
+                if is_relative_path:
+                    self.personality_package_path = self.lollms_paths.personalities_zoo_path/personality_package_path
+                else:
+                    self.personality_package_path = Path(personality_package_path)
 
             # Validate that the path exists
             if not self.personality_package_path.exists():
