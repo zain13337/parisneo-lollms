@@ -139,10 +139,20 @@ class LOLLMSConfig(BaseConfig):
         except Exception as ex:
             print(f"Exception in checking model existance: {ex}")
             return False 
-           
+
+    def searchModelPath(self, model_name:str):
+        model_path=None
+        for mn in self.lollms_paths.binding_models_paths:
+            if mn.name in model_name.lower():
+                model_path = mn/model_name
+                break
+        if model_path is None:
+            model_path = self.lollms_paths.binding_models_paths[0]/model_name
+        return model_path
+    
     def download_model(self, url, binding, callback = None):
         model_name  = url.split("/")[-1]
-        folder_path = binding.config.searchModelPath(model_name)
+        folder_path = self.searchModelPath(model_name)
         model_full_path = (folder_path / model_name)
         if binding is not None and hasattr(binding,'download_model'):
             binding.download_model(url, model_full_path, callback)
@@ -169,8 +179,8 @@ class LOLLMSConfig(BaseConfig):
 
     def reference_model(self, path):
         path = str(path).replace("\\","/")
-        folder_path = self.lollms_paths.personal_models_path/self.binding_name
         model_name  = path.split("/")[-1]+".reference"
+        folder_path = self.searchModelPath(model_name)
         model_full_path = (folder_path / model_name)
 
         # Check if file already exists in folder

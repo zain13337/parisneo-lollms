@@ -88,7 +88,8 @@ class LLMBinding:
             self.models_folders = config.lollms_paths.binding_models_paths
             self.models_dir_names = models_dir_names
         else:
-            self.models_folders = [config.lollms_paths.personal_models_path / self.binding_folder_name]
+            config.lollms_paths.binding_models_paths= [config.lollms_paths.personal_models_path / self.binding_folder_name]
+            self.models_folders = config.lollms_paths.binding_models_paths
             self.models_dir_names = [self.binding_folder_name]
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
@@ -206,6 +207,17 @@ class LLMBinding:
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
         ASCIIColors.red(f"UnInstalling {self.binding_folder_name}")
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+
+    def searchModelParentFolder(self, model_name:str):
+        model_path=None
+        for mn in self.models_folders:
+            if mn.name in model_name.lower():
+                model_path = mn
+                break
+        if model_path is None:
+            model_path = self.models_folders[0]
+        return model_path
+
 
     def searchModelPath(self, model_name:str):
         model_path=None
