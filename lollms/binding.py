@@ -225,11 +225,11 @@ class LLMBinding:
             if mn.name in model_name.lower():
                 if mn.name == "ggml":
                     idx = model_name.index("-GGML")
-                    models=[m for m in mn.iterdir() if model_name[:idx] in m.name]
+                    models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
                     model_path = mn/models[0].name
                 elif mn.name == "gguf":
                     idx = model_name.index("-GGUF")
-                    models=[m for m in mn.iterdir() if model_name[:idx] in m.name]
+                    models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
                     model_path = mn/models[0].name
                 else:
                     model_path = mn/model_name
