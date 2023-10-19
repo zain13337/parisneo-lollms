@@ -223,7 +223,16 @@ class LLMBinding:
         model_path=None
         for mn in self.models_folders:
             if mn.name in model_name.lower():
-                model_path = mn/model_name
+                if mn.name == "ggml":
+                    idx = model_name.index("-GGML")
+                    models=[m for m in mn.iterdir() if model_name[:idx] in m.name]
+                    model_path = mn/models[0].name
+                elif mn.name == "gguf":
+                    idx = model_name.index("-GGUF")
+                    models=[m for m in mn.iterdir() if model_name[:idx] in m.name]
+                    model_path = mn/models[0].name
+                else:
+                    model_path = mn/model_name
                 break
         if model_path is None:
             model_path = self.models_folders[0]/model_name
@@ -352,7 +361,7 @@ class LLMBinding:
         """
         models = []
         for models_folder in self.models_folders:
-            if models_folder in ["ggml","gguf"]:
+            if models_folder.name in ["ggml","gguf"]:
                 models+=[f.name for f in models_folder.iterdir() if f.suffix in self.supported_file_extensions or f.suffix==".reference"]
             else:
                 models+=[f.name for f in models_folder.iterdir() if f.is_dir() and not f.stem.startswith(".") or f.suffix==".reference"]
