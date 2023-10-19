@@ -312,7 +312,7 @@ class MainMenu(Menu):
                 ASCIIColors.green(personality)
             else:
                 ASCIIColors.yellow(personality)
-        personality_categories = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Back"]
+        personality_categories = [p.stem for p in (self.lollms_app.lollms_paths.personalities_zoo_path).iterdir() if p.is_dir() and not p.name.startswith(".")]+["Custom personalities","Back"]
         print("Select category")
         choice = self.show_menu(personality_categories)
         if 1 <= choice <= len(personality_categories)-1:
