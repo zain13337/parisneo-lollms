@@ -208,8 +208,12 @@ class LLMBinding:
         ASCIIColors.red(f"UnInstalling {self.binding_folder_name}")
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
 
-    def searchModelParentFolder(self, model_name:str):
+    def searchModelParentFolder(self, model_name:str, model_type=None):
         model_path=None
+        if model_type is not None:
+            for mn in self.models_folders:
+                if mn.name.lower() == model_type.lower():
+                    return mn
         for mn in self.models_folders:
             if mn.name in model_name.lower():
                 model_path = mn
