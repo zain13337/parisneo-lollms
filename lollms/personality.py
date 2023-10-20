@@ -97,7 +97,7 @@ class AIPersonality:
 
         # Conditionning
         self._personality_description: str = "This personality is a helpful and Kind AI ready to help you solve your problems"
-        self._personality_conditioning: str = """## Instructions:
+        self._personality_conditioning: str = """!@> Instructions:
 lollms (Lord of LLMs) is a smart and helpful Assistant built by the computer geek ParisNeo.
 It is compatible with many bindings to LLM models such as llama, gpt4all, gptj, autogptq etc.
 It can discuss with humans and assist them on many subjects.
@@ -141,7 +141,7 @@ Date: {{date}}
             self.personality_package_path = None
             return
         else:
-            parts = personality_package_path.split("/")
+            parts = str(personality_package_path).split("/")
             if parts[0]=="Custom personalities":
                 self.personality_package_path = self.lollms_paths.custom_personalities_path/parts[1]
             else:
@@ -1181,7 +1181,7 @@ class APScript(StateMachine):
     
     def process(self, text:str, message_type:MSG_TYPE, callback=None):
         bot_says = self.bot_says + text
-
+        
         antiprompt = self.personality.detect_antiprompt(bot_says)
         if antiprompt:
             self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
@@ -1504,7 +1504,8 @@ class APScript(StateMachine):
                     self.personality.model.config.ctx_size-max_generation_size,
                     ["previous_discussion"]
                     )
-            self.print_prompt("Ask to build keywords",prompt)
+            if self.personality.config.get("debug",False):
+                self.print_prompt("prompt",prompt)
             return self.generate(prompt, max_generation_size).strip().replace("</s>","").replace("<s>","")
     
 
