@@ -1,5 +1,5 @@
 # =================== Lord Of Large Language Models Configuration file =========================== 
-version: 26
+version: 27
 binding_name: null
 model_name: null
 
@@ -14,7 +14,7 @@ port: 9601
 discussion_prompt_separator: "!@>"
 seed: -1
 n_predict: 1024
-ctx_size: 2048
+ctx_size: 4048
 min_n_predict: 256
 temperature: 0.9
 top_k: 50
@@ -45,6 +45,7 @@ debug: false
 
 # Data vectorization
 use_files: true # Activate using files
+data_vectorization_visualize_on_vectorization: false # if active, the vectorizer wil lshow data whenever index is called
 data_vectorization_activate: true # To activate/deactivate data vectorization
 data_vectorization_method: "ftidf_vectorizer" #"model_embedding" or "ftidf_vectorizer"
 data_visualization_method: "PCA" #"PCA" or "TSNE"
