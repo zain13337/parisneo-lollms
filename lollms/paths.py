@@ -55,6 +55,7 @@ class LollmsPaths:
         self.binding_models_paths   = []
 
         self.execution_path = Path(os.getcwd())
+        ASCIIColors.yellow(f"Execution path : {self.execution_path}")
         if (self.execution_path/"zoos").exists():
             self.bindings_zoo_path              = self.execution_path/"zoos" / "bindings_zoo"
             self.personalities_zoo_path         = self.execution_path/"zoos" / "personalities_zoo"
