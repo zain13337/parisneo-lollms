@@ -1,5 +1,5 @@
-[submodule "zoos/binding_zoo"]
-	path = zoos/binding_zoo
+[submodule "zoos/bindings_zoo"]
+	path = zoos/bindings_zoo
 	url = https://github.com/ParisNeo/lollms_bindings_zoo.git
 	branch = main
 [submodule "zoos/personalities_zoo"]
