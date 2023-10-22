@@ -168,11 +168,10 @@ class LOLLMSConfig(BaseConfig):
     def download_model(self, url, binding, callback = None):
         model_name  = url.split("/")[-1]
         folder_path = binding.searchModelPath(model_name)
-        model_full_path = (folder_path / model_name)
+        model_full_path = folder_path
         if binding is not None and hasattr(binding,'download_model'):
             binding.download_model(url, model_full_path, callback)
         else:
-
             # Check if file already exists in folder
             if model_full_path.exists():
                 print("File already exists in folder")
