@@ -88,6 +88,19 @@ class LollmsPaths:
         ASCIIColors.red("custom_personalities_path:",end="")
         ASCIIColors.yellow(f"{self.custom_personalities_path}")
         ASCIIColors.green("-------------------------------------------------------------")
+
+
+        ASCIIColors.green("----------------------Zoo information-----------------------")
+        ASCIIColors.red("bindings_zoo_path:",end="")
+        ASCIIColors.yellow(f"{self.bindings_zoo_path}")
+        ASCIIColors.red("personalities_zoo_path:",end="")
+        ASCIIColors.yellow(f"{self.personalities_zoo_path}")
+        ASCIIColors.red("extensions_zoo_path:",end="")
+        ASCIIColors.yellow(f"{self.extensions_zoo_path}")
+        ASCIIColors.red("models_zoo_path:",end="")
+        ASCIIColors.yellow(f"{self.models_zoo_path}")
+        ASCIIColors.green("-------------------------------------------------------------")
+
         self.create_directories()
         self.copy_default_config()
 

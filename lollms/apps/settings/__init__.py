@@ -22,9 +22,6 @@ class Settings(LollmsApplication):
 
         # get paths
         lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
-        ASCIIColors.yellow("------ Lollms Paths ------")
-        ASCIIColors.info(lollms_paths)        
-        ASCIIColors.yellow("------ ------------ ------")
         # Load maoin configuration
         config = LOLLMSConfig.autoload(lollms_paths)
 
