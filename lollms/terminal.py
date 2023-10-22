@@ -226,12 +226,16 @@ class MainMenu(Menu):
         print()
         print(f"{ASCIIColors.color_green}Current binding: {ASCIIColors.color_reset}{self.lollms_app.config['binding_name']}")
         for p in self.lollms_app.lollms_paths.bindings_zoo_path.iterdir():
-            if p.is_dir() and not p.stem.startswith("."):
+            if p.is_dir() and not p.stem.startswith(".") and p.stem !="binding_template":
                 if (p/"binding_card.yaml").exists():
                     with open(p/"binding_card.yaml", "r") as f:
                         card = yaml.safe_load(f)
-                    with open(p/"models.yaml", "r") as f:
-                        models = yaml.safe_load(f)
+                    models =[]
+                    for accepted_model in card["accepted_models"]:
+                        models_path = self.lollms_app.lollms_paths.models_zoo_path/f"{accepted_model}.yaml"
+                        with open(models_path, "r") as f:
+                            models += yaml.safe_load(f)
+
                     is_installed = (self.lollms_app.lollms_paths.personal_configuration_path/f"binding_{p.name}.yaml").exists()
                     entry=f"{ASCIIColors.color_green if is_installed else ''}{'*' if self.lollms_app.config['binding_name']==card['name'] else ''} {card['name']} (by {card['author']})"
                     bindings_list.append(entry)
