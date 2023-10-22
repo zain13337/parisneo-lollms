@@ -120,8 +120,14 @@ class LLMBinding:
             if isinstance(attr, property) or isinstance(attr, type):
                 continue
             value = getattr(cls, attr)
-            ASCIIColors.yellow("{}: {}".format(attr, value))
-
+            if attr!="tensor_file_map": 
+                ASCIIColors.red(f"{attr}: ",end="")
+                ASCIIColors.yellow(f"{value}")
+            else:
+                ASCIIColors.red(f"{attr}: ")
+                for k in value.keys():
+                    ASCIIColors.yellow(f"{k}")
+                
     def get_parameter_info(self, cls):
         # Get the signature of the class
         sig = inspect.signature(cls)
