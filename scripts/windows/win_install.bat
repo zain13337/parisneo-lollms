@@ -148,10 +148,7 @@ for /F "delims=" %%a in (requirements.txt) do echo "%%a"| findstr /C:"git+" >nul
 call python -m pip install -r requirements.txt --upgrade
 
 @rem install the pip requirements
-call python -m pip install -e lollms_core --upgrade
-
-@rem install the pip requirements
-call python -m pip install -e utilities/safe_store --upgrade
+call python -m pip install -e . --upgrade
 
 
 @rem create launcher

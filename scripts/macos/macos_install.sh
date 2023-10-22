@@ -144,9 +144,7 @@ done < requirements.txt
 # Install the pip requirements
 python -m pip install -r requirements.txt --upgrade
 
-python -m pip install -e lollms_core --upgrade
-
-python -m pip install -e utilities/safe_store --upgrade
+python -m pip install -e . --upgrade
 
 if [[ -e "../macos_lollms_server.sh" ]]; then
     echo "Macos run found"
