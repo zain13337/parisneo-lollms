@@ -142,17 +142,32 @@ class LOLLMSConfig(BaseConfig):
 
     def searchModelPath(self, model_name:str):
         model_path=None
-        for mn in self.lollms_paths.binding_models_paths:
+        for mn in self.models_folders:
             if mn.name in model_name.lower():
-                model_path = mn/model_name
+                if mn.name == "ggml":
+                    try:
+                        idx = model_name.index("-GGML")
+                        models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
+                        model_path = mn/models[0].name
+                    except:
+                        model_path = mn/model_name
+                elif mn.name == "gguf":
+                    try:
+                        idx = model_name.index("-GGUF")
+                        models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
+                        model_path = mn/models[0].name
+                    except:
+                        model_path = mn/model_name
+                else:
+                    model_path = mn/model_name
                 break
         if model_path is None:
-            model_path = self.lollms_paths.binding_models_paths[0]/model_name
+            model_path = self.models_folders[0]/model_name
         return model_path
     
     def download_model(self, url, binding, callback = None):
         model_name  = url.split("/")[-1]
-        folder_path = self.searchModelPath(model_name)
+        folder_path = binding.searchModelPath(model_name)
         model_full_path = (folder_path / model_name)
         if binding is not None and hasattr(binding,'download_model'):
             binding.download_model(url, model_full_path, callback)
