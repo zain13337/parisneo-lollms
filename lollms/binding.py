@@ -94,6 +94,11 @@ class LLMBinding:
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
 
+        # Store the zoo in memory for fast access
+        self.modelsZoo = []
+        self.modelsZoo = self.get_available_models()
+
+
     def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle client requests.
@@ -385,14 +390,18 @@ class LLMBinding:
 
     def get_available_models(self):
         # Create the file path relative to the child class's directory
-        full_data = []
+        if len(self.modelsZoo)>0:
+            return self.modelsZoo
+        modelsZoo = []
         for models_dir_name in self.models_dir_names:
             file_path = self.lollms_paths.models_zoo_path/f"{models_dir_name}.yaml"
             with open(file_path, 'r') as file:
+                ASCIIColors.yellow(f"Loading: {file_path} ...",end="")
                 yaml_data = yaml.safe_load(file)
-                full_data+=yaml_data
+                ASCIIColors.green(f"ok")
+                modelsZoo+=yaml_data
         
-        return full_data
+        return modelsZoo
     
 
     @staticmethod

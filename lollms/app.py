@@ -91,7 +91,6 @@ class LollmsApplication:
                                 trace_exception(ex)
                 else:
                     ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
-
             
         self.mount_personalities()
         self.mount_extensions()
