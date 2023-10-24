@@ -94,11 +94,6 @@ class LLMBinding:
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
 
-        # Store the zoo in memory for fast access
-        self.modelsZoo = []
-        self.modelsZoo = self.get_available_models()
-
-
     def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle client requests.
@@ -120,7 +115,7 @@ class LLMBinding:
         """        
         return {"status":True}
 
-    def print_class_attributes(self, cls):
+    def print_class_attributes(self, cls, show_layers=False):
         for attr in cls.__dict__:
             if isinstance(attr, property) or isinstance(attr, type):
                 continue
@@ -128,7 +123,7 @@ class LLMBinding:
             if attr!="tensor_file_map": 
                 ASCIIColors.red(f"{attr}: ",end="")
                 ASCIIColors.yellow(f"{value}")
-            else:
+            elif show_layers:
                 ASCIIColors.red(f"{attr}: ")
                 for k in value.keys():
                     ASCIIColors.yellow(f"{k}")
@@ -390,18 +385,14 @@ class LLMBinding:
 
     def get_available_models(self):
         # Create the file path relative to the child class's directory
-        if len(self.modelsZoo)>0:
-            return self.modelsZoo
-        modelsZoo = []
+        full_data = []
         for models_dir_name in self.models_dir_names:
             file_path = self.lollms_paths.models_zoo_path/f"{models_dir_name}.yaml"
             with open(file_path, 'r') as file:
-                ASCIIColors.yellow(f"Loading: {file_path} ...",end="")
                 yaml_data = yaml.safe_load(file)
-                ASCIIColors.green(f"ok")
-                modelsZoo+=yaml_data
+                full_data+=yaml_data
         
-        return modelsZoo
+        return full_data
     
 
     @staticmethod
