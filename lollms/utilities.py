@@ -48,10 +48,27 @@ class AdvancedGarbageCollector:
         to forcefully collect objects that might not be collected automatically.
 
         """
+        if obj is None:
+            return
         all_referrers = gc.get_referrers(obj)
         for referrer in all_referrers:
-            if not isinstance(referrer, (list, tuple, dict, set)):
-                referrer = None
+            try:
+                if isinstance(referrer, (list, tuple, dict, set)):
+                    if isinstance(referrer, list):
+                        if obj in referrer:
+                            referrer.remove(obj)
+                    elif isinstance(referrer, dict):
+                        new_dict = {}
+                        for key, value in referrer.items():
+                            if value != obj:
+                                new_dict[key] = value
+                        referrer.clear()
+                        referrer.update(new_dict)
+                    elif isinstance(referrer, set):
+                        if obj in referrer:
+                            referrer.remove(obj)
+            except:
+                ASCIIColors.warning("Couldn't remove object from referrer")
         del obj
 
     @staticmethod
