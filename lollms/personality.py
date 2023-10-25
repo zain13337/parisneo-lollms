@@ -1493,20 +1493,35 @@ class APScript(StateMachine):
         ASCIIColors.yellow(prompt)
         ASCIIColors.red(" *-*-*-*-*-*-*-*")        
 
-    def fast_gen(self, prompt, max_generation_size, placeholders={}, debug=False):
-            """
-            Fast way to generate code
-            """
-            pr  = PromptReshaper(prompt)
-            prompt = pr.build(placeholders, 
-                    self.personality.model.tokenize, 
-                    self.personality.model.detokenize, 
-                    self.personality.model.config.ctx_size-max_generation_size,
-                    ["previous_discussion"]
-                    )
-            if self.personality.config.get("debug",False):
-                self.print_prompt("prompt",prompt)
-            return self.generate(prompt, max_generation_size).strip().replace("</s>","").replace("<s>","")
+    def fast_gen(self, prompt: str, max_generation_size: int, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False) -> str:
+        """
+        Fast way to generate code
+        
+        This method takes in a prompt, maximum generation size, optional placeholders, sacrifice list, and debug flag.
+        It reshapes the context before performing text generation by adjusting and cropping the number of tokens.
+        
+        Parameters:
+        - prompt (str): The input prompt for text generation.
+        - max_generation_size (int): The maximum number of tokens to generate.
+        - placeholders (dict, optional): A dictionary of placeholders to be replaced in the prompt. Defaults to an empty dictionary.
+        - sacrifice (list, optional): A list of placeholders to sacrifice if the window is bigger than the context size minus the number of tokens to generate. Defaults to ["previous_discussion"].
+        - debug (bool, optional): Flag to enable/disable debug mode. Defaults to False.
+        
+        Returns:
+        - str: The generated text after removing special tokens ("<s>" and "</s>") and stripping any leading/trailing whitespace.
+        """
+        pr = PromptReshaper(prompt)
+        prompt = pr.build(placeholders, 
+                        self.personality.model.tokenize, 
+                        self.personality.model.detokenize, 
+                        self.personality.model.config.ctx_size - max_generation_size,
+                        sacrifice
+                        )
+        if debug:
+            self.print_prompt("prompt", prompt)
+            
+        return self.generate(prompt, max_generation_size).strip().replace("</s>", "").replace("<s>", "")
+
     
 
     #Helper method to convert outputs path to url
