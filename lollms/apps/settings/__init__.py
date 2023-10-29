@@ -7,11 +7,15 @@ import argparse
 from lollms.app import LollmsApplication
 from typing import Callable
 
+from lollms.config import BaseConfig
+from lollms.binding import BindingBuilder, InstallOption
+from tqdm import tqdm
 
 
 class Settings(LollmsApplication):
     def __init__(
                     self, 
+                    lollms_paths:LollmsPaths=None,
                     configuration_path:str|Path=None, 
                     show_logo:bool=True, 
                     show_commands_list:bool=False, 
@@ -21,7 +25,8 @@ class Settings(LollmsApplication):
                 ):
 
         # get paths
-        lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
+        if lollms_paths is None:
+            lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix="lollms_server_")
         # Load maoin configuration
         config = LOLLMSConfig.autoload(lollms_paths)
 
@@ -49,6 +54,7 @@ class Settings(LollmsApplication):
             except:
                 pass
 
+    def start(self):
         self.menu.main_menu()
             
     def ask_override_file(self):
@@ -151,6 +157,7 @@ Participating personalities:
         return string    
 
 def main():
+    tool_prefix = "lollms_server_"
     # Create the argument parser
     parser = argparse.ArgumentParser(description='App Description')
 
@@ -164,9 +171,19 @@ def main():
     parser.add_argument('--default_cfg_path', type=str, default=None, help='Reset all installation status')
 
 
+    parser.add_argument('--tool_prefix', type=str, default="lollms_server_", help='A prefix to define what tool is being used (default lollms_server)')
+    parser.add_argument('--set_personal_folder_path', type=str, default=None, help='Forces installing and selecting a specific binding')
+    parser.add_argument('--install_binding', type=str, default=None, help='Forces installing and selecting a specific binding')
+    parser.add_argument('--install_model', type=str, default=None, help='Forces installing and selecting a specific model')
+    parser.add_argument('--select_model', type=str, default=None, help='Forces selecting a specific model')
+    parser.add_argument('--mount_personalities', nargs='+', type=str, default=None, help='Forces mounting a list of personas')
+    parser.add_argument('--set_personal_foldrer', type=str, default=None, help='Forces setting personal folder to a specific value')
+
+    parser.add_argument('--silent', action='store_true', help='This will operate in scilent mode, no menu will be shown')
 
     # Parse the command-line arguments
     args = parser.parse_args()
+
 
     if args.reset_installs:
         LollmsApplication.reset_all_installs()
@@ -175,17 +192,70 @@ def main():
         LollmsPaths.reset_configs()
     
     if args.reset_config:
-        lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=args.default_cfg_path, tool_prefix="lollms_server_")
+        lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=args.default_cfg_path, tool_prefix=tool_prefix)
         cfg_path = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
         try:
             cfg_path.unlink()
             ASCIIColors.success("LOLLMS configuration reset successfully")
         except:
             ASCIIColors.success("Couldn't reset LOLLMS configuration")
+    else:
+        lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix=tool_prefix)
 
     configuration_path = args.configuration_path
         
-    Settings(configuration_path=configuration_path, show_commands_list=True)
+    if args.set_personal_folder_path:
+        cfg = BaseConfig(config={
+            "lollms_path":str(Path(__file__).parent),
+            "lollms_personal_path":args.set_personal_folder_path
+        })
+        ASCIIColors.green(f"Selected personal path: {cfg.lollms_personal_path}")
+        pp= Path(cfg.lollms_personal_path)
+        if not pp.exists():
+            try:
+                pp.mkdir(parents=True)
+                ASCIIColors.green(f"Personal path set to {pp}")
+            except:
+                print(f"{ASCIIColors.color_red}It seams there is an error in the path you rovided{ASCIIColors.color_reset}")
+        global_paths_cfg_path = Path.home()/f"{tool_prefix}global_paths_cfg.yaml"
+        lollms_paths = LollmsPaths.find_paths(force_local=False, custom_global_paths_cfg_path=global_paths_cfg_path, tool_prefix=tool_prefix)
+        cfg.save_config(global_paths_cfg_path)
+
+
+    settings_app = Settings(configuration_path=configuration_path, lollms_paths=lollms_paths, show_commands_list=True)
+
+    if args.install_binding:
+        settings_app.config.binding_name= args.install_binding
+        settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL)
+        settings_app.config.save_config()
+
+
+    if args.install_model:
+        if not settings_app.binding:
+            settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL)
+        
+        def progress_callback(blocks, block_size, total_size):
+            tqdm_bar.total=total_size
+            tqdm_bar.update(block_size)
+
+        # Usage example
+        with tqdm(total=100, unit="%", desc="Download Progress", ncols=80) as tqdm_bar:
+            settings_app.config.download_model(args.install_model,settings_app.binding, progress_callback)
+        
+        settings_app.model = settings_app.binding.build_model()
+        settings_app.config.save_config()
+
+    if args.select_model:
+        settings_app.config.model_name = args.select_model
+        if not settings_app.binding:
+            settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL)
+        settings_app.model = settings_app.binding.build_model()
+        settings_app.config.save_config()
+
+
+    if not args.silent:
+        settings_app.start()
+
     
 
 if __name__ == "__main__":

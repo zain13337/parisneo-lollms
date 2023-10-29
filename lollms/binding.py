@@ -94,6 +94,12 @@ class LLMBinding:
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
 
+    def settings_updated(self):
+        """
+        To be implemented by the bindings
+        """
+        pass
+
     def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle client requests.

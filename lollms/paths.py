@@ -57,12 +57,13 @@ class LollmsPaths:
         self.execution_path = Path(os.getcwd())
         ASCIIColors.yellow(f"Execution path : {self.execution_path}")
         if (self.execution_path/"zoos").exists():
+            ASCIIColors.green("Local zoos folder found")
             self.bindings_zoo_path              = self.execution_path/"zoos" / "bindings_zoo"
             self.personalities_zoo_path         = self.execution_path/"zoos" / "personalities_zoo"
             self.extensions_zoo_path            = self.execution_path/"zoos" / "extensions_zoo"
             self.models_zoo_path                = self.execution_path/"zoos" / "models_zoo"
         else:
-
+            ASCIIColors.orange("local zoos folder not found")
             self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
             self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
             self.extensions_zoo_path            = self.personal_path / "extensions_zoo"
@@ -214,6 +215,8 @@ class LollmsPaths:
             global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
         else:
             global_paths_cfg_path = Path(custom_global_paths_cfg_path)
+
+        ASCIIColors.cyan(f"Trying to use Configuration at :{global_paths_cfg_path}")
         if global_paths_cfg_path.exists():
             try:
                 cfg = BaseConfig()

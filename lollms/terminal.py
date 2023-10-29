@@ -436,7 +436,7 @@ class MainMenu(Menu):
         elif choice <= len(bindings_list):
             return
         else:
-            print("Invalid choice!")        
+            print("Invalid choice!")
 
 
     
