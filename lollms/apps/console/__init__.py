@@ -137,24 +137,7 @@ Participating personalities:
             full_discussion = ""
         return full_discussion
         
-    def safe_generate(self, full_discussion:str, n_predict=None, callback: Callable[[str, int, dict], bool]=None):
-        """safe_generate
 
-        Args:
-            full_discussion (string): A prompt or a long discussion to use for generation
-            callback (_type_, optional): A callback to call for each received token. Defaults to None.
-
-        Returns:
-            str: Model output
-        """
-        if n_predict == None:
-            n_predict =self.personality.model_n_predicts
-        tk = self.personality.model.tokenize(full_discussion)
-        n_tokens = len(tk)
-        fd = self.personality.model.detokenize(tk[-min(self.config.ctx_size-self.n_cond_tk,n_tokens):])
-        self.bot_says = ""
-        output = self.personality.model.generate(self.personality.personality_conditioning+fd, n_predict=n_predict, callback=callback)
-        return output
     
     def remove_text_from_string(self, string, text_to_find):
         """

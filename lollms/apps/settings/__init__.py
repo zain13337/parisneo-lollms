@@ -157,7 +157,6 @@ Participating personalities:
         return string    
 
 def main():
-    tool_prefix = "lollms_server_"
     # Create the argument parser
     parser = argparse.ArgumentParser(description='App Description')
 
@@ -184,6 +183,7 @@ def main():
     # Parse the command-line arguments
     args = parser.parse_args()
 
+    tool_prefix = args.tool_prefix
 
     if args.reset_installs:
         LollmsApplication.reset_all_installs()
@@ -192,7 +192,7 @@ def main():
         LollmsPaths.reset_configs()
     
     if args.reset_config:
-        lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=args.default_cfg_path, tool_prefix=tool_prefix)
+        lollms_paths = LollmsPaths.find_paths(custom_default_cfg_path=args.default_cfg_path, tool_prefix=tool_prefix, force_personal_path=args.set_personal_folder_path)
         cfg_path = lollms_paths.personal_configuration_path / f"{lollms_paths.tool_prefix}local_config.yaml"
         try:
             cfg_path.unlink()
@@ -200,7 +200,7 @@ def main():
         except:
             ASCIIColors.success("Couldn't reset LOLLMS configuration")
     else:
-        lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix=tool_prefix)
+        lollms_paths = LollmsPaths.find_paths(force_local=False, tool_prefix=tool_prefix, force_personal_path=args.set_personal_folder_path)
 
     configuration_path = args.configuration_path
         
@@ -242,6 +242,7 @@ def main():
         with tqdm(total=100, unit="%", desc="Download Progress", ncols=80) as tqdm_bar:
             settings_app.config.download_model(args.install_model,settings_app.binding, progress_callback)
         
+        settings_app.config.model_name = args.install_model.split("/")[-1]
         settings_app.model = settings_app.binding.build_model()
         settings_app.config.save_config()
 

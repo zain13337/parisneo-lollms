@@ -209,7 +209,7 @@ class LollmsPaths:
         return LollmsPaths(global_paths_cfg_path, cfg.lollms_path, cfg.lollms_personal_path, custom_default_cfg_path=self.default_cfg_path)        
 
     @staticmethod
-    def find_paths(force_local=False, custom_default_cfg_path=None, custom_global_paths_cfg_path=None, tool_prefix=""):
+    def find_paths(force_local=False, custom_default_cfg_path=None, custom_global_paths_cfg_path=None, tool_prefix="", force_personal_path=None):
         lollms_path = Path(__file__).parent
         if custom_global_paths_cfg_path is None:
             global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
@@ -218,6 +218,7 @@ class LollmsPaths:
 
         ASCIIColors.cyan(f"Trying to use Configuration at :{global_paths_cfg_path}")
         if global_paths_cfg_path.exists():
+            ASCIIColors.green(f"{global_paths_cfg_path} found!")
             try:
                 cfg = BaseConfig()
                 cfg.load_config(global_paths_cfg_path)
@@ -245,9 +246,11 @@ class LollmsPaths:
                 lollms_personal_path = cfg.lollms_personal_path
                 return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
         else:
+            ASCIIColors.red(f"{global_paths_cfg_path} not found! Searching in your home folder.")
             # if the app is not forcing a specific path, then try to find out if the default installed library has specified a default path
             global_paths_cfg_path = Path.home()/f"{tool_prefix}global_paths_cfg.yaml"
             if global_paths_cfg_path.exists():
+                ASCIIColors.green(f"{global_paths_cfg_path} found!")
                 cfg = BaseConfig()
                 cfg.load_config(global_paths_cfg_path)
                 try:
@@ -263,21 +266,11 @@ class LollmsPaths:
                     lollms_personal_path = cfg.lollms_personal_path
                     return LollmsPaths(global_paths_cfg_path, lollms_path, lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
             else: # First time 
-                print(f"{ASCIIColors.color_green}Welcome! It seems this is your first use of the new lollms app.{ASCIIColors.color_reset}")
-                print(f"To make it clear where your data are stored, we now give the user the choice where to put its data.")
-                print(f"This allows you to mutualize models which are heavy, between multiple lollms compatible apps.")
-                print(f"You can change this at any time using the lollms-settings script or by simply change the content of the global_paths_cfg.yaml file.")
-                found = False
-                while not found:
-                    print(f"Please provide a folder to store your configurations files, your models and your personal data (database, custom personalities etc).")
+                if force_personal_path is not None:
                     cfg = BaseConfig(config={
                         "lollms_path":str(Path(__file__).parent),
-                        "lollms_personal_path":str(Path.home()/"Documents/lollms")
+                        "lollms_personal_path":force_personal_path
                     })
-                    cfg.lollms_personal_path = input(f"Folder path: ({cfg.lollms_personal_path}):")
-                    if cfg.lollms_personal_path=="":
-                        cfg.lollms_personal_path = str(Path.home()/"Documents/lollms")
-
                     print(f"Selected: {cfg.lollms_personal_path}")
                     pp= Path(cfg.lollms_personal_path)
                     if not pp.exists():
@@ -285,13 +278,42 @@ class LollmsPaths:
                             pp.mkdir(parents=True)
                         except:
                             print(f"{ASCIIColors.color_red}It seams there is an error in the path you rovided{ASCIIColors.color_reset}")
-                            continue
                     if force_local:
                         global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
                     else:
                         global_paths_cfg_path = Path.home()/f"{tool_prefix}global_paths_cfg.yaml"
                     cfg.save_config(global_paths_cfg_path)
                     found = True
+                else:
+                    print(f"{ASCIIColors.color_green}Welcome! It seems this is your first use of the new lollms app.{ASCIIColors.color_reset}")
+                    print(f"To make it clear where your data are stored, we now give the user the choice where to put its data.")
+                    print(f"This allows you to mutualize models which are heavy, between multiple lollms compatible apps.")
+                    print(f"You can change this at any time using the lollms-settings script or by simply change the content of the global_paths_cfg.yaml file.")
+                    found = False
+                    while not found:
+                        print(f"Please provide a folder to store your configurations files, your models and your personal data (database, custom personalities etc).")
+                        cfg = BaseConfig(config={
+                            "lollms_path":str(Path(__file__).parent),
+                            "lollms_personal_path":str(Path.home()/"Documents/lollms")
+                        })
+                        cfg.lollms_personal_path = input(f"Folder path: ({cfg.lollms_personal_path}):")
+                        if cfg.lollms_personal_path=="":
+                            cfg.lollms_personal_path = str(Path.home()/"Documents/lollms")
+
+                        print(f"Selected: {cfg.lollms_personal_path}")
+                        pp= Path(cfg.lollms_personal_path)
+                        if not pp.exists():
+                            try:
+                                pp.mkdir(parents=True)
+                            except:
+                                print(f"{ASCIIColors.color_red}It seams there is an error in the path you rovided{ASCIIColors.color_reset}")
+                                continue
+                        if force_local:
+                            global_paths_cfg_path = Path(f"./{tool_prefix}global_paths_cfg.yaml")
+                        else:
+                            global_paths_cfg_path = Path.home()/f"{tool_prefix}global_paths_cfg.yaml"
+                        cfg.save_config(global_paths_cfg_path)
+                        found = True
                 
                 return LollmsPaths(global_paths_cfg_path, cfg.lollms_path, cfg.lollms_personal_path, custom_default_cfg_path=custom_default_cfg_path, tool_prefix=tool_prefix)
             
