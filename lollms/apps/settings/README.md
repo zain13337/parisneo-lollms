@@ -1,95 +1,73 @@
 # lollms-settings
 
-The lollms-settings app is used to configure multiple aspects of the lollms project. Lollms is a multi bindings LLM service that serves multiple LLM models that can generate text out of a prompt.
+## Description
+The `lollms-settings` tool is used to configure multiple aspects of the lollms project. Lollms is a multi-bindings LLM service that serves multiple LLM models that can generate text out of a prompt.
 
 ## Usage
+To use the `lollms-settings` tool, you can run the following command:
 
-To use the lollms-settings app, you need to provide command-line arguments. Here are the available arguments:
-
-### `--configuration_path`
-
-- Description: Path to the configuration file.
-- Default: None
-
-### `--reset_personal_path`
-
-- Description: Reset the personal path.
-- Action: Store True
-
-### `--reset_config`
-
-- Description: Reset the configurations.
-- Action: Store True
-
-### `--reset_installs`
-
-- Description: Reset all installation status.
-- Action: Store True
-
-### `--default_cfg_path`
-
-- Description: Reset all installation status.
-- Type: String
-- Default: None
-
-### `--tool_prefix`
-
-- Description: A prefix to define what tool is being used.
-- Type: String
-- Default: "lollms_server_"
-
-### `--set_personal_folder_path`
-
-- Description: Forces installing and selecting a specific binding.
-- Type: String
-- Default: None
-
-### `--install_binding`
-
-- Description: Forces installing and selecting a specific binding.
-- Type: String
-- Default: None
-
-### `--install_model`
-
-- Description: Forces installing and selecting a specific model.
-- Type: String
-- Default: None
-
-### `--select_model`
-
-- Description: Forces selecting a specific model.
-- Type: String
-- Default: None
-
-### `--mount_personalities`
-
-- Description: Forces mounting a list of personas.
-- Type: List of Strings
-- Default: None
-
-### `--set_personal_foldrer`
-
-- Description: Forces setting personal folder to a specific value.
-- Type: String
-- Default: None
-
-### `--silent`
-
-- Description: This will operate in silent mode, no menu will be shown.
-- Action: Store True
-
-## Example
-
-To run the lollms-settings app with specific configurations, you can use the command-line arguments. Here's an example:
-
-```bash
-python lollms-settings.py --configuration_path /path/to/configuration/file --reset_personal_path --install_binding binding_name
+```
+python lollms_settings.py [--configuration_path CONFIGURATION_PATH] [--reset_personal_path] [--reset_config] [--reset_installs] [--default_cfg_path DEFAULT_CFG_PATH] [--tool_prefix TOOL_PREFIX] [--set_personal_folder_path SET_PERSONAL_FOLDER_PATH] [--install_binding INSTALL_BINDING] [--install_model INSTALL_MODEL] [--select_model SELECT_MODEL] [--mount_personalities MOUNT_PERSONALITIES] [--set_personal_foldrer SET_PERSONAL_FOLDRE] [--silent]
 ```
 
-In this example, the `--configuration_path` argument is used to specify the path to the configuration file. The `--reset_personal_path` argument is used to reset the personal path, and the `--install_binding` argument is used to force installing and selecting a specific binding.
+### Arguments
 
-## Additional Notes
+- `--configuration_path`: Path to the configuration file.
+- `--reset_personal_path`: Reset the personal path.
+- `--reset_config`: Reset the configurations.
+- `--reset_installs`: Reset all installation status.
+- `--default_cfg_path`: Reset all installation status.
+- `--tool_prefix`: A prefix to define what tool is being used (default `lollms_server_`).
+  - lollms applications prefixes:
+    - lollms server: `lollms_server_`
+    - lollms-elf: `lollms_elf_`
+    - lollms-webui: `""`
+    - lollms-discord-bot: `lollms_discord_`
+- `--set_personal_folder_path`: Forces installing and selecting a specific binding.
+- `--install_binding`: Forces installing and selecting a specific binding.
+- `--install_model`: Forces installing and selecting a specific model.
+- `--select_model`: Forces selecting a specific model.
+- `--mount_personalities`: Forces mounting a list of personas.
+- `--set_personal_foldrer`: Forces setting personal folder to a specific value.
+- `--silent`: This will operate in silent mode, no menu will be shown.
 
-- Make sure to provide the necessary permissions and access rights to the configuration file and any other files or directories required by the lollms-settings app.
-- Refer to the lollms documentation for more information on configuring and using the lollms project.
+### Examples
+Here are some examples of how to use the `lollms-settings` tool:
+
+1. Reset the configurations:
+```
+python lollms_settings.py --reset_config
+```
+
+2. Install and select a specific binding:
+```
+python lollms_settings.py --install_binding <binding_name>
+```
+
+3. Install and select a specific model:
+```
+python lollms_settings.py --install_model <model_path>
+```
+
+4. Select a specific model:
+```
+python lollms_settings.py --select_model <model_name>
+```
+
+5. Mount a list of personas:
+```
+python lollms_settings.py --mount_personalities <persona1> <persona2> ...
+```
+
+6. Set personal folder to a specific value:
+```
+python lollms_settings.py --set_personal_foldrer <folder_path>
+```
+
+7. Run in silent mode:
+```
+python lollms_settings.py --silent
+```
+
+## License
+This project is licensed under the Apache 2.0 License.
