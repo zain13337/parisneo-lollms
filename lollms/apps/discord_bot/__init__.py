@@ -8,7 +8,9 @@ from pathlib import Path
 from ascii_colors import ASCIIColors
 from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
 
-contexts={}
+context={
+    "discussion":""
+}
 
 client = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 
@@ -62,31 +64,48 @@ async def on_message(message):
         return
     if message.content.startswith(config["summoning_word"]):
         prompt = message.content[len(config["summoning_word"]):]
+        context['discussion']+= message.author.name +":"+  prompt + "\n" + f"{lollms_app.personality.ai_message_prefix}"
+        context['current_response']=""
         print("Chatting")
         try:
             docs, _ = text_vectorzer.recover_text(prompt,3)
-            docs = "!#>Documentation:\n"+'\n'.join(docs)
+            docs = "!@>Documentation:\n"+'\n'.join(docs)
         except:
             docs=""
-        context = f"""!#>instruction:
+        context_text = f"""!@>instruction:
 {lollms_app.personality.personality_conditioning}
-!#>Informations:
+!@>Informations:
 Current model:{lollms_app.config.model_name}
 Current personality:{lollms_app.personality.name}
 {docs}
-!#>{message.author.id}: {prompt}
-!#>{lollms_app.personality.ai_message_prefix}: """
-        print("Context:"+context)
-        out = ['']
+{context['discussion']}"""
+        print("Context:"+context_text)
         def callback(text, type=None):
-            out[0] += text
+            antiprompt = lollms_app.personality.detect_antiprompt(context['current_response'])
+            if antiprompt:
+                ASCIIColors.warning(f"\nDetected hallucination with antiprompt: {antiprompt}")
+                context['current_response'] = lollms_app.remove_text_from_string(context['current_response'],antiprompt)
+                return False
+
+            context['current_response'] += text
             print(text,end="")
             return True
         
         ASCIIColors.green("Warming up")
-        lollms_app.safe_generate(context, n_predict=1024, callback=callback)
+        lollms_app.safe_generate(context_text, n_predict=1024, callback=callback)
+
         print()
-        await message.channel.send(out[0])
+        context['discussion'] += context['current_response']
+        await message.channel.send(context['current_response'])
+    elif message.content.startswith('!mount'):
+        personality_name =  message.content[len('!mount')+1:]
+        lollms_app.config.personalities.append(personality_name)
+        lollms_app.mount_personality(len(lollms_app.config.personalities)-1)
+        await message.channel.send(f"Personality {personality_name} mounted successfuly")
+    elif message.content.startswith('!list'):
+        personality_name =  message.content[len('!mount')+1:]
+        await message.channel.send(f"Mounted personalities:\n{[p.name for p in lollms_app.mounted_personalities]}")
+
     elif message.content.startswith('!install'):
         response = "To install lollms, make sure you have installed the currently supported python version (consult the repository to verify what version is currently supported, but as of 10/22/2023, the version is 3.10).\nThen you can follow these steps:\n1. Open your command line interface.\n2. Navigate to the directory where you want to install lollms.\n3. Run the following command to clone the lollms repository: `git clone https://github.com/lollms/lollms.git`.\n4. Once the repository is cloned, navigate into the lollms directory.\n5. Run `pip install -r requirements.txt` to install the required dependencies.\n6. You can now use lollms by importing it in your Python code."
         await message.channel.send(response)

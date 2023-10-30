@@ -178,11 +178,10 @@ class LOLLMSConfig(BaseConfig):
             else:
                 # Create folder if it doesn't exist
                 folder_path.mkdir(parents=True, exist_ok=True)
-                progress_bar = tqdm(total=None, unit="B", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
+                progress_bar = tqdm(total=100, unit="%", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
                 # Define callback function for urlretrieve
                 def report_progress(block_num, block_size, total_size):
-                    progress_bar.total=total_size
-                    progress_bar.update(block_size)
+                    progress_bar.update(block_size/total_size)
                 # Download file from URL to folder
                 try:
                     rq.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress if callback is None else callback)

@@ -95,6 +95,25 @@ class LollmsApplication:
         self.mount_personalities()
         self.mount_extensions()
 
+
+    def remove_text_from_string(self, string, text_to_find):
+        """
+        Removes everything from the first occurrence of the specified text in the string (case-insensitive).
+
+        Parameters:
+        string (str): The original string.
+        text_to_find (str): The text to find in the string.
+
+        Returns:
+        str: The updated string.
+        """
+        index = string.lower().find(text_to_find.lower())
+
+        if index != -1:
+            string = string[:index]
+
+        return string
+
     def safe_generate(self, full_discussion:str, n_predict=None, callback: Callable[[str, int, dict], bool]=None):
         """safe_generate
 
@@ -111,8 +130,13 @@ class LollmsApplication:
         n_tokens = len(tk)
         fd = self.personality.model.detokenize(tk[-min(self.config.ctx_size-self.n_cond_tk,n_tokens):])
         self.bot_says = ""
-        output = self.personality.model.generate(self.personality.personality_conditioning+fd, n_predict=n_predict, callback=callback)
-        return output
+        if self.personality.processor is not None and self.personality.processor_cfg["custom_workflow"]:
+            ASCIIColors.info("processing...")
+            generated_text = self.personality.processor.run_workflow(full_discussion.split("!@>")[-1] if "!@>" in full_discussion else full_discussion, previous_discussion_text=self.personality.personality_conditioning+fd, callback=callback)
+        else:
+            ASCIIColors.info("generating...")
+            generated_text = self.personality.model.generate(self.personality.personality_conditioning+fd, n_predict=n_predict, callback=callback)
+        return generated_text
 
     def notify(self, content, is_success, client_id=None):
         if is_success:
