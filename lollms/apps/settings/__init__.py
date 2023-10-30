@@ -158,7 +158,7 @@ Participating personalities:
 
 def main():
     # Create the argument parser
-    parser = argparse.ArgumentParser(description='App Description')
+    parser = argparse.ArgumentParser(description='The lollms-settings app is used to configure multiple aspects of the lollms project. Lollms is a multi bindings LLM service that serves multiple LLM models that can generate text out of a prompt.')
 
     # Add the configuration path argument
     parser.add_argument('--configuration_path', default=None,
@@ -170,7 +170,7 @@ def main():
     parser.add_argument('--default_cfg_path', type=str, default=None, help='Reset all installation status')
 
 
-    parser.add_argument('--tool_prefix', type=str, default="lollms_server_", help='A prefix to define what tool is being used (default lollms_server)')
+    parser.add_argument('--tool_prefix', type=str, default="lollms_server_", help='A prefix to define what tool is being used (default lollms_server_)\nlollms applications prefixes:\n lollms server: lollms_server_\nlollms-elf: lollms_elf_\nlollms-webui: ""\nlollms-discord-bot: lollms_discord_')
     parser.add_argument('--set_personal_folder_path', type=str, default=None, help='Forces installing and selecting a specific binding')
     parser.add_argument('--install_binding', type=str, default=None, help='Forces installing and selecting a specific binding')
     parser.add_argument('--install_model', type=str, default=None, help='Forces installing and selecting a specific model')

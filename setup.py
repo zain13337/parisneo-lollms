@@ -26,7 +26,7 @@ def get_all_files(path):
 
 setuptools.setup(
     name="lollms",
-    version="5.9.5",
+    version="6.0.0",
     author="Saifeddine ALOUI",
     author_email="aloui.saifeddine@gmail.com",
     description="A python library for AI personality definition",
@@ -42,6 +42,7 @@ setuptools.setup(
             'lollms-server = lollms.apps.server:main',
             'lollms-console = lollms.apps.console:main',
             'lollms-settings = lollms.apps.settings:main',
+            'lollms-discord = lollms.apps.discord_bot:main',
             'lollms-playground = lollms.apps.playground:main'
         ],
     },
