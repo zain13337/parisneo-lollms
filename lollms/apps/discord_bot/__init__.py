@@ -69,7 +69,7 @@ async def on_message(message):
         print("Chatting")
         try:
             docs, _ = text_vectorzer.recover_text(prompt,3)
-            docs = "!@>Documentation:\n"+'\n'.join(docs)
+            docs = "Use the content of those documentation chunks to enhance your answers\n!@>Documentation:\n"+'\n'.join(docs)
         except:
             docs=""
         context_text = f"""{lollms_app.personality.personality_conditioning}
