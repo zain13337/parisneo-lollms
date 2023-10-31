@@ -694,8 +694,6 @@ class PromptReshaper:
     def build(self, placeholders:dict, tokenize, detokenize, max_nb_tokens:int, place_holders_to_sacrifice:list=[])->str:
         # Tokenize the template without placeholders
         template_text = self.template
-        for placeholder in placeholders:
-            template_text = template_text.replace("{{" + placeholder + "}}", "")
         template_tokens = tokenize(template_text)
         
         # Calculate the number of tokens in the template without placeholders

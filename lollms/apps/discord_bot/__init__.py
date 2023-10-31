@@ -63,8 +63,8 @@ async def on_message(message):
     if message.author == client.user:
         return
     if message.content.startswith(config["summoning_word"]):
-        prompt = message.content[len(config["summoning_word"]):]
-        context['discussion']+= message.author.name +":"+  prompt + "\n" + f"{lollms_app.personality.ai_message_prefix}"
+        prompt = message.content[len(config["summoning_word"])+1:]
+        context['discussion']+= "\n!@>" + message.author.name +": "+  prompt + "\n" + f"{lollms_app.personality.ai_message_prefix}"
         context['current_response']=""
         print("Chatting")
         try:
@@ -72,14 +72,12 @@ async def on_message(message):
             docs = "!@>Documentation:\n"+'\n'.join(docs)
         except:
             docs=""
-        context_text = f"""!@>instruction:
-{lollms_app.personality.personality_conditioning}
-!@>Informations:
+        context_text = f"""{lollms_app.personality.personality_conditioning}
+!@>informations:
 Current model:{lollms_app.config.model_name}
 Current personality:{lollms_app.personality.name}
 {docs}
-{context['discussion']}"""
-        print("Context:"+context_text)
+"""+"{{discussion}}"
         def callback(text, type=None):
             antiprompt = lollms_app.personality.detect_antiprompt(context['current_response'])
             if antiprompt:
@@ -91,20 +89,32 @@ Current personality:{lollms_app.personality.name}
             print(text,end="")
             return True
         
-        ASCIIColors.green("Warming up")
-        lollms_app.safe_generate(context_text, n_predict=1024, callback=callback)
+        ASCIIColors.green("Warming up ...")
+        lollms_app.safe_generate(context_text, n_predict=1024, callback=callback, placeholder={"discussion":context['discussion']},place_holders_to_sacrifice=["discussion"], debug=True)
 
         print()
-        context['discussion'] += context['current_response']
-        await message.channel.send(context['current_response'])
+        context['discussion'] += context['current_response'][0:2000]
+        await message.channel.send(context['current_response'][0:2000])
     elif message.content.startswith('!mount'):
         personality_name =  message.content[len('!mount')+1:]
         lollms_app.config.personalities.append(personality_name)
-        lollms_app.mount_personality(len(lollms_app.config.personalities)-1)
+        lollms_app.personality = lollms_app.mount_personality(len(lollms_app.config.personalities)-1)
+        lollms_app.config.active_personality_id = len(lollms_app.config.personalities)-1
+        
         await message.channel.send(f"Personality {personality_name} mounted successfuly")
     elif message.content.startswith('!list'):
-        personality_name =  message.content[len('!mount')+1:]
         await message.channel.send(f"Mounted personalities:\n{[p.name for p in lollms_app.mounted_personalities]}")
+    elif message.content.startswith('!select'):
+        personality_name =  message.content[len('!select')+1:]
+        index = 0
+        for i in range(len(lollms_app.mounted_personalities)):
+            if lollms_app.mounted_personalities[i].name.lower().strip()==personality_name.lower():
+                index = i
+        lollms_app.config.active_personality_id = index
+        await message.channel.send(f"Activated personality:\n{personality_name}")
+    elif message.content.startswith('!reset'):
+        context["discussion"]=""
+        await message.channel.send(f"Content reset")
 
     elif message.content.startswith('!install'):
         response = "To install lollms, make sure you have installed the currently supported python version (consult the repository to verify what version is currently supported, but as of 10/22/2023, the version is 3.10).\nThen you can follow these steps:\n1. Open your command line interface.\n2. Navigate to the directory where you want to install lollms.\n3. Run the following command to clone the lollms repository: `git clone https://github.com/lollms/lollms.git`.\n4. Once the repository is cloned, navigate into the lollms directory.\n5. Run `pip install -r requirements.txt` to install the required dependencies.\n6. You can now use lollms by importing it in your Python code."

@@ -6,6 +6,7 @@ from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
+from lollms.utilities import PromptReshaper
 from typing import Callable
 from ascii_colors import ASCIIColors
 
@@ -114,7 +115,7 @@ class LollmsApplication:
 
         return string
 
-    def safe_generate(self, full_discussion:str, n_predict=None, callback: Callable[[str, int, dict], bool]=None):
+    def safe_generate(self, full_discussion:str, n_predict=None, callback: Callable[[str, int, dict], bool]=None, placeholder={}, place_holders_to_sacrifice=[], debug=False):
         """safe_generate
 
         Args:
@@ -124,18 +125,18 @@ class LollmsApplication:
         Returns:
             str: Model output
         """
+        full_discussion = PromptReshaper(full_discussion).build(placeholder, self.model.tokenize, self.model.detokenize, max_nb_tokens=self.config.ctx_size-n_predict, place_holders_to_sacrifice=place_holders_to_sacrifice )
+        if debug:
+            ASCIIColors.yellow(full_discussion)
         if n_predict == None:
             n_predict =self.personality.model_n_predicts
-        tk = self.personality.model.tokenize(full_discussion)
-        n_tokens = len(tk)
-        fd = self.personality.model.detokenize(tk[-min(self.config.ctx_size-self.n_cond_tk,n_tokens):])
         self.bot_says = ""
         if self.personality.processor is not None and self.personality.processor_cfg["custom_workflow"]:
             ASCIIColors.info("processing...")
             generated_text = self.personality.processor.run_workflow(full_discussion.split("!@>")[-1] if "!@>" in full_discussion else full_discussion, previous_discussion_text=self.personality.personality_conditioning+fd, callback=callback)
         else:
             ASCIIColors.info("generating...")
-            generated_text = self.personality.model.generate(self.personality.personality_conditioning+fd, n_predict=n_predict, callback=callback)
+            generated_text = self.personality.model.generate(full_discussion, n_predict=n_predict, callback=callback)
         return generated_text
 
     def notify(self, content, is_success, client_id=None):

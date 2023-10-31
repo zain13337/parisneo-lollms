@@ -253,7 +253,16 @@ def main():
         settings_app.model = settings_app.binding.build_model()
         settings_app.config.save_config()
 
-
+    if args.mount_personalities:
+        for entry in args.mount_personalities:
+            try:
+                settings_app.config.personalities.append(entry)
+                settings_app.mount_personality(-1)
+                ASCIIColors.green(f"Personality : {entry} mounted")
+            except:
+                settings_app.config.personalities.pop()
+                ASCIIColors.red(f"Personality : {entry} couldn't be mounted")
+                
     if not args.silent:
         settings_app.start()
 
