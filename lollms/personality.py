@@ -1035,6 +1035,16 @@ class APScript(StateMachine):
         else:
             self.load_personality_config()
 
+    def execute_command(self, command: str, parameters:list=[]):
+        """
+        Recovers user commands and executes them. Each personality can define a set of commands that they can receive and execute
+        Args:
+            command: The command name
+            parameters: A list of the command parameters
+
+        """
+        self.process_state(command, "", self.callback)
+
     def handle_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle client requests.
@@ -1207,22 +1217,6 @@ class APScript(StateMachine):
                                 ).strip()    
         return self.bot_says
 
-
-    def execute_command(self, command:dict):
-        """Executes a command
-
-        Args:
-            command (dict): command information in form:
-            name: (command name)
-            value: (command value)
-            params: (command parameters)
-        """
-
-        if command["value"] in self.states_dict[self.current_state_id]["commands"]:
-            return self.states_dict[self.current_state_id]["commands"][command["value"]](command)
-        else:
-            return False
-
     def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """
         Runs the workflow for processing the model input and output.
@@ -1394,6 +1388,19 @@ class APScript(StateMachine):
         if callback:
             callback(code, MSG_TYPE.MSG_TYPE_CODE)
 
+    def notify(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This sends full text to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_INFO)
+
     def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end
 
@@ -1432,6 +1439,89 @@ class APScript(StateMachine):
 
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
+
+    def yes_no(self, question: str, context:str="", max_answer_length: int = 50) -> bool:
+        """
+        Analyzes the user prompt and answers whether it is asking to generate an image.
+
+        Args:
+            question (str): The user's message.
+            max_answer_length (int, optional): The maximum length of the generated answer. Defaults to 50.
+
+        Returns:
+            bool: True if the user prompt is asking to generate an image, False otherwise.
+        """
+        if context!="":
+            template = """!@>Instructions:
+Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
+!@>Context:                               
+{{context}}
+!@>instruction: {{question}}
+Yes or No?
+!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+        else:
+            template = """!@>Instructions:
+Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
+!@>instruction: {{question}}
+Yes or No?
+!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+
+        pr  = PromptReshaper(template)
+        prompt = pr.build({
+                "context":context,
+                "question":question
+                }, 
+                self.personality.model.tokenize, 
+                self.personality.model.detokenize, 
+                self.personality.model.config.ctx_size,
+                ["previous_discussion"]
+                )
+        self.print_prompt("Ask yes or no, this is a generation request",prompt)
+        is_discussion = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
+        ASCIIColors.cyan(is_discussion)
+        return "yes" in is_discussion.lower()
+
+    def multichoice_question(self, question: str, possible_anwers:list, context:str = "", max_answer_length: int = 50) -> int:
+        """
+        Interprets a multi-choice question from a users response. This function expects only one choice as true. All other choices are considered false. If none are correct, returns -1.
+        
+        Args:
+            question (str): The multi-choice question posed by the user.
+            possible_ansers (List[Any]): A list containing all valid options for the chosen value. For each item in the list, either 'True', 'False', None or another callable should be passed which will serve as the truth test function when checking against the actual user input.
+            max_answer_length (int, optional): Maximum string length allowed while interpreting the users' responses. Defaults to 50.
+            
+        Returns:
+            int: Index of the selected option within the possible_ansers list. Or -1 if there was not match found among any of them.
+        """
+        if context!="":
+            template = """!@>Instructions:
+Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
+!@>Context:                               
+{{context}}
+!@>instruction: {{question}}
+Yes or No?
+!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+        else:
+            template = """!@>Instructions:
+Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
+!@>instruction: {{question}}
+Yes or No?
+!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+
+        pr  = PromptReshaper(template)
+        prompt = pr.build({
+                "context":context,
+                "question":question
+                }, 
+                self.personality.model.tokenize, 
+                self.personality.model.detokenize, 
+                self.personality.model.config.ctx_size,
+                ["previous_discussion"]
+                )
+        self.print_prompt("Ask yes or no, this is a generation request",prompt)
+        is_discussion = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
+        ASCIIColors.cyan(is_discussion)
+        return "yes" in is_discussion.lower()
 
 
     def info(self, info_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
