@@ -1460,7 +1460,7 @@ class APScript(StateMachine):
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_PROGRESS, {'progress':progress})
 
-    def new_message(self, message_text:str, message_type:MSG_TYPE, metadata=[], callback: Callable[[str, int, dict, list], bool]=None):
+    def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list], bool]=None):
         """This sends step rogress to front end
 
         Args:
