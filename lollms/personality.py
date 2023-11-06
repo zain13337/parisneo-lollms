@@ -142,7 +142,7 @@ Date: {{date}}
             return
         else:
             parts = str(personality_package_path).split("/")
-            if parts[0]=="Custom personalities":
+            if parts[0]=="custom_personalities":
                 self.personality_package_path = self.lollms_paths.custom_personalities_path/parts[1]
             else:
                 if is_relative_path:
