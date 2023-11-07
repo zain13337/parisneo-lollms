@@ -11,6 +11,8 @@ lollms_bindings_zoo_path = lollms_path / "bindings_zoo"
 lollms_personalities_zoo_path = lollms_path / "personalities_zoo"
 lollms_extensions_zoo_path = lollms_path / "extensions_zoo"
 
+lollms_core_repo = "https://github.com/ParisNeo/lollms.git"
+safe_store_repo = "https://github.com/ParisNeo/safe_store.git"
 
 personalities_zoo_repo = "https://github.com/ParisNeo/lollms_personalities_zoo.git"
 bindings_zoo_repo = "https://github.com/ParisNeo/lollms_bindings_zoo.git"
@@ -55,6 +57,10 @@ class LollmsPaths:
         self.binding_models_paths   = []
 
         self.execution_path = Path(os.getcwd())
+
+        self.lollms_core_path = self.execution_path/"lollms_core"
+        self.safe_store_path = self.execution_path/"utilities/safe_store"
+    
         ASCIIColors.yellow(f"Execution path : {self.execution_path}")
         if (self.execution_path/"zoos").exists():
             ASCIIColors.green("Local zoos folder found")
@@ -139,7 +145,7 @@ class LollmsPaths:
         self.personal_user_infos_path.mkdir(parents=True, exist_ok=True)
         self.personal_trainers_path.mkdir(parents=True, exist_ok=True)
         self.custom_personalities_path.mkdir(parents=True, exist_ok=True)
-        
+
         
         if not self.bindings_zoo_path.exists():
             # Clone the repository to the target path
