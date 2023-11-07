@@ -42,6 +42,15 @@ class LollmsApplication:
 
         try:
             if config.auto_update:
+                # Clone the repository to the target path
+                if self.lollms_paths.lollms_core_path.exists():
+                    ASCIIColors.info("Lollms_core found in the app space.\nPulling last lollms_core")
+                    subprocess.run(["git", "-C", self.lollms_paths.lollms_core_path, "pull"])            
+                if self.lollms_paths.safe_store_path.exists():
+                    ASCIIColors.info("Lollms_core found in the app space.\nPulling last lollms_core")
+                    subprocess.run(["git", "-C", self.lollms_paths.safe_store_path, "pull"])            
+                # Pull the repository if it already exists
+                
                 ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
                 subprocess.run(["git", "-C", self.lollms_paths.bindings_zoo_path, "pull"])            
                 # Pull the repository if it already exists
