@@ -47,7 +47,7 @@ class LollmsApplication:
                     ASCIIColors.info("Lollms_core found in the app space.\nPulling last lollms_core")
                     subprocess.run(["git", "-C", self.lollms_paths.lollms_core_path, "pull"])            
                 if self.lollms_paths.safe_store_path.exists():
-                    ASCIIColors.info("Lollms_core found in the app space.\nPulling last lollms_core")
+                    ASCIIColors.info("safe_store_path found in the app space.\nPulling last safe_store_path")
                     subprocess.run(["git", "-C", self.lollms_paths.safe_store_path, "pull"])            
                 # Pull the repository if it already exists
                 
