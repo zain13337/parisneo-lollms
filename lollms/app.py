@@ -22,7 +22,8 @@ class LollmsApplication:
                     load_model=True, 
                     try_select_binding=False, 
                     try_select_model=False,
-                    callback=None
+                    callback=None,
+                    notification_callback:Callable=None
                 ) -> None:
         """
         Creates a LOLLMS Application
@@ -36,7 +37,7 @@ class LollmsApplication:
         self.personality            = None
 
         self.mounted_extensions     = []
-
+        self.notification_callback  = notification_callback
         self.binding=None
         self.model=None
 
@@ -149,6 +150,9 @@ class LollmsApplication:
         return generated_text
 
     def notify(self, content, is_success, client_id=None):
+        if self.notification_callback:
+            return self.notification_callback(content, is_success, client_id)
+
         if is_success:
             ASCIIColors.yellow(content)
         else:
@@ -156,7 +160,7 @@ class LollmsApplication:
 
     def load_binding(self):
         try:
-            binding = BindingBuilder().build_binding(self.config, self.lollms_paths)
+            binding = BindingBuilder().build_binding(self.config, self.lollms_paths, notification_callback=self.notify)
             return binding    
         except Exception as ex:
             print(ex)

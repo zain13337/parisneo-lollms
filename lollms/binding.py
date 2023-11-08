@@ -59,7 +59,8 @@ class LLMBinding:
                     installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
                     supported_file_extensions='*.bin',
                     binding_type:BindingType=BindingType.TEXT_ONLY,
-                    models_dir_names:list=None
+                    models_dir_names:list=None,
+                    notification_callback:Callable=None
                 ) -> None:
         
         self.binding_type           = binding_type
@@ -71,6 +72,7 @@ class LLMBinding:
         self.binding_config         = binding_config
         self.supported_file_extensions         = supported_file_extensions
         self.seed                   = config["seed"]
+        self.notification_callback  = notification_callback
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/"bindings"/self.binding_folder_name/f"config.yaml"
         self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -93,6 +95,11 @@ class LLMBinding:
             self.models_dir_names = [self.binding_folder_name]
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
+
+    def notify(self, content:str, status:bool):
+        if self.notification_callback:
+            self.notification_callback(content, status)
+
 
     def settings_updated(self):
         """
@@ -465,14 +472,16 @@ class BindingBuilder:
                         self, 
                         config: LOLLMSConfig, 
                         lollms_paths:LollmsPaths,
-                        installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
+                        installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
+                        notification_callback:Callable=None
                     )->LLMBinding:
 
         binding:LLMBinding = self.getBinding(config, lollms_paths, installation_option)
         return binding(
                 config,
                 lollms_paths=lollms_paths,
-                installation_option = installation_option
+                installation_option = installation_option,
+                notification_callback=notification_callback
                 )
     
     def getBinding(
