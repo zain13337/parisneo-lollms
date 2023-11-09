@@ -1226,6 +1226,8 @@ class APScript(StateMachine):
         return string
     
     def process(self, text:str, message_type:MSG_TYPE, callback=None):
+        if text is None:
+            return True
         bot_says = self.bot_says + text
         
         antiprompt = self.personality.detect_antiprompt(bot_says)
