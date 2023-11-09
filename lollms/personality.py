@@ -76,7 +76,8 @@ class AIPersonality:
         self.callback = callback
         self.app = app
 
-        self.files = []
+        self.text_files = []
+        self.image_files = []
         self.vectorizer = None
 
         self.installation_option = installation_option
@@ -290,53 +291,84 @@ Date: {{date}}
         return config
     def remove_file(self, path, callback=None):
         try:
-            self.files.remove(path)
-            Path(path).unlink()
-            if len(self.files)>0:
-                try:
-                    self.vectorizer.remove_document(path)
-                    if callback is not None:
-                        callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-                    return True
-                except ValueError as ve:
-                    ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
-                    return False
-            else:
-                self.vectorizer = None
+            if path in self.text_files:
+                self.text_files.remove(path)
+                Path(path).unlink()
+                if len(self.text_files)>0:
+                    try:
+                        self.vectorizer.remove_document(path)
+                        if callback is not None:
+                            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                        return True
+                    except ValueError as ve:
+                        ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                        return False
+                else:
+                    self.vectorizer = None
+            elif path in self.image_files:
+                self.image_files.remove(path)
+                Path(path).unlink()
+                if len(self.text_files)>0:
+                    try:
+                        self.vectorizer.remove_document(path)
+                        if callback is not None:
+                            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                        return True
+                    except ValueError as ve:
+                        ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                        return False
+                else:
+                    self.vectorizer = None
+
         except Exception as ex:
             ASCIIColors.warning(f"Couldn't remove the file {path}")
 
     def remove_all_files(self, callback=None):
-        for file in self.files:
+        for file in self.text_files:
             try:
                 Path(file).unlink()
             except Exception as ex:
                 ASCIIColors.warning(f"Couldn't remove the file {file}")
-        self.files=[]  
+        for file in self.image_files:
+            try:
+                Path(file).unlink()
+            except Exception as ex:
+                ASCIIColors.warning(f"Couldn't remove the file {file}")
+        self.text_files=[]  
+        self.image_files=[]  
         self.vectorizer = None
         return True     
+    
     def add_file(self, path, callback=None):
-        self.files.append(path)
         db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        if self.vectorizer is None:
-            self.vectorizer = TextVectorizer(
-                        self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
-                        model=self.model, #needed in case of using model_embedding
-                        database_path=db_path,
-                        save_db=self.config.data_vectorization_save_db,
-                        data_visualization_method=VisualizationMethod.PCA,
-                        database_dict=None)
-        try:
-            data = GenericDataLoader.read_file(path)
-            self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size)
-            self.vectorizer.index()
+        path = Path(path)
+        if path.suffix in [".png",".jpg",".gif",".bmp"]:
+            self.image_files.append(path)
+            ASCIIColors.info("Received image file")
             if callback is not None:
-                callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-            return True
-        except ValueError as ve:
-            ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
-            return False
+                callback("Image file added successfully",MSG_TYPE.MSG_TYPE_INFO)
+        else:
+            self.text_files.append(path)
+            ASCIIColors.info("Received text compatible file")
+            if self.vectorizer is None:
+                self.vectorizer = TextVectorizer(
+                            self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
+                            model=self.model, #needed in case of using model_embedding
+                            database_path=db_path,
+                            save_db=self.config.data_vectorization_save_db,
+                            data_visualization_method=VisualizationMethod.PCA,
+                            database_dict=None)
+            try:
+                data = GenericDataLoader.read_file(path)
+                self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size)
+                self.vectorizer.index()
+                if callback is not None:
+                    callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                return True
+            except ValueError as ve:
+                ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                return False
     def save_personality(self, package_path=None):
         """
         Save the personality parameters to a YAML configuration file.
@@ -1018,7 +1050,9 @@ class APScript(StateMachine):
                     callback            = None
                 ) -> None:
         super().__init__(states_dict)
-        self.files=[]
+        self.text_files = []
+        self.image_files = []
+
         self.personality                        = personality
         self.personality_config                 = personality_config
         self.installation_option                = personality.installation_option
@@ -1118,12 +1152,14 @@ class APScript(StateMachine):
     def add_file(self, path, callback=None):
         if callback is not None:
             callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-        self.files.append(path)
+        self.text_files.append(path)
         return True
 
     def remove_file(self, path):
-        self.files.remove(path)
-
+        if path in self.text_files:
+            self.text_files.remove(path)
+        elif path in self.image_files:
+            self.image_files.remove(path)
     def load_config_file(self, path, default_config=None):
         """
         Load the content of local_config.yaml file.

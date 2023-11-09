@@ -330,6 +330,24 @@ class LLMBinding:
         """     
         self.binding_config.config.save_config(self.configuration_file_path)
 
+    def generate_with_images(self, 
+                 prompt:str,
+                 images:list=[],
+                 n_predict: int = 128,
+                 callback: Callable[[str, int, dict], bool] = None,
+                 verbose: bool = False,
+                 **gpt_params ):
+        """Generates text out of a prompt and a bunch of images
+        This should be implemented by child class
+
+        Args:
+            prompt (str): The prompt to use for generation
+            images(list): A list of images to interpret
+            n_predict (int, optional): Number of tokens to prodict. Defaults to 128.
+            callback (Callable[[str, int, dict], None], optional): A callback function that is called everytime a new text element is generated. Defaults to None.
+            verbose (bool, optional): If true, the code will spit many informations about the generation process. Defaults to False.
+        """
+        pass
     
 
 
@@ -340,7 +358,7 @@ class LLMBinding:
                  verbose: bool = False,
                  **gpt_params ):
         """Generates text out of a prompt
-        This should ber implemented by child class
+        This should be implemented by child class
 
         Args:
             prompt (str): The prompt to use for generation
