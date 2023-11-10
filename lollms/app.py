@@ -39,7 +39,7 @@ class LollmsApplication:
         self.mounted_extensions     = []
         self.notification_callback  = notification_callback
         self.binding=None
-        self.model=None
+        self.model:LLMBinding=None
 
         try:
             if config.auto_update:
