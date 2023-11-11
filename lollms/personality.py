@@ -135,6 +135,9 @@ Date: {{date}}
 
         self._logo: Optional[Image.Image] = None
         self._processor = None
+        self._data = None
+
+
 
         if personality_package_path is None:
             self.config = {}
@@ -261,13 +264,42 @@ Date: {{date}}
         self.assets_path = self.personality_package_path / "assets"
         # Get the scripts folder path
         self.scripts_path = self.personality_package_path / "scripts"
-        
+        # Get the languages folder path
+        self.languages_path = self.personality_package_path / "languages"
+        # Get the data folder path
+        self.data_path = self.personality_package_path / "data"
+
+
         # If not exist recreate
         self.assets_path.mkdir(parents=True, exist_ok=True)
 
         # If not exist recreate
         self.scripts_path.mkdir(parents=True, exist_ok=True)
 
+        # Verify if the persona has a data folder
+        if self.data_path.exists():
+            text = []
+            text_files = [file if file.exists() else "" for file in self.data_path.glob("*.txt")]
+            for file in text_files:
+                with open(str(file),"r") as f:
+                    text.append(f.read())
+            # Replace 'example_dir' with your desired directory containing .txt files
+            self._data = "\n".join(map((lambda x: f"\n{x}"), text))
+            print(self._data)
+            ASCIIColors.info("Building data ...",end="")
+            self.persona_data_vectorizer = TextVectorizer(
+                        self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
+                        model=self.model, #needed in case of using model_embedding
+                        save_db=False,
+                        data_visualization_method=VisualizationMethod.PCA,
+                        database_dict=None)
+            self.persona_data_vectorizer.add_document("persona_data", self._data,512,0)
+            self.persona_data_vectorizer.index()
+            ASCIIColors.green("Ok")
+        else:
+            self.persona_data_vectorizer = None
+            self._data = None
+ 
 
         if self.run_scripts:
             # Search for any processor code
@@ -289,6 +321,7 @@ Date: {{date}}
 
         self._assets_list = contents
         return config
+    
     def remove_file(self, path, callback=None):
         try:
             if path in self.text_files:
@@ -1063,6 +1096,7 @@ class APScript(StateMachine):
         self.personality_config.config.file_path    = self.configuration_file_path
 
         self.callback = callback
+
         # Installation
         if (not self.configuration_file_path.exists() or self.installation_option==InstallOption.FORCE_INSTALL) and self.installation_option!=InstallOption.NEVER_INSTALL:
             self.install()
