@@ -1330,7 +1330,7 @@ class APScript(StateMachine):
 
 
     def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None ):
-        self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, callback)
+        return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, callback)
 
     def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """

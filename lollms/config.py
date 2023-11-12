@@ -532,8 +532,8 @@ class TypedConfig:
                     entry_value = int(entry_value)
                 elif entry_type == "float":
                     entry_value = float(entry_value)
-                elif entry_type == "str" or entry_type == "string":
-                    entry_value = str(entry_value)
+                elif entry_type == "str" or entry_type == "string" or entry_type == "btn":
+                    entry_value = str(entry_value)                   
                 elif entry_type == "bool":
                     entry_value = bool(entry_value)
                 elif entry_type == "list":
