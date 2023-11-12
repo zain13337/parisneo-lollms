@@ -2,7 +2,7 @@ active_personality_id: 0
 auto_save: true
 auto_update: false
 binding_name: null
-ctx_size: 2048
+ctx_size: 4096
 data_vectorization_activate: true
 data_vectorization_build_keys_words: false
 data_vectorization_chunk_size: 512
