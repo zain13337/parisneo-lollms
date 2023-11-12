@@ -199,18 +199,19 @@ class LollmsSD:
                     password=None,
                     auto_sd_base_url=None
                     ):
+        if auto_sd_base_url=="" or auto_sd_base_url=="http://127.0.0.1:7860":
+            auto_sd_base_url = None
         # Get the current directory
-        lollms_path = app.lollms_path
+        lollms_paths = app.lollms_paths
         self.app = app
-        root_dir = lollms_path.personal_path
+        root_dir = lollms_paths.personal_path
         
         self.wm = wm
         # Store the path to the script
         if auto_sd_base_url is None:
             self.auto_sd_base_url = "http://127.0.0.1:7860"
-            if not verify_sd(lollms_path):
+            if not verify_sd(lollms_paths):
                 install_sd()
-
         else:
             self.auto_sd_base_url = auto_sd_base_url
 
@@ -231,7 +232,7 @@ class LollmsSD:
         ASCIIColors.red(" Forked from Auto1111's Stable diffusion api")
         ASCIIColors.red(" Integration in lollms by ParisNeo using mix1009's sdwebuiapi ")
 
-        if not self.wait_for_service(1,False):
+        if not self.wait_for_service(1,False) and auto_sd_base_url is None:
             ASCIIColors.info("Loading lollms_sd")
             os.environ['SD_WEBUI_RESTARTING'] = '1' # To forbid sd webui from showing on the browser automatically
             # Launch the Flask service using the appropriate script for the platform
@@ -994,7 +995,7 @@ class LollmsSD:
                 if response.status_code == 200:
                     print("Service is available.")
                     if self.app is not None:
-                        self.app.notify("SD Service is available.", False)
+                        self.app.notify("SD Service is now available.", True)
                     return True
             except requests.exceptions.RequestException:
                 pass
