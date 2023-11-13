@@ -169,8 +169,15 @@ Date: {{date}}
             # Open and store the personality
             self.load_personality()
 
+    def print_prompt(self, title, prompt):
+        ASCIIColors.red("*-*-*-*-*-*-*-* ", end="")
+        ASCIIColors.red(title, end="")
+        ASCIIColors.red(" *-*-*-*-*-*-*-*")
+        ASCIIColors.yellow(prompt)
+        ASCIIColors.red(" *-*-*-*-*-*-*-*")  
 
-    def fast_gen(self, prompt: str, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False, callback=None) -> str:
+
+    def fast_gen(self, prompt: str, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool  = False, callback=None) -> str:
         """
         Fast way to generate code
         
@@ -187,6 +194,9 @@ Date: {{date}}
         Returns:
         - str: The generated text after removing special tokens ("<s>" and "</s>") and stripping any leading/trailing whitespace.
         """
+        if debug == False:
+            debug = self.config.debug
+            
         if max_generation_size is None:
             prompt_size = self.model.tokenize(prompt)
             max_generation_size = self.model.config.ctx_size - len(prompt_size)
