@@ -170,7 +170,7 @@ Date: {{date}}
             self.load_personality()
 
 
-    def fast_gen(self, prompt: str, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False) -> str:
+    def fast_gen(self, prompt: str, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False, callback=None) -> str:
         """
         Fast way to generate code
         
@@ -201,7 +201,7 @@ Date: {{date}}
         if debug:
             self.print_prompt("prompt", prompt)
             
-        return self.generate(prompt, max_generation_size).strip().replace("</s>", "").replace("<s>", "")
+        return self.generate(prompt, max_generation_size, callback=callback).strip().replace("</s>", "").replace("<s>", "")
 
     def remove_text_from_string(self, string, text_to_find):
         """
@@ -1698,7 +1698,7 @@ Yes or No?
         ASCIIColors.yellow(prompt)
         ASCIIColors.red(" *-*-*-*-*-*-*-*")        
 
-    def fast_gen(self, prompt: str, max_generation_size: int= None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False) -> str:
+    def fast_gen(self, prompt: str, max_generation_size: int= None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False, callback=None) -> str:
         """
         Fast way to generate code
         
@@ -1715,7 +1715,7 @@ Yes or No?
         Returns:
         - str: The generated text after removing special tokens ("<s>" and "</s>") and stripping any leading/trailing whitespace.
         """
-        return self.personality.fast_gen(prompt=prompt,max_generation_size=max_generation_size,placeholders=placeholders, sacrifice=sacrifice, debug=debug)
+        return self.personality.fast_gen(prompt=prompt,max_generation_size=max_generation_size,placeholders=placeholders, sacrifice=sacrifice, debug=debug, callback=callback)
     
 
     #Helper method to convert outputs path to url

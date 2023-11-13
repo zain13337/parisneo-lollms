@@ -197,7 +197,8 @@ class LollmsSD:
                     use_https=False,
                     username=None,
                     password=None,
-                    auto_sd_base_url=None
+                    auto_sd_base_url=None,
+                    share=False
                     ):
         if auto_sd_base_url=="" or auto_sd_base_url=="http://127.0.0.1:7860":
             auto_sd_base_url = None
@@ -239,14 +240,20 @@ class LollmsSD:
             if platform.system() == "Windows":
                 ASCIIColors.info("Running on windows")
                 script_path = self.sd_folder / "lollms_sd.bat"
-                subprocess.Popen(script_path, cwd=self.sd_folder)
+                if share:
+                    subprocess.Popen(script_path+" --share", cwd=self.sd_folder)
+                else:
+                    subprocess.Popen(script_path, cwd=self.sd_folder)
             else:
                 ASCIIColors.info("Running on linux/MacOs")
                 script_path = str(self.sd_folder / "lollms_sd.sh")
                 ASCIIColors.info(f"launcher path: {script_path}")
                 ASCIIColors.info(f"sd path: {self.sd_folder}")
 
-                subprocess.Popen(['bash', script_path], cwd=self.sd_folder)
+                if share:
+                    subprocess.Popen(['bash', script_path,"--share"], cwd=self.sd_folder)
+                else:
+                    subprocess.Popen(['bash', script_path], cwd=self.sd_folder)
                 ASCIIColors.info("Process done")
                 ASCIIColors.success("Launching Auto1111's SD succeeded")
 
