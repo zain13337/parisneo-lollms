@@ -260,12 +260,14 @@ def chat_completions():
         if True:
             def callback(token, data_type):
                 print(token)
+                return True
             response = cv.safe_generate(
                             full_discussion=full_discussion, 
                             temperature=temperature, 
                             top_p=top_p, 
                             n_predict=max_tokens, 
-                            callback=callback
+                            # callback=callback
+                            
                             )
             def stream():
                 nonlocal response
