@@ -95,7 +95,8 @@ class Elf(LollmsApplication):
                         last_n_tokens=60,
                         seed=-1,
                         n_threads=8,
-                        batch_size=1):
+                        batch_size=1,
+                        stream=None):
         """safe_generate
 
         Args:
