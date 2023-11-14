@@ -266,13 +266,32 @@ def chat_completions():
                             temperature=temperature, 
                             top_p=top_p, 
                             n_predict=max_tokens, 
-                            # callback=callback
+                            callback=callback
                             
                             )
             def stream():
                 nonlocal response
                 for token in response:
-                    stream_callback(token, None)
+                    completion_timestamp = int(time.time())
+                    completion_id = ''.join(random.choices(
+                        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
+
+                    completion_data = {
+                        'id': f'chatcmpl-{completion_id}',
+                        'object': 'chat.completion.chunk',
+                        'created': completion_timestamp,
+                        'choices': [
+                            {
+                                'delta': {
+                                    'content': token
+                                },
+                                'index': 0,
+                                'finish_reason': None
+                            }
+                        ]
+                    }
+                    yield 'data: %s\n\n' % json.dumps(completion_data, separators=(',' ':'))
+                    time.sleep(0.02)
             return app.response_class(
                     stream(), 
                     mimetype='text/event-stream'
