@@ -259,7 +259,8 @@ def chat_completions():
         print('Streaming')
         if True:
             def callback(token, data_type):
-                print(token)
+                print(token,end="",flush=True)
+                
                 return True
             response = cv.safe_generate(
                             full_discussion=full_discussion, 
