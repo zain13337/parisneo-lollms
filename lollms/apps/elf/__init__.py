@@ -107,13 +107,13 @@ class Elf(LollmsApplication):
             str: Model output
         """
         if n_predict == None:
-            n_predict =self.personality.model_n_predicts
+            n_predict =self.config.n_predict
         tk = self.personality.model.tokenize(full_discussion)
         n_tokens = len(tk)
         fd = self.personality.model.detokenize(tk[-min(self.config.ctx_size-self.n_cond_tk,n_tokens):])
         self.bot_says = ""
         output = self.personality.model.generate(
-                        self.personality.personality_conditioning+fd, 
+                        fd, 
                         n_predict=n_predict, 
                         temperature=temperature,
                         top_k=top_k,
