@@ -272,7 +272,7 @@ def chat_completions():
                 for token in response:
                     stream_callback(token, None)
             return app.response_class(
-                    response, 
+                    stream(), 
                     mimetype='text/event-stream'
                     )
         else:
