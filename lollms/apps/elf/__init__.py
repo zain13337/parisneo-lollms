@@ -195,7 +195,11 @@ def chat_completions():
     if model is not None:
         # TODO add model selection
         pass
-    response = cv.safe_generate(stream=stream, messages=messages, temperature=temperature, top_p=top_p, max_tokens=max_tokens, system_prompt="")
+
+    full_discussion = ""
+    for message in messages:
+        full_discussion += f'{message["role"]}: {message["content"]}\n'
+    response = cv.safe_generate(full_discussion=full_discussion, temperature=temperature, top_p=top_p, n_predict=max_tokens)
 
     completion_id = "".join(random.choices(string.ascii_letters + string.digits, k=28))
     completion_timestamp = int(time.time())
