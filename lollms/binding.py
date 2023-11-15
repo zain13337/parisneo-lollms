@@ -2,7 +2,6 @@
 # Project       : lollms
 # File          : binding.py
 # Author        : ParisNeo with the help of the community
-# Supported by Nomic-AI
 # license       : Apache 2.0
 # Description   : 
 # This is an interface class for lollms bindings.
@@ -19,12 +18,10 @@ import requests
 import shutil
 import os
 import yaml
-from tqdm import tqdm
 import importlib
 import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
-import traceback
 import urllib
 import inspect
 from enum import Enum
@@ -425,10 +422,17 @@ class LLMBinding:
         
         return full_data
     
+    @staticmethod
+    def check_torch_version(min_version):
+        import torch
+        # Extract torch version from __version__ attribute with regular expression
+        current_version_float = float('.'.join(torch.__version__.split(".")[:2]))
+        # Check if the current version meets or exceeds the minimum required version
+        return current_version_float >= min_version
 
     @staticmethod
     def reinstall_pytorch_with_cuda():
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu118"])
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu121"])
         if result.returncode != 0:
             ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
             result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
@@ -436,6 +440,29 @@ class LLMBinding:
                 ASCIIColors.error("Couldn't install pytorch !!")
             else:
                 ASCIIColors.error("Pytorch installed successfully!!")
+
+    @staticmethod
+    def reinstall_pytorch_with_rocm():
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/rocm5.6"])
+        if result.returncode != 0:
+            ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
+            result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+            if result.returncode != 0:
+                ASCIIColors.error("Couldn't install pytorch !!")
+            else:
+                ASCIIColors.error("Pytorch installed successfully!!")
+                
+                
+    @staticmethod
+    def reinstall_pytorch_with_cpu():
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+        if result.returncode != 0:
+            ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
+            result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+            if result.returncode != 0:
+                ASCIIColors.error("Couldn't install pytorch !!")
+            else:
+                ASCIIColors.error("Pytorch installed successfully!!")                
 
     @staticmethod
     def vram_usage():
