@@ -475,10 +475,23 @@ Date: {{date}}
         return True     
     
     def add_file(self, path, callback=None):
+        if not self.callback:
+            self.callback = callback
         db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         path = Path(path)
         if path.suffix in [".png",".jpg",".gif",".bmp"]:
+            if self.callback:
+                try:
+                    if callback:
+                        pth = str(path).replace("\\","/").split('/')
+                        if "uploads" in pth:
+                            idx = pth.index("uploads")
+                            pth = "/".join(pth[idx:])
+                            callback(f'<img src="{pth}" width="300">', MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':MSG_TYPE.MSG_TYPE_FULL.value,'metadata':[]})
+
+                except Exception as ex:
+                    ASCIIColors.error("Couldn't create new message")
             self.image_files.append(path)
             ASCIIColors.info("Received image file")
             if callback is not None:
