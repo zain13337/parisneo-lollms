@@ -198,32 +198,10 @@ def chat_completions():
 
     full_discussion = ""
     for message in messages:
-        full_discussion += f'{message["role"]}: {message["content"]}\n'
-
-    def stream_callback(token, message_type):
-        print(token)
-        completion_timestamp = int(time.time())
-        completion_id = ''.join(random.choices(
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
-
-        completion_data = {
-            'id': f'chatcmpl-{completion_id}',
-            'object': 'chat.completion.chunk',
-            'created': completion_timestamp,
-            'choices': [
-                {
-                    'delta': {
-                        'content': token
-                    },
-                    'index': 0,
-                    'finish_reason': None
-                }
-            ]
-        }
-        yield 'data: %s\n\n' % json.dumps(completion_data, separators=(',' ':'))
-        time.sleep(0.02)
-        return True
-
+        if message["role"]:
+            full_discussion += f'{message["role"]}: {message["content"]}\n'
+        else:
+            full_discussion += f'{message["content"]}\n'
 
     completion_id = "".join(random.choices(string.ascii_letters + string.digits, k=28))
     completion_timestamp = int(time.time())
@@ -256,7 +234,7 @@ def chat_completions():
             },
         }
     else:
-        print('Streaming')
+        print('Streaming ...')
         if True:
             def callback(token, data_type):
                 print(token,end="",flush=True)
@@ -272,7 +250,7 @@ def chat_completions():
                             )
             def stream():
                 nonlocal response
-                for token in response:
+                for token in response.split(" "):
                     completion_timestamp = int(time.time())
                     completion_id = ''.join(random.choices(
                         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
@@ -284,7 +262,7 @@ def chat_completions():
                         'choices': [
                             {
                                 'delta': {
-                                    'content': token
+                                    'content': token+" "
                                 },
                                 'index': 0,
                                 'finish_reason': None
@@ -293,18 +271,42 @@ def chat_completions():
                     }
                     yield 'data: %s\n\n' % json.dumps(completion_data, separators=(',' ':'))
                     time.sleep(0.02)
+                    
             return app.response_class(
                     stream(), 
                     mimetype='text/event-stream'
                     )
         else:
+            def stream_callback(token, message_type=None):
+                print(token)
+                completion_timestamp = int(time.time())
+                completion_id = ''.join(random.choices(
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
+
+                completion_data = {
+                    'id': f'chatcmpl-{completion_id}',
+                    'object': 'chat.completion.chunk',
+                    'created': completion_timestamp,
+                    'choices': [
+                        {
+                            'delta': {
+                                'content': token
+                            },
+                            'index': 0,
+                            'finish_reason': None
+                        }
+                    ]
+                }
+                #yield 'data: %s\n\n' % json.dumps(completion_data, separators=(',' ':'))
+                time.sleep(0.02)
+                return True            
             return app.response_class(
                     cv.safe_generate(
                             full_discussion=full_discussion, 
                             temperature=temperature, 
                             top_p=top_p, 
                             n_predict=max_tokens, 
-                            callback=stream_callback
+                            callback=lambda x,y:stream_callback(x,y)
                             ), 
                     mimetype='text/event-stream'
                     )
