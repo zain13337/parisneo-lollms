@@ -4,7 +4,7 @@
 # Author        : ParisNeo with the help of the community
 # license       : Apache 2.0
 # Description   : 
-# This is an interface class for lollms bindings.
+# This is an interface class for lollms personalities.
 ######
 from datetime import datetime
 from pathlib import Path
