@@ -1289,6 +1289,8 @@ class APScript(StateMachine):
             self.text_files.remove(path)
         elif path in self.image_files:
             self.image_files.remove(path)
+
+
     def load_config_file(self, path, default_config=None):
         """
         Load the content of local_config.yaml file.
@@ -1336,9 +1338,6 @@ class APScript(StateMachine):
             yaml.dump(data, file)
 
 
-    
-
-
     def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None ):
         return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, callback)
 
@@ -1359,6 +1358,17 @@ class APScript(StateMachine):
         """
         return None
     
+
+    # ================================================= Advanced methods ===========================================
+    def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start=""):
+        summeries = []
+        for i, chunk in enumerate(chunks):
+            self.step_start(f"Processing chunk : {i+1}")
+            summery = self.remove_backticks(f"```markdown\n{answer_start}"+ self.fast_gen(f"!@>instruction: {summary_instruction}\n{chunk_name}:\n{chunk}\n!@>summary:\n```markdown\n{answer_start}"))
+            summeries.append(summery)
+            self.step_end(f"Processing chunk : {i+1}")
+        return "\n".join(summeries)
+
     # ================================================= Sending commands to ui ===========================================
 
     def step_start(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
