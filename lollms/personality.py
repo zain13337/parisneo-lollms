@@ -1266,18 +1266,6 @@ class APScript(StateMachine):
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
 
 
-    @staticmethod
-    def reinstall_pytorch_with_cuda():
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu118"])
-        if result.returncode != 0:
-            ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
-            result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
-            if result.returncode != 0:
-                ASCIIColors.error("Couldn't install pytorch !!")
-            else:
-                ASCIIColors.error("Pytorch installed successfully!!")
-
-
     def add_file(self, path, callback=None):
         if callback is not None:
             callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
