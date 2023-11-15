@@ -1356,6 +1356,14 @@ class APScript(StateMachine):
     
 
     # ================================================= Advanced methods ===========================================
+    def remove_backticks(self, text):
+        if text.startswith("```"):
+            split_text = text.split("\n")
+            text = "\n".join(split_text[1:])
+        if text.endswith("```"):
+            text= text[:-3]
+        return text
+        
     def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start=""):
         summeries = []
         for i, chunk in enumerate(chunks):
