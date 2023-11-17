@@ -212,7 +212,7 @@ class LollmsSD:
         if auto_sd_base_url is None:
             self.auto_sd_base_url = "http://127.0.0.1:7860"
             if not verify_sd(lollms_paths):
-                install_sd()
+                install_sd(app.lollms_paths)
         else:
             self.auto_sd_base_url = auto_sd_base_url
 
