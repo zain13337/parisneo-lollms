@@ -56,8 +56,12 @@ def remove_text_from_string(string, text_to_find):
 
 
 # Pytorch and cuda tools
-def check_torch_version(min_version):
+def check_torch_version(min_version, min_cuda_versio=12):
     import torch
+
+    if "+" in torch.__version__ and int(torch.__version__.split("+")[-1][2:4])<min_cuda_versio:
+        return False
+
     # Extract torch version from __version__ attribute with regular expression
     current_version_float = float('.'.join(torch.__version__.split(".")[:2]))
     # Check if the current version meets or exceeds the minimum required version
