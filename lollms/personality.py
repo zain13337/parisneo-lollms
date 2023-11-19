@@ -85,7 +85,10 @@ class AIPersonality:
         self.config = config
         self.callback = callback
         self.app = app
-
+        if app is not None:
+            self.notify = app.notify
+        else:
+            self.notify = None
         self.text_files = []
         self.image_files = []
         self.vectorizer = None
@@ -379,20 +382,14 @@ Date: {{date}}
         self.scripts_path.mkdir(parents=True, exist_ok=True)
 
         # Verify if the persona has a data folder
-        if self.data_path.exists():
-            text = []
-            text_files = [file if file.exists() else "" for file in self.data_path.glob("*.txt")]
-            for file in text_files:
-                with open(str(file),"r") as f:
-                    text.append(f.read())
-            # Replace 'example_dir' with your desired directory containing .txt files
-            self._data = "\n".join(map((lambda x: f"\n{x}"), text))
-            print(self._data)
+        self.database_path = self.data_path / "db.json"
+        if self.database_path.exists():
             ASCIIColors.info("Building data ...",end="")
             self.persona_data_vectorizer = TextVectorizer(
-                        self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
+                        "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
                         model=self.model, #needed in case of using model_embedding
-                        save_db=False,
+                        save_db=True,
+                        database_path=self.database_path,
                         data_visualization_method=VisualizationMethod.PCA,
                         database_dict=None)
             self.persona_data_vectorizer.add_document("persona_data", self._data,512,0)
@@ -1539,19 +1536,6 @@ class APScript(StateMachine):
 
         if callback:
             callback(code, MSG_TYPE.MSG_TYPE_CODE)
-
-    def notify(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
-        """This sends full text to front end
-
-        Args:
-            step_text (dict): The step text
-            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
-        """
-        if not callback and self.callback:
-            callback = self.callback
-
-        if callback:
-            callback(full_text, MSG_TYPE.MSG_TYPE_INFO)
 
     def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end

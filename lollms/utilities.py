@@ -16,7 +16,46 @@ import json
 import re
 import subprocess
 import gc
+
 from typing import List
+
+def find_first_available_file_index(folder_path, prefix, extension=""):
+    """
+    Finds the first available file index in a folder with files that have a prefix and an optional extension.
+    
+    Args:
+        folder_path (str): The path to the folder.
+        prefix (str): The file prefix.
+        extension (str, optional): The file extension (including the dot). Defaults to "".
+    
+    Returns:
+        int: The first available file index.
+    """
+    # Create a Path object for the folder
+    folder = Path(folder_path)
+    
+    # Get a list of all files in the folder
+    files = folder.glob(f'{prefix}*'+extension)
+    
+    # Initialize the first available number
+    available_number = 1
+    
+    # Iterate through the files
+    for file in files:
+        # Extract the number from the file name
+        file_number = int(file.stem[len(prefix):])
+        
+        # If the file number is equal to the available number, increment the available number
+        if file_number == available_number:
+            available_number += 1
+        # If the file number is greater than the available number, break the loop
+        elif file_number > available_number:
+            break
+    
+    return available_number
+
+
+
 
 # Prompting tools
 def detect_antiprompt(text:str, anti_prompts=["!@>"]) -> bool:
@@ -69,7 +108,16 @@ def check_torch_version(min_version, min_cuda_versio=12):
 
 
 def reinstall_pytorch_with_cuda():
-    result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu121"])
+    try:
+        ASCIIColors.info("Installing cuda 12.1.1")
+        result = subprocess.run(["conda", "install", "-c", "nvidia/label/cuda-12.1.1", "cuda-toolkit"])
+    except Exception as ex:
+        ASCIIColors.error(ex)
+    try:
+        ASCIIColors.info("Installing pytorch 2.1.1")
+        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu121"])
+    except Exception as ex:
+        ASCIIColors.error(ex)
     if result.returncode != 0:
         ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
         result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
