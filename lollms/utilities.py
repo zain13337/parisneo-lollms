@@ -110,7 +110,7 @@ def check_torch_version(min_version, min_cuda_versio=12):
 def reinstall_pytorch_with_cuda():
     try:
         ASCIIColors.info("Installing cuda 12.1.1")
-        result = subprocess.run(["conda", "install", "-c", "nvidia/label/cuda-12.1.1", "cuda-toolkit"])
+        result = subprocess.run(["conda", "install", "-c", "nvidia/label/cuda-12.1.1", "cuda-toolkit", "-y"])
     except Exception as ex:
         ASCIIColors.error(ex)
     try:

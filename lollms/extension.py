@@ -28,6 +28,8 @@ class LOLLMSExtension():
         self.app = app
         self.config = config
         self.script_path = script_path
+        self.category = str(script_path).replace("\\","/").split("/")[-2]
+        self.extension_folder_name = str(script_path).replace("\\","/").split("/")[-1]
         self.card =  self.script_path /"card.yaml"
         
         self.configuration_path = app.lollms_paths.personal_configuration_path/"extensions"/f"{name}"
