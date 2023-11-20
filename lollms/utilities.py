@@ -19,6 +19,41 @@ import gc
 
 from typing import List
 
+from PIL import Image
+import requests
+from io import BytesIO
+import base64
+
+
+def load_image(image_file):
+    s_image_file = str(image_file)
+    if s_image_file.startswith('http://') or s_image_file.startswith('https://'):
+        response = requests.get(s_image_file)
+        image = Image.open(BytesIO(response.content)).convert('RGB')
+    else:
+        image = Image.open(s_image_file).convert('RGB')
+    return image
+
+def load_image_from_base64(image):
+    return Image.open(BytesIO(base64.b64decode(image)))
+
+
+def expand2square(pil_img, background_color):
+    width, height = pil_img.size
+    if width == height:
+        return pil_img
+    elif width > height:
+        result = Image.new(pil_img.mode, (width, width), background_color)
+        result.paste(pil_img, (0, (width - height) // 2))
+        return result
+    else:
+        result = Image.new(pil_img.mode, (height, height), background_color)
+        result.paste(pil_img, ((height - width) // 2, 0))
+        return result
+
+
+
+
 def find_first_available_file_index(folder_path, prefix, extension=""):
     """
     Finds the first available file index in a folder with files that have a prefix and an optional extension.
