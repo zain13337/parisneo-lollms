@@ -23,7 +23,12 @@ class EXTENSION_TYPE(Enum):
 
 
 class LOLLMSExtension():
-    def __init__(self, name:str, script_path:str|Path, config:TypedConfig, app) -> None:
+    def __init__(self, 
+                    name:str, 
+                    script_path:str|Path, 
+                    config:TypedConfig, 
+                    app,
+                    installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY) -> None:
         self.name = name
         self.app = app
         self.config = config
@@ -36,6 +41,14 @@ class LOLLMSExtension():
         self.configuration_path.mkdir(parents=True, exist_ok=True)
         self.configuration_path= self.configuration_path/"config.yaml"
 
+        self.installation_option = installation_option
+        self.configuration_file_path            = self.configuration_path/f"config.yaml"
+        # Installation
+        if (not self.configuration_file_path.exists() or self.installation_option==InstallOption.FORCE_INSTALL) and self.installation_option!=InstallOption.NEVER_INSTALL:
+            self.install()
+            self.config.save(self.configuration_file_path)
+
+
     def build_extension(self):
         return self
 
@@ -46,6 +59,7 @@ class LOLLMSExtension():
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
         ASCIIColors.red(f"Installing {self.name}")
         ASCIIColors.blue("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+
 
     def pre_gen(self, previous_prompt:str, prompt:str):
         return previous_prompt, prompt
@@ -70,11 +84,12 @@ class ExtensionBuilder:
                         self, 
                         extension_path:str, 
                         lollms_paths:LollmsPaths,
-                        app
+                        app,
+                        installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
                     )->LOLLMSExtension:
 
         extension, script_path = self.getExtension(extension_path, lollms_paths, app)
-        return extension(app = app)
+        return extension(app = app, installation_option = installation_option)
     
     def getExtension(
                         self, 

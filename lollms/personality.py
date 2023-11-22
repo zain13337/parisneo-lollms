@@ -1606,14 +1606,14 @@ Yes or No?
         prompt = pr.build({
                 "context":context,
                 "question":question
-                }, 
+                },
                 self.personality.model.tokenize, 
                 self.personality.model.detokenize, 
                 self.personality.model.config.ctx_size,
                 ["previous_discussion"]
                 )
         self.print_prompt("Ask yes or no, this is a generation request",prompt)
-        is_discussion = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
+        is_discussion = self.generate(prompt, max_answer_length,temperature=0.01).strip().replace("</s>","").replace("<s>","")
         ASCIIColors.cyan(is_discussion)
         return "yes" in is_discussion.lower()
 
