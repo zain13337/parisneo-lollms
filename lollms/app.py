@@ -149,7 +149,7 @@ class LollmsApplication:
             generated_text = self.personality.model.generate(full_discussion, n_predict=n_predict, callback=callback)
         return generated_text
 
-    def notify(self, content, is_success, client_id=None):
+    def notify(self, content, is_success=True, client_id=None):
         if self.notification_callback:
             return self.notification_callback(content, is_success, client_id)
 
