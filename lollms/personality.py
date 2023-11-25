@@ -1576,6 +1576,21 @@ class APScript(StateMachine):
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
 
+    def make_title(self, prompt, max_title_length: int = 50):
+        """
+        Generates a title for a given prompt.
+
+        Args:
+            prompt (str): The prompt for which a title needs to be generated.
+            max_title_length (int, optional): The maximum length of the generated title. Defaults to 50.
+
+        Returns:
+            str: The generated title.
+        """        
+        global_prompt = f"!@>instruction: Create a title for the following prompt:\n!@>prompt:{prompt}\n!@>title:"
+        title = self.fast_gen(global_prompt,max_title_length)
+        return title
+    
     def yes_no(self, question: str, context:str="", max_answer_length: int = 50) -> bool:
         """
         Analyzes the user prompt and answers whether it is asking to generate an image.
@@ -1587,37 +1602,9 @@ class APScript(StateMachine):
         Returns:
             bool: True if the user prompt is asking to generate an image, False otherwise.
         """
-        if context!="":
-            template = """!@>Instructions:
-Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
-!@>Context:                               
-{{context}}
-!@>instruction: {{question}}
-Yes or No?
-!@>prompt analyzer: After analyzing the user prompt, the answer is"""
-        else:
-            template = """!@>Instructions:
-Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
-!@>instruction: {{question}}
-Yes or No?
-!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+        return self.multichoice_question(question, ["no","yes"],context, max_answer_length)==1
 
-        pr  = PromptReshaper(template)
-        prompt = pr.build({
-                "context":context,
-                "question":question
-                },
-                self.personality.model.tokenize, 
-                self.personality.model.detokenize, 
-                self.personality.model.config.ctx_size,
-                ["previous_discussion"]
-                )
-        self.print_prompt("Ask yes or no, this is a generation request",prompt)
-        is_discussion = self.generate(prompt, max_answer_length,temperature=0.01).strip().replace("</s>","").replace("<s>","")
-        ASCIIColors.cyan(is_discussion)
-        return "yes" in is_discussion.lower()
-
-    def multichoice_question(self, question: str, possible_anwers:list, context:str = "", max_answer_length: int = 50) -> int:
+    def multichoice_question(self, question: str, possible_answers:list, context:str = "", max_answer_length: int = 50) -> int:
         """
         Interprets a multi-choice question from a users response. This function expects only one choice as true. All other choices are considered false. If none are correct, returns -1.
         
@@ -1630,34 +1617,40 @@ Yes or No?
             int: Index of the selected option within the possible_ansers list. Or -1 if there was not match found among any of them.
         """
         if context!="":
-            template = """!@>Instructions:
-Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
+            template = """!@>instruction:
+Act as prompt classifier, a tool capable of classifying the user prompt.
 !@>Context:                               
 {{context}}
-!@>instruction: {{question}}
-Yes or No?
-!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+!@>question: {{question}}
+!@>choices:
+{{choices}} 
+!@>prompt analyzer: After analyzing the user prompt, the most suitable choice is choice number """
         else:
             template = """!@>Instructions:
 Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
 !@>instruction: {{question}}
-Yes or No?
-!@>prompt analyzer: After analyzing the user prompt, the answer is"""
+!@>choices: {{choices}} 
+!@>prompt analyzer: After analyzing the user prompt, the most suitable choice is choice number """
 
         pr  = PromptReshaper(template)
         prompt = pr.build({
                 "context":context,
-                "question":question
+                "question":question,
+                "choices":"\n".join([f"{i} - {possible_answer}" for i,possible_answer in enumerate(possible_answers)])
                 }, 
                 self.personality.model.tokenize, 
                 self.personality.model.detokenize, 
                 self.personality.model.config.ctx_size,
                 ["previous_discussion"]
                 )
-        self.print_prompt("Ask yes or no, this is a generation request",prompt)
-        is_discussion = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
-        ASCIIColors.cyan(is_discussion)
-        return "yes" in is_discussion.lower()
+        gen = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
+        selection = gen.split()[0]
+        self.print_prompt("Multi choice selection",prompt+gen)
+        try:
+            return int(selection)
+        except:
+            ASCIIColors.cyan("Model failed to answer the question")
+            return -1
 
 
     def info(self, info_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
