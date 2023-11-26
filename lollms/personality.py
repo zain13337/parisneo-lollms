@@ -392,7 +392,7 @@ Date: {{date}}
         # Verify if the persona has a data folder
         self.database_path = self.data_path / "db.json"
         if self.database_path.exists():
-            ASCIIColors.info("Building data ...",end="")
+            ASCIIColors.info("Loading database ...",end="")
             self.persona_data_vectorizer = TextVectorizer(
                         "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
                         model=self.model, #needed in case of using model_embedding
@@ -400,8 +400,6 @@ Date: {{date}}
                         database_path=self.database_path,
                         data_visualization_method=VisualizationMethod.PCA,
                         database_dict=None)
-            self.persona_data_vectorizer.add_document("persona_data", self._data,512,0)
-            self.persona_data_vectorizer.index()
             ASCIIColors.green("Ok")
         else:
             self.persona_data_vectorizer = None
