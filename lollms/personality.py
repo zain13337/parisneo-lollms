@@ -12,7 +12,7 @@ from lollms.config import InstallOption, TypedConfig, BaseConfig
 from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.binding import LLMBinding
-from lollms.utilities import PromptReshaper
+from lollms.utilities import PromptReshaper, PackageManager
 import pkg_resources
 from pathlib import Path
 from PIL import Image
@@ -1575,6 +1575,17 @@ class APScript(StateMachine):
 
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
+
+    def build_python_code(self, prompt, max_title_length=4096):
+        if not PackageManager.check_package_installed("autopep8"):
+            PackageManager.install_package("autopep8")
+        import autopep8
+        global_prompt = f"{prompt}\n##>Code Builder:```python\n"
+        code = self.fast_gen(global_prompt,max_title_length)
+        code = code.rstrip("`")  # Remove trailing backticks
+        formatted_code = autopep8.fix_code(code)  # Fix indentation errors
+        return formatted_code
+
 
     def make_title(self, prompt, max_title_length: int = 50):
         """

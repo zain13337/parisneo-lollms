@@ -9,3 +9,5 @@ wget
 setuptools
 requests
 safe_store
+
+autopep8
