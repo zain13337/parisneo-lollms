@@ -24,13 +24,15 @@ import shutil
 import subprocess
 import yaml
 from ascii_colors import ASCIIColors
-
+import time
 from lollms.types import MSG_TYPE
 from typing import Callable
 import json
 from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
 from functools import partial
 from typing import Dict, Any
+
+from lollms.helpers import get_trace_exception
 
 def is_package_installed(package_name):
     try:
@@ -179,6 +181,9 @@ Date: {{date}}
 
             # Open and store the personality
             self.load_personality()
+            self.personality_output_folder = lollms_paths.personal_outputs_path/self.name
+            self.personality_output_folder.mkdir(parents=True, exist_ok=True)
+
 
     def print_prompt(self, title, prompt):
         ASCIIColors.red("*-*-*-*-*-*-*-* ", end="")
@@ -219,10 +224,13 @@ Date: {{date}}
                         self.model.config.ctx_size - max_generation_size,
                         sacrifice
                         )
+        ntk = len(self.model.tokenize(prompt))
+        max_generation_size = min(self.model.config.ctx_size - ntk, max_generation_size)
+        gen = self.generate(prompt, max_generation_size, callback=callback).strip().replace("</s>", "").replace("<s>", "")
         if debug:
-            self.print_prompt("prompt", prompt)
-            
-        return self.generate(prompt, max_generation_size, callback=callback).strip().replace("</s>", "").replace("<s>", "")
+            self.print_prompt("prompt", prompt+gen)
+           
+        return gen
 
     def remove_text_from_string(self, string, text_to_find):
         """
@@ -1576,13 +1584,54 @@ class APScript(StateMachine):
         if callback:
             callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
 
+
+
+
+    def execute_python(self, code):
+        def spawn_process(code):
+            """Executes Python code and returns the output as JSON."""
+            # Create a temporary file.
+            root_folder = self.personality.personality_output_folder
+            root_folder.mkdir(parents=True,exist_ok=True)
+            tmp_file = root_folder/f"ai_code.py"
+            with open(tmp_file,"w") as f:
+                f.write(code)
+
+            try:
+                # Execute the Python code in a temporary file.
+                process = subprocess.Popen(
+                    ["python", str(tmp_file)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=root_folder
+                )
+
+                # Get the output and error from the process.
+                output, error = process.communicate()
+            except Exception as ex:
+                error_message = f"Error executing Python code: {ex}"
+                raise Exception(error_message)
+
+            # Check if the process was successful.
+            if process.returncode != 0:
+                # The child process threw an exception.
+                error_message = f"Error executing Python code: {error.decode('utf8')}"
+                raise Exception(error_message)
+
+            # The child process was successful.
+            return output.decode("utf8")
+        return spawn_process(code)
+
     def build_python_code(self, prompt, max_title_length=4096):
         if not PackageManager.check_package_installed("autopep8"):
             PackageManager.install_package("autopep8")
         import autopep8
-        global_prompt = f"{prompt}\n##>Code Builder:```python\n"
-        code = self.fast_gen(global_prompt,max_title_length)
-        code = code.rstrip("`")  # Remove trailing backticks
+        global_prompt = f"{prompt}\n!@>Code Builder:```python\n"
+        code = self.fast_gen(global_prompt, max_title_length)
+        back_quote_index = code.index("```")  # Remove trailing backticks
+        if back_quote_index>=0:
+            # Removing any extra text
+            code = code[:back_quote_index]
         formatted_code = autopep8.fix_code(code)  # Fix indentation errors
         return formatted_code
 
