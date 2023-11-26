@@ -66,6 +66,7 @@ class LLMBinding:
         self.lollms_paths           = lollms_paths
         self.config                 = config
         self.binding_config         = binding_config
+
         self.supported_file_extensions         = supported_file_extensions
         self.seed                   = config["seed"]
         self.notification_callback  = notification_callback
@@ -409,6 +410,7 @@ class LLMBinding:
             else:
                 models+=[f.name for f in models_folder.iterdir() if f.is_dir() and not f.stem.startswith(".") or f.suffix==".reference"]
         return models
+    
 
     def get_available_models(self):
         # Create the file path relative to the child class's directory
