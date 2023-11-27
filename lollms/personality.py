@@ -1588,14 +1588,15 @@ class APScript(StateMachine):
 
 
     def execute_python(self, code, code_folder=None, code_file_name=None):
-        code_folder = Path(code_folder)
+        if code_folder is not None:
+            code_folder = Path(code_folder)
 
         def spawn_process(code):
             """Executes Python code and returns the output as JSON."""
             # Create a temporary file.
-            root_folder = self.personality.personality_output_folder
+            root_folder = code_folder if code_folder is not None else self.personality.personality_output_folder
             root_folder.mkdir(parents=True,exist_ok=True)
-            tmp_file = root_folder/f"ai_code.py"
+            tmp_file = root_folder/(code_file_name if code_file_name is not None else f"ai_code.py")
             with open(tmp_file,"w") as f:
                 f.write(code)
 
