@@ -1631,7 +1631,10 @@ class APScript(StateMachine):
         import autopep8
         global_prompt = f"{prompt}\n!@>Code Builder:```python\n"
         code = self.fast_gen(global_prompt, max_title_length)
-        back_quote_index = code.index("```")  # Remove trailing backticks
+        try:
+            back_quote_index = code.index("```")  # Remove trailing backticks
+        except:
+            pass
         if back_quote_index>=0:
             # Removing any extra text
             code = code[:back_quote_index]
