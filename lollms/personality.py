@@ -193,7 +193,7 @@ Date: {{date}}
         ASCIIColors.red(" *-*-*-*-*-*-*-*")  
 
 
-    def fast_gen(self, prompt: str, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool  = False, callback=None) -> str:
+    def fast_gen(self, prompt: str, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool  = False, callback=None, show_progress=False) -> str:
         """
         Fast way to generate code
         
@@ -226,6 +226,8 @@ Date: {{date}}
                         )
         ntk = len(self.model.tokenize(prompt))
         max_generation_size = min(self.model.config.ctx_size - ntk, max_generation_size)
+        # TODO : add show progress
+
         gen = self.generate(prompt, max_generation_size, callback=callback).strip().replace("</s>", "").replace("<s>", "")
         if debug:
             self.print_prompt("prompt", prompt+gen)
@@ -1585,7 +1587,9 @@ class APScript(StateMachine):
 
 
 
-    def execute_python(self, code):
+    def execute_python(self, code, code_folder=None, code_file_name=None):
+        code_folder = Path(code_folder)
+
         def spawn_process(code):
             """Executes Python code and returns the output as JSON."""
             # Create a temporary file.
@@ -1770,7 +1774,7 @@ Act as  prompt analyzer, a tool capable of analyzing the user prompt and answeri
         ASCIIColors.yellow(prompt)
         ASCIIColors.red(" *-*-*-*-*-*-*-*")        
 
-    def fast_gen(self, prompt: str, max_generation_size: int= None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False, callback=None) -> str:
+    def fast_gen(self, prompt: str, max_generation_size: int= None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool = False, callback=None, show_progress=False) -> str:
         """
         Fast way to generate code
         
