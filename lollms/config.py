@@ -422,6 +422,10 @@ class TypedConfig:
         # Fill the template values from the config values
         self.sync()
         
+    def addConfigs(self, cfg_template:list):
+        self.config_template.template += cfg_template
+        self.sync()
+
     def update_template(self, new_template):
         self.config_template.template = new_template
         self.config = BaseConfig.from_template(self.config_template,self.config.exceptional_keys, self.config.file_path)

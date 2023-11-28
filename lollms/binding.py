@@ -67,6 +67,16 @@ class LLMBinding:
         self.config                 = config
         self.binding_config         = binding_config
 
+
+        binding_config.addConfigs([
+            {"name":"clip_model_name","type":"str","value":'ViT-L-14/openai','options':["ViT-L-14/openai","ViT-H-14/laion2b_s32b_b79k"], "help":"Clip model to be used for images understanding"},
+            {"name":"caption_model_name","type":"str","value":'blip-large','options':['blip-base', 'git-large-coco', 'blip-large','blip2-2.7b', 'blip2-flan-t5-xl'], "help":"Clip model to be used for images understanding"},
+            {"name":"vqa_model_name","type":"str","value":'Salesforce/blip-vqa-capfilt-large','options':['Salesforce/blip-vqa-capfilt-large', 'Salesforce/blip-vqa-base', 'Salesforce/blip-image-captioning-large','Salesforce/blip2-opt-2.7b', 'Salesforce/blip2-flan-t5-xxl'], "help":"Salesforce question/answer model"},
+            
+        ])
+        self.interrogatorStorer = None
+
+
         self.supported_file_extensions         = supported_file_extensions
         self.seed                   = config["seed"]
         self.notification_callback  = notification_callback
@@ -326,6 +336,24 @@ class LLMBinding:
             dict: A dictionary containing the loaded data from the local_config.yaml file.
         """     
         self.binding_config.config.save_config(self.configuration_file_path)
+
+    def interrogate_blip(self, images):
+        if self.interrogatorStorer is None:
+            from lollms.image_gen_modules.clip_interrogator import InterrogatorStorer
+            self.interrogatorStorer = InterrogatorStorer(self.binding_config.clip_model_name, self.binding_config.caption_model_name)
+        descriptions = []
+        for image in images:
+            descriptions.append(self.interrogatorStorer.interrogate(image))
+        return descriptions
+
+    def qna_blip(self, images, question=""):
+        if self.interrogatorStorer is None:
+            from lollms.image_gen_modules.blip_vqa import BlipInterrogatorStorer
+            self.interrogatorStorer = BlipInterrogatorStorer()
+        descriptions = []
+        for image in images:
+            descriptions.append(self.interrogatorStorer.interrogate(image,question))
+        return descriptions
 
     def generate_with_images(self, 
                  prompt:str,

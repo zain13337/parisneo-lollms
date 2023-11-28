@@ -11,7 +11,7 @@ from pathlib import Path
 from lollms.config import InstallOption, TypedConfig, BaseConfig
 from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
-from lollms.binding import LLMBinding
+from lollms.binding import LLMBinding, BindingType
 from lollms.utilities import PromptReshaper, PackageManager
 import pkg_resources
 from pathlib import Path
@@ -32,7 +32,7 @@ from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, V
 from functools import partial
 from typing import Dict, Any
 
-from lollms.helpers import get_trace_exception
+from lollms.helpers import trace_exception
 
 def is_package_installed(package_name):
     try:
@@ -93,6 +93,7 @@ class AIPersonality:
             self.notify = None
         self.text_files = []
         self.image_files = []
+        self.images_descriptions = []
         self.vectorizer = None
 
         self.installation_option = installation_option
@@ -184,6 +185,101 @@ Date: {{date}}
             self.personality_output_folder = lollms_paths.personal_outputs_path/self.name
             self.personality_output_folder.mkdir(parents=True, exist_ok=True)
 
+    def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list], bool]=None):
+        """This sends step rogress to front end
+
+        Args:
+            step_text (dict): The step progress in %
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the progress to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata})
+
+    def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This sends full text to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
+
+
+    def full_invisible_to_ai(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This sends full text to front end (INVISIBLE to AI)
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI)
+
+    def full_invisible_to_user(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This sends full text to front end (INVISIBLE to user)
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER)
+    def step_start(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This triggers a step start
+
+        Args:
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step start to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_START)
+
+    def step_end(self, step_text, status=True, callback: Callable[[str, int, dict, list], bool]=None):
+        """This triggers a step end
+
+        Args:
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the step end to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP_END, {'status':status})
+
+    def step(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This triggers a step information
+
+        Args:
+            step_text (str): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE, dict, list) to send the step to. Defaults to None.
+            The callback has these fields:
+            - chunk
+            - Message Type : the type of message
+            - Parameters (optional) : a dictionary of parameters
+            - Metadata (optional) : a list of metadata 
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(step_text, MSG_TYPE.MSG_TYPE_STEP)
 
     def print_prompt(self, title, prompt):
         ASCIIColors.red("*-*-*-*-*-*-*-* ", end="")
@@ -485,7 +581,7 @@ Date: {{date}}
         db_path = self.lollms_paths.personal_databases_path / "personalities" / self.name / "db.json"
         db_path.parent.mkdir(parents=True, exist_ok=True)
         path = Path(path)
-        if path.suffix in [".png",".jpg",".gif",".bmp"]:
+        if path.suffix in [".png",".jpg",".gif",".bmp",".webp"]:
             if self.callback:
                 try:
                     if callback:
@@ -493,14 +589,35 @@ Date: {{date}}
                         if "uploads" in pth:
                             idx = pth.index("uploads")
                             pth = "/".join(pth[idx:])
-                            callback(f'<img src="{pth}" width="300">', MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':MSG_TYPE.MSG_TYPE_FULL.value,'metadata':[]})
+                            self.new_message("",MSG_TYPE.MSG_TYPE_FULL)
+                            output = f'<img src="{pth}" width="300">\n\n'
+                            self.full(output)
+
+                    if self.model.binding_type not in [BindingType.TEXT_IMAGE, BindingType.TEXT_IMAGE_VIDEO]:
+                        self.step_start("Understanding image (please wait)")
+                        from PIL import Image
+                        img = Image.open(str(path))
+                        # Convert the image to RGB mode
+                        img = img.convert("RGB")
+                        output += "## image description :\n"+ self.model.interrogate_blip([img])[0]
+                        # output += "## image description :\n"+ self.model.qna_blip([img],"Describe this photo with details.\n")[0]
+                        self.full(output)
+                        self.step_end("Understanding image (please wait)")
+                        if self.config.debug:
+                            ASCIIColors.yellow(output)
+                    else:
+                        self.step_start("Importing image (please wait)")
+                        self.step_end("Importing image (please wait)")
+                        self.full(output)
 
                 except Exception as ex:
+                    trace_exception(ex)
+                    self.step_end("Understanding image (please wait)", False)
                     ASCIIColors.error("Couldn't create new message")
             self.image_files.append(path)
             ASCIIColors.info("Received image file")
             if callback is not None:
-                callback("Image file added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                callback("Image file added successfully", MSG_TYPE.MSG_TYPE_INFO)
         else:
             self.text_files.append(path)
             ASCIIColors.info("Received text compatible file")
@@ -1206,6 +1323,7 @@ class APScript(StateMachine):
         self.notify = personality.app.notify
         self.text_files = []
         self.image_files = []
+        self.images_descriptions=[]
 
         self.personality                        = personality
         self.personality_config                 = personality_config
