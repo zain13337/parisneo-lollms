@@ -11,7 +11,13 @@ from lollms.utilities import PackageManager
 import hashlib
 import math
 import numpy as np
-import open_clip
+
+if PackageManager.check_package_installed("open_clip"):
+    import open_clip
+else:
+    PackageManager.install_package("open_clip_torch")
+    import open_clip
+
 import os
 import requests
 import time
