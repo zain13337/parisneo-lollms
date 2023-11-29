@@ -195,8 +195,6 @@ lollms-server --host 0.0.0.0 --port 5000
 - `add_personality`: Add a new personality to the server.
 - `generate_text`: Generate text based on the provided prompt and selected personality.
 
-For more details refer to the [API documentation](doc/server_endpoints.md)
-
 ### RESTful API
 
 - `GET /personalities`: List all available personalities.
