@@ -364,9 +364,12 @@ Date: {{date}}
             self.bot_says = bot_says
             return True
         
-    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None ):
+    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None, debug=False ):
         ASCIIColors.info("Text generation started: Warming up")
         self.bot_says = ""
+        if debug:
+            self.print_prompt("gen",prompt)
+
         self.model.generate(
                                 prompt, 
                                 max_size, 
@@ -1413,7 +1416,7 @@ class APScript(StateMachine):
     def add_file(self, path, callback=None):
         if callback is not None:
             callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-        self.text_files.append(path)
+        self.personality.add_file(path)
         return True
 
     def remove_file(self, path):
@@ -1470,8 +1473,8 @@ class APScript(StateMachine):
             yaml.dump(data, file)
 
 
-    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None ):
-        return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, callback)
+    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None, debug=False ):
+        return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, callback, debug=debug)
 
     def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """

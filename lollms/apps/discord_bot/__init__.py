@@ -7,7 +7,7 @@ import yaml
 from pathlib import Path
 from ascii_colors import ASCIIColors
 from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
-from typing import Tuple
+from typing import Tuple, List
 
 context={
     "discussion":""
@@ -59,164 +59,148 @@ async def on_member_join(member):
     if channel is not None:
         await channel.send(f'Welcome {member.mention} to the server! How can I assist you today?')
 
-# def prepare_query(prompt, n_tokens: int = 0) -> Tuple[str, str, List[str]]:
-#     """
-#     Prepares the query for the model.
+def prepare_query(discussion, prompt, n_tokens: int = 0) -> Tuple[str, str, List[str]]:
+    """
+    Prepares the query for the model.
 
-#     Args:
-#         client_id (str): The client ID.
-#         message_id (int): The message ID. Default is -1.
-#         is_continue (bool): Whether the query is a continuation. Default is False.
-#         n_tokens (int): The number of tokens. Default is 0.
+    Args:
+        client_id (str): The client ID.
+        message_id (int): The message ID. Default is -1.
+        is_continue (bool): Whether the query is a continuation. Default is False.
+        n_tokens (int): The number of tokens. Default is 0.
 
-#     Returns:
-#         Tuple[str, str, List[str]]: The prepared query, original message content, and tokenized query.
-#     """
-    
-#     # Define current message
-#     current_message = messages[message_index]
+    Returns:
+        Tuple[str, str, List[str]]: The prepared query, original message content, and tokenized query.
+    """
 
-#     # Build the conditionning text block
-#     conditionning = self.personality.personality_conditioning
+    # Define current message
+    current_message = prompt
 
-#     # Check if there are document files to add to the prompt
-#     documentation = ""
-#     if self.personality.persona_data_vectorizer:
-#         if documentation=="":
-#             documentation="!@>Documentation:\n"
-#         docs, sorted_similarities = self.personality.persona_data_vectorizer.recover_text(current_message.content, top_k=self.config.data_vectorization_nb_chunks)
-#         for doc, infos in zip(docs, sorted_similarities):
-#             documentation += f"document chunk:\n{doc}"
+    # Build the conditionning text block
+    conditionning = lollms_app.personality.personality_conditioning
 
-    
-#     if len(self.personality.text_files) > 0 and self.personality.vectorizer:
-#         if documentation=="":
-#             documentation="!@>Documentation:\n"
-#         docs, sorted_similarities = self.personality.vectorizer.recover_text(current_message.content, top_k=self.config.data_vectorization_nb_chunks)
-#         for doc, infos in zip(docs, sorted_similarities):
-#             documentation += f"document chunk:\nchunk path: {infos[0]}\nchunk content:{doc}"
-
-#     # Check if there is discussion history to add to the prompt
-#     history = ""
-#     if self.config.use_discussions_history and self.discussions_store is not None:
-#         if history=="":
-#             documentation="!@>History:\n"
-#         docs, sorted_similarities = self.discussions_store.recover_text(current_message.content, top_k=self.config.data_vectorization_nb_chunks)
-#         for doc, infos in zip(docs, sorted_similarities):
-#             history += f"discussion chunk:\ndiscussion title: {infos[0]}\nchunk content:{doc}"
-
-#     # Add information about the user
-#     user_description=""
-#     if self.config.use_user_name_in_discussions:
-#         user_description="!@>User description:\n"+self.config.user_description
+    # Check if there are document files to add to the prompt
+    documentation = ""
+    if lollms_app.personality.persona_data_vectorizer:
+        if documentation=="":
+            documentation="!@>Documentation:\n"
+        docs, sorted_similarities = lollms_app.personality.persona_data_vectorizer.recover_text(current_message.content, top_k=lollms_app.config.data_vectorization_nb_chunks)
+        for doc, infos in zip(docs, sorted_similarities):
+            documentation += f"document chunk:\n{doc}"
 
 
-#     # Tokenize the conditionning text and calculate its number of tokens
-#     tokens_conditionning = self.model.tokenize(conditionning)
-#     n_cond_tk = len(tokens_conditionning)
+    if len(lollms_app.personality.text_files) > 0 and lollms_app.personality.vectorizer:
+        if documentation=="":
+            documentation="!@>Documentation:\n"
+        docs, sorted_similarities = lollms_app.personality.vectorizer.recover_text(current_message.content, top_k=lollms_app.config.data_vectorization_nb_chunks)
+        for doc, infos in zip(docs, sorted_similarities):
+            documentation += f"document chunk:\nchunk path: {infos[0]}\nchunk content:{doc}"
 
-#     # Tokenize the documentation text and calculate its number of tokens
-#     if len(documentation)>0:
-#         tokens_documentation = self.model.tokenize(documentation)
-#         n_doc_tk = len(tokens_documentation)
-#     else:
-#         tokens_documentation = []
-#         n_doc_tk = 0
+    # Check if there is discussion history to add to the prompt
+    history = ""
+    if lollms_app.config.use_discussions_history and lollms_app.discussions_store is not None:
+        if history=="":
+            documentation="!@>History:\n"
+        docs, sorted_similarities = lollms_app.discussions_store.recover_text(current_message.content, top_k=lollms_app.config.data_vectorization_nb_chunks)
+        for doc, infos in zip(docs, sorted_similarities):
+            history += f"discussion chunk:\ndiscussion title: {infos[0]}\nchunk content:{doc}"
 
-#     # Tokenize the history text and calculate its number of tokens
-#     if len(history)>0:
-#         tokens_history = self.model.tokenize(history)
-#         n_history_tk = len(tokens_history)
-#     else:
-#         tokens_history = []
-#         n_history_tk = 0
-
-
-#     # Tokenize user description
-#     if len(user_description)>0:
-#         tokens_user_description = self.model.tokenize(user_description)
-#         n_user_description_tk = len(tokens_user_description)
-#     else:
-#         tokens_user_description = []
-#         n_user_description_tk = 0
+    # Add information about the user
+    user_description=""
+    if lollms_app.config.use_user_name_in_discussions:
+        user_description="!@>User description:\n"+lollms_app.config.user_description
 
 
-#     # Calculate the total number of tokens between conditionning, documentation, and history
-#     total_tokens = n_cond_tk + n_doc_tk + n_history_tk + n_user_description_tk
+    # Tokenize the conditionning text and calculate its number of tokens
+    tokens_conditionning = lollms_app.model.tokenize(conditionning)
+    n_cond_tk = len(tokens_conditionning)
 
-#     # Calculate the available space for the messages
-#     available_space = self.config.ctx_size - n_tokens - total_tokens
+    # Tokenize the documentation text and calculate its number of tokens
+    if len(documentation)>0:
+        tokens_documentation = lollms_app.model.tokenize(documentation)
+        n_doc_tk = len(tokens_documentation)
+    else:
+        tokens_documentation = []
+        n_doc_tk = 0
 
-#     # Raise an error if the available space is 0 or less
-#     if available_space<1:
-#         raise Exception("Not enough space in context!!")
-
-#     # Accumulate messages until the cumulative number of tokens exceeds available_space
-#     tokens_accumulated = 0
-
-
-#     # Initialize a list to store the full messages
-#     full_message_list = []
-#     # If this is not a continue request, we add the AI prompt
-#     if not is_continue:
-#         message_tokenized = self.model.tokenize(
-#             "\n" +self.personality.ai_message_prefix.strip()
-#         )
-#         full_message_list.append(message_tokenized)
-#         # Update the cumulative number of tokens
-#         tokens_accumulated += len(message_tokenized)
+    # Tokenize the history text and calculate its number of tokens
+    if len(history)>0:
+        tokens_history = lollms_app.model.tokenize(history)
+        n_history_tk = len(tokens_history)
+    else:
+        tokens_history = []
+        n_history_tk = 0
 
 
-#     # Accumulate messages starting from message_index
-#     for i in range(message_index, -1, -1):
-#         message = messages[i]
+    # Tokenize user description
+    if len(user_description)>0:
+        tokens_user_description = lollms_app.model.tokenize(user_description)
+        n_user_description_tk = len(tokens_user_description)
+    else:
+        tokens_user_description = []
+        n_user_description_tk = 0
 
-#         # Check if the message content is not empty and visible to the AI
-#         if message.content != '' and (
-#                 message.message_type <= MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER.value and message.message_type != MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI.value):
 
-#             # Tokenize the message content
-#             message_tokenized = self.model.tokenize(
-#                 "\n" + self.config.discussion_prompt_separator + message.sender + ": " + message.content.strip())
+    # Calculate the total number of tokens between conditionning, documentation, and history
+    total_tokens = n_cond_tk + n_doc_tk + n_history_tk + n_user_description_tk
 
-#             # Check if adding the message will exceed the available space
-#             if tokens_accumulated + len(message_tokenized) > available_space:
-#                 break
+    # Calculate the available space for the messages
+    available_space = lollms_app.config.ctx_size - n_tokens - total_tokens
 
-#             # Add the tokenized message to the full_message_list
-#             full_message_list.insert(0, message_tokenized)
+    # Raise an error if the available space is 0 or less
+    if available_space<1:
+        raise Exception("Not enough space in context!!")
 
-#             # Update the cumulative number of tokens
-#             tokens_accumulated += len(message_tokenized)
+    # Accumulate messages until the cumulative number of tokens exceeds available_space
+    tokens_accumulated = 0
 
-#     # Build the final discussion messages by detokenizing the full_message_list
-#     discussion_messages = ""
-#     for message_tokens in full_message_list:
-#         discussion_messages += self.model.detokenize(message_tokens)
 
-#     # Build the final prompt by concatenating the conditionning and discussion messages
-#     prompt_data = conditionning + documentation + history + user_description + discussion_messages
+    # Initialize a list to store the full messages
+    full_message_list = []
+    # If this is not a continue request, we add the AI prompt
+    message_tokenized = lollms_app.model.tokenize(
+        "\n" +lollms_app.personality.ai_message_prefix.strip()
+    )
+    full_message_list.append(message_tokenized)
+    # Update the cumulative number of tokens
+    tokens_accumulated += len(message_tokenized)
 
-#     # Tokenize the prompt data
-#     tokens = self.model.tokenize(prompt_data)
 
-#     # if this is a debug then show prompt construction details
-#     if self.config["debug"]:
-#         ASCIIColors.bold("CONDITIONNING")
-#         ASCIIColors.yellow(conditionning)
-#         ASCIIColors.bold("DOC")
-#         ASCIIColors.yellow(documentation)
-#         ASCIIColors.bold("HISTORY")
-#         ASCIIColors.yellow(history)
-#         ASCIIColors.bold("DISCUSSION")
-#         ASCIIColors.hilight(discussion_messages,"!@>",ASCIIColors.color_yellow,ASCIIColors.color_bright_red,False)
-#         ASCIIColors.bold("Final prompt")
-#         ASCIIColors.hilight(prompt_data,"!@>",ASCIIColors.color_yellow,ASCIIColors.color_bright_red,False)
-#         ASCIIColors.info(f"prompt size:{len(tokens)} tokens") 
-#         ASCIIColors.info(f"available space after doc and history:{available_space} tokens") 
+    message_tokenized = lollms_app.model.tokenize(discussion)
+    if len(message_tokenized)>lollms_app.config.ctx_size-1024:
+        pos = message_tokenized[-(lollms_app.config.ctx_size-1024)]
+        detokenized = lollms_app.model.detokenize(message_tokenized[pos:pos+10])
+        position = discussion.find(detokenized)
+        if position!=-1:
+            discussion_messages = discussion[-position:]
+        else:
+            discussion_messages = discussion
+    else:
+        discussion_messages = discussion
 
-#     # Return the prepared query, original message content, and tokenized query
-#     return prompt_data, current_message.content, tokens
+    # Build the final prompt by concatenating the conditionning and discussion messages
+    prompt_data = conditionning + documentation + history + user_description + discussion_messages
+
+    # Tokenize the prompt data
+    tokens = lollms_app.model.tokenize(prompt_data)
+
+    # if this is a debug then show prompt construction details
+    if lollms_app.config["debug"]:
+        ASCIIColors.bold("CONDITIONNING")
+        ASCIIColors.yellow(conditionning)
+        ASCIIColors.bold("DOC")
+        ASCIIColors.yellow(documentation)
+        ASCIIColors.bold("HISTORY")
+        ASCIIColors.yellow(history)
+        ASCIIColors.bold("DISCUSSION")
+        ASCIIColors.hilight(discussion_messages,"!@>",ASCIIColors.color_yellow,ASCIIColors.color_bright_red,False)
+        ASCIIColors.bold("Final prompt")
+        ASCIIColors.hilight(prompt_data,"!@>",ASCIIColors.color_yellow,ASCIIColors.color_bright_red,False)
+        ASCIIColors.info(f"prompt size:{len(tokens)} tokens") 
+        ASCIIColors.info(f"available space after doc and history:{available_space} tokens") 
+
+    # Return the prepared query, original message content, and tokenized query
+    return prompt_data
 
 @client.event
 async def on_message(message):
@@ -224,6 +208,8 @@ async def on_message(message):
         return
     if message.content.startswith(config["summoning_word"]):
         prompt = message.content[len(config["summoning_word"])+1:]
+
+        context['discussion'] = prepare_query(context['discussion'], prompt, 512)
         context['discussion']+= "\n!@>" + message.author.name +": "+  prompt + "\n" + f"{lollms_app.personality.ai_message_prefix}"
         context['current_response']=""
         print("Chatting")
