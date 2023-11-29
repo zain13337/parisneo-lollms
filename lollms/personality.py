@@ -534,10 +534,10 @@ Date: {{date}}
                     try:
                         self.vectorizer.remove_document(path)
                         if callback is not None:
-                            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                            callback("File removed successfully",MSG_TYPE.MSG_TYPE_INFO)
                         return True
                     except ValueError as ve:
-                        ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                        ASCIIColors.error(f"Couldn't remove the file")
                         return False
                 else:
                     self.vectorizer = None
@@ -548,10 +548,10 @@ Date: {{date}}
                     try:
                         self.vectorizer.remove_document(path)
                         if callback is not None:
-                            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                            callback("File removed successfully",MSG_TYPE.MSG_TYPE_INFO)
                         return True
                     except ValueError as ve:
-                        ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                        ASCIIColors.error(f"Couldn't remove file")
                         return False
                 else:
                     self.vectorizer = None
@@ -637,7 +637,7 @@ Date: {{date}}
                     callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
                 return True
             except ValueError as ve:
-                ASCIIColors.error(f"Unsupported file format. Supported formats are {GenericDataLoader.get_supported_file_types()}")
+                ASCIIColors.error(f"Unsupported file format or empty file.\nSupported formats are {GenericDataLoader.get_supported_file_types()}")
                 return False
     def save_personality(self, package_path=None):
         """
