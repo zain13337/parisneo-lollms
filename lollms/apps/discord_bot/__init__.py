@@ -98,10 +98,10 @@ def prepare_query(discussion, prompt, n_tokens: int = 0) -> Tuple[str, str, List
 
     # Check if there is discussion history to add to the prompt
     history = ""
-    if lollms_app.config.use_discussions_history and lollms_app.discussions_store is not None:
+    if lollms_app.config.use_discussions_history and lollms_app.long_term_memory is not None:
         if history=="":
             documentation="!@>History:\n"
-        docs, sorted_similarities = lollms_app.discussions_store.recover_text(current_message.content, top_k=lollms_app.config.data_vectorization_nb_chunks)
+        docs, sorted_similarities = lollms_app.long_term_memory.recover_text(current_message.content, top_k=lollms_app.config.data_vectorization_nb_chunks)
         for doc, infos in zip(docs, sorted_similarities):
             history += f"discussion chunk:\ndiscussion title: {infos[0]}\nchunk content:{doc}"
 
