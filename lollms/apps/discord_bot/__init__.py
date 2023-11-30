@@ -84,7 +84,7 @@ def prepare_query(discussion, prompt, n_tokens: int = 0) -> Tuple[str, str, List
     if lollms_app.personality.persona_data_vectorizer:
         if documentation=="":
             documentation="!@>Documentation:\n"
-        docs, sorted_similarities = lollms_app.personality.persona_data_vectorizer.recover_text(current_message.content, top_k=lollms_app.config.data_vectorization_nb_chunks)
+        docs, sorted_similarities = lollms_app.personality.persona_data_vectorizer.recover_text(current_message, top_k=lollms_app.config.data_vectorization_nb_chunks)
         for doc, infos in zip(docs, sorted_similarities):
             documentation += f"document chunk:\n{doc}"
 
@@ -169,12 +169,12 @@ def prepare_query(discussion, prompt, n_tokens: int = 0) -> Tuple[str, str, List
     message_tokenized = lollms_app.model.tokenize(discussion)
     if len(message_tokenized)>lollms_app.config.ctx_size-1024:
         pos = message_tokenized[-(lollms_app.config.ctx_size-1024)]
-        detokenized = lollms_app.model.detokenize(message_tokenized[pos:pos+10])
+        detokenized = lollms_app.model.detokenize(message_tokenized[pos:pos+20])
         position = discussion.find(detokenized)
-        if position!=-1:
+        if position!=-1 and position>0:
             discussion_messages = discussion[-position:]
         else:
-            discussion_messages = discussion
+            discussion_messages = discussion[-(lollms_app.config.ctx_size-1024):]
     else:
         discussion_messages = discussion
 
@@ -209,21 +209,9 @@ async def on_message(message):
     if message.content.startswith(config["summoning_word"]):
         prompt = message.content[len(config["summoning_word"])+1:]
 
-        context['discussion'] = prepare_query(context['discussion'], prompt, 512)
+        context['discussion'] = prepare_query(context['discussion'], prompt, 1024)
         context['discussion']+= "\n!@>" + message.author.name +": "+  prompt + "\n" + f"{lollms_app.personality.ai_message_prefix}"
         context['current_response']=""
-        print("Chatting")
-        try:
-            docs, _ = text_vectorzer.recover_text(prompt,3)
-            docs = "Use the content of those documentation chunks to enhance your answers\n!@>Documentation:\n"+'\n'.join(docs)
-        except:
-            docs=""
-        context_text = f"""{lollms_app.personality.personality_conditioning}
-!@>informations:
-Current model:{lollms_app.config.model_name}
-Current personality:{lollms_app.personality.name}
-{docs}
-"""+"{{discussion}}"
         def callback(text, type=None):
             antiprompt = lollms_app.personality.detect_antiprompt(context['current_response'])
             if antiprompt:
@@ -236,11 +224,10 @@ Current personality:{lollms_app.personality.name}
             return True
         
         ASCIIColors.green("Warming up ...")
-        lollms_app.safe_generate(context_text, n_predict=1024, callback=callback, placeholder={"discussion":context['discussion']},place_holders_to_sacrifice=["discussion"], debug=True)
+        lollms_app.safe_generate(context['discussion'], n_predict=1024, callback=callback, placeholder={"discussion":context['discussion']},place_holders_to_sacrifice=["discussion"], debug=True)
 
-        print()
-        context['discussion'] += context['current_response'][0:2000]
-        await message.channel.send(context['current_response'][0:2000])
+        context['discussion'] += context['current_response']
+        await message.channel.send(context['current_response'])
     elif message.content.startswith('!mount'):
         personality_name =  message.content[len('!mount')+1:]
         lollms_app.config.personalities.append(personality_name)
