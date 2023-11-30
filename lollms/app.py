@@ -7,8 +7,10 @@ from lollms.config import InstallOption
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
 from lollms.utilities import PromptReshaper
+from safe_store import TextVectorizer, VectorizationMethod, VisualizationMethod
 from typing import Callable
 from ascii_colors import ASCIIColors
+from pathlib import Path
 
 import subprocess
 import importlib
@@ -38,8 +40,9 @@ class LollmsApplication:
 
         self.mounted_extensions     = []
         self.notification_callback  = notification_callback
-        self.binding=None
-        self.model:LLMBinding=None
+        self.binding                = None
+        self.model:LLMBinding       = None
+        self.long_term_memory       = None
 
         try:
             if config.auto_update:
@@ -106,7 +109,23 @@ class LollmsApplication:
         self.mount_personalities()
         self.mount_extensions()
 
-
+    def build_long_term_skills_memory(self):
+        db_path:Path = self.lollms_paths.personal_databases_path/self.config.db_path.split(".")[0]
+        db_path.mkdir(exist_ok=True, parents=True)
+        self.long_term_memory = TextVectorizer(
+                vectorization_method=VectorizationMethod.TFIDF_VECTORIZER,
+                model=self.model,
+                database_path=db_path/"skills_memory.json",
+                save_db=True,
+                data_visualization_method=VisualizationMethod.PCA,
+            )
+        return self.long_term_memory
+    
+    def learn_from_discussion(self, discussion):        
+        learned_skill = self.model.generate(f"{discussion}\n\n!@>What should we learn from this discussion?!@>Summerizer: Here is a summary of the most important informations extracted from the discussion:\n",)
+        return learned_skill
+    
+    
     def remove_text_from_string(self, string, text_to_find):
         """
         Removes everything from the first occurrence of the specified text in the string (case-insensitive).
