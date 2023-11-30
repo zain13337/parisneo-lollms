@@ -1839,6 +1839,58 @@ Act as  prompt analyzer, a tool capable of analyzing the user prompt and answeri
             ASCIIColors.cyan("Model failed to answer the question")
             return -1
 
+    def multichoice_ranking(self, question: str, possible_answers:list, context:str = "", max_answer_length: int = 50) -> int:
+        """
+        Ranks answers for a question from best to worst. returns a list of integers
+        
+        Args:
+            question (str): The multi-choice question posed by the user.
+            possible_ansers (List[Any]): A list containing all valid options for the chosen value. For each item in the list, either 'True', 'False', None or another callable should be passed which will serve as the truth test function when checking against the actual user input.
+            max_answer_length (int, optional): Maximum string length allowed while interpreting the users' responses. Defaults to 50.
+            
+        Returns:
+            int: Index of the selected option within the possible_ansers list. Or -1 if there was not match found among any of them.
+        """
+        if context!="":
+            template = """!@>instruction:
+Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are returned as a python list. Do not add comments.
+!@>Context:                               
+{{context}}
+!@>question: {{question}}
+!@>choices:
+{{choices}} 
+!@>prompt analyzer: After analyzing the user prompt, here is my ranking of the choices from best to worst :["""
+        else:
+            template = """!@>Instructions:
+Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are returned as a python list. Do not add comments.
+!@>instruction: {{question}}
+!@>choices: {{choices}} 
+!@>prompt analyzer: After analyzing the user prompt, here is my ranking of the choices from best to worst :\nranks=["""
+
+        pr  = PromptReshaper(template)
+        prompt = pr.build({
+                "context":context,
+                "question":question,
+                "choices":"\n".join([f"{i} - {possible_answer}" for i,possible_answer in enumerate(possible_answers)])
+                }, 
+                self.personality.model.tokenize, 
+                self.personality.model.detokenize, 
+                self.personality.model.config.ctx_size,
+                ["previous_discussion"]
+                )
+        gen = "["+self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
+        self.print_prompt("Multi choice selection",prompt+gen)
+        if gen.index("]")>=0:
+            try:
+                ranks = eval(gen.split("]")[0]+"]")
+                return ranks
+            except:
+                ASCIIColors.red("Model failed to rank inputs")
+                return None
+        else:
+            ASCIIColors.red("Model failed to rank inputs")
+            return None
+
 
     def info(self, info_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends info text to front end
