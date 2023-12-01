@@ -194,7 +194,7 @@ Date: {{date}}
             self.personality_output_folder = lollms_paths.personal_outputs_path/self.name
             self.personality_output_folder.mkdir(parents=True, exist_ok=True)
 
-    def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list], bool]=None):
+    def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list, Any], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -205,7 +205,7 @@ Date: {{date}}
             callback = self.callback
 
         if callback:
-            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata})
+            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata}, personality=self)
 
     def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end
@@ -1545,6 +1545,18 @@ class APScript(StateMachine):
         else:
             self.load_personality_config()
 
+    def mounted(self):
+        """
+        triggered when mounted
+        """
+        pass
+
+    def selected(self):
+        """
+        triggered when mounted
+        """
+        pass
+
     def execute_command(self, command: str, parameters:list=[]):
         """
         Recovers user commands and executes them. Each personality can define a set of commands that they can receive and execute
@@ -2237,7 +2249,7 @@ Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are r
         if callback:
             callback(info_text, MSG_TYPE.MSG_TYPE_FULL)
 
-    def step_progress(self, step_text:str, progress:float, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+    def step_progress(self, step_text:str, progress:float, callback: Callable[[str, MSG_TYPE, dict, list, AIPersonality], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -2250,7 +2262,7 @@ Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are r
         if callback:
             callback(step_text, MSG_TYPE.MSG_TYPE_STEP_PROGRESS, {'progress':progress})
 
-    def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list], bool]=None):
+    def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list, AIPersonality], bool]=None):
         """This sends step rogress to front end
 
         Args:
@@ -2261,7 +2273,7 @@ Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are r
             callback = self.callback
 
         if callback:
-            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata})
+            callback(message_text, MSG_TYPE.MSG_TYPE_NEW_MESSAGE, parameters={'type':message_type.value,'metadata':metadata},personality = self.personality)
 
     def finished_message(self, message_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends step rogress to front end
