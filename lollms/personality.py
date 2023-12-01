@@ -34,11 +34,6 @@ import sys
 
 from lollms.helpers import trace_exception
 from lollms.utilities import PackageManager
-if not PackageManager.check_package_installed("jsonschema"):
-    PackageManager.install_package("jsonschema")
-    from jsonschema import Draft7Validator
-else:
-    from jsonschema import Draft7Validator
 def is_package_installed(package_name):
     try:
         dist = pkg_resources.get_distribution(package_name)
@@ -63,21 +58,12 @@ def install_package(package_name):
 
 def fix_json(json_text):
     try:
+        json_text.replace("}\n{","},\n{")
         # Try to load the JSON string
         json_obj = json.loads(json_text)
         return json_obj
     except json.JSONDecodeError as e:
-        # If there's a syntax error, try to fix it using jsonschema
-        validator = Draft7Validator()
-        errors = list(validator.iter_errors(json_text))
-        for error in errors:
-            # Check if the error is due to a missing closing bracket
-            if error.validator == 'additionalProperties' and error.validator_value == False:
-                # Find the position of the error in the JSON string
-                position = error.absolute_path.pop()
-                # Add the missing closing bracket at the position
-                repaired_json_text = json_text[:position] + '}' + json_text[position:]
-                return fix_json(repaired_json_text)
+        trace_exception(e)
 class AIPersonality:
 
     # Extra     
@@ -1433,6 +1419,15 @@ class LoLLMsActionParameters:
         value = parameter_dict['value']
         return LoLLMsActionParameters(name, parameter_type, range, options, value)
 
+    @staticmethod
+    def from_dict(parameter_dict: dict) -> 'LoLLMsActionParameters':
+        name = parameter_dict['name']
+        parameter_type = eval(parameter_dict['parameter_type'])
+        range = parameter_dict.get('range', None)
+        options = parameter_dict.get('options', None)
+        value = parameter_dict['value']
+        return LoLLMsActionParameters(name, parameter_type, range, options, value)
+
 
 class LoLLMsActionParametersEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -1450,14 +1445,17 @@ class LoLLMsActionParametersEncoder(json.JSONEncoder):
         return super().default(obj)
 
 class LoLLMsAction:
-    def __init__(self, name, parameters: List[LoLLMsActionParameters], callback: Callable) -> None:
-        self.name = name
-        self.parameters = parameters
-        self.callback = callback
+    def __init__(self, name, parameters: List[LoLLMsActionParameters], callback: Callable, description:str="") -> None:
+        self.name           = name
+        self.parameters     = parameters
+        self.callback       = callback
+        self.description    = description
+
     def __str__(self) -> str:
         action_dict = {
             'name': self.name,
-            'parameters': self.parameters
+            'parameters': self.parameters,
+            'description': self.description
         }
         return json.dumps(action_dict, indent=4, cls=LoLLMsActionParametersEncoder)    
         
@@ -1465,8 +1463,15 @@ class LoLLMsAction:
     def from_str(string: str) -> 'LoLLMsAction':
         action_dict = json.loads(string)
         name = action_dict['name']
-        parameters = [LoLLMsActionParameters.from_str(param_str) for param_str in action_dict['parameters']]
+        parameters = [LoLLMsActionParameters.from_dict(param_str) for param_str in action_dict['parameters']]
         return LoLLMsAction(name, parameters, None)
+
+    @staticmethod
+    def from_dict(action_dict: dict) -> 'LoLLMsAction':
+        name = action_dict['name']
+        parameters = [LoLLMsActionParameters.from_dict(param_str) for param_str in action_dict['parameters']]
+        return LoLLMsAction(name, parameters, None)
+
 
     def run(self) -> None:
         args = {param.name: param.value for param in self.parameters}
@@ -1481,11 +1486,23 @@ def generate_actions(potential_actions: List[LoLLMsAction], parsed_text: dict) -
             matching_action = next((action for action in potential_actions if action.name == name), None)
             if matching_action:
                 action = LoLLMsAction.from_str(str(matching_action))
-                action.callback=matching_action.callback
-                for param_name, param_value in parameters.items():
-                    matching_param = next((param for param in action.parameters if param.name == param_name), None)
-                    if matching_param:
-                        matching_param.value = param_value
+                action.callback = matching_action.callback
+                if type(parameters)==dict:
+                    for param_name, param_value in parameters.items():
+                        matching_param = next((param for param in action.parameters if param.name == param_name), None)
+                        if matching_param:
+                            matching_param.value = param_value
+                else:
+                    for param in parameters:
+                        if "name" in param:
+                            param_name = param["name"]
+                            param_value = param["value"]
+                        else:
+                            param_name = list(param.keys())[0]
+                            param_value = param[param_name]
+                        matching_param = next((param for param in action.parameters if param.name == param_name), None)
+                        if matching_param:
+                            matching_param.value = param_value
                 actions.append(action)
     except json.JSONDecodeError:
         print("Invalid JSON format.")
@@ -1979,18 +1996,37 @@ class APScript(StateMachine):
 Act as plan builder, a tool capable of making plans to perform the user requested operation.
 """
         if len(actions_list)>0:
-            template +="""The plan builder is an AI that responds in json format
-!@>actions_list:
+            template +="""The plan builder is an AI that responds in json format. It should plan a succession of actions in order to reach the objective.
+!@>list of action types information:
 [
 {{actions_list}} 
 ]
+The AI should respond in this format using data from actions_list:
+{
+    "actions": [
+    {
+        "name": name of the action 1,
+        "parameters":[
+            parameter name: parameter value
+        ]        
+    },
+    {
+        "name": name of the action 2,
+        "parameters":[
+            parameter name: parameter value
+        ]        
+    }
+    ...
+    ]
+}
 """
         if context!="":
             template += """!@>Context:                               
-{{context}}"""
+{{context}}Ok
+"""
         template +="""!@>request: {{request}}
 """
-        template +="""!@>planner: Analyzing the user prompt.\n!@>planner: Plan has been established.\n!@>planner: list of actions in json format:\n```json\n"""
+        template +="""!@>plan: To acheive the requested objective, this is the list of actions to follow, formatted as requested in json format:\n```json\n"""
         pr  = PromptReshaper(template)
         prompt = pr.build({
                 "context":context,
@@ -2005,7 +2041,6 @@ Act as plan builder, a tool capable of making plans to perform the user requeste
         gen = self.generate_with_images(prompt, images, max_answer_length).strip().replace("</s>","").replace("<s>","")
         gen = self.remove_backticks(gen)
         self.print_prompt("full",prompt+gen)
-        gen = "{\n  \"actions\": [\n" + gen
         gen = fix_json(gen)
         return generate_actions(actions_list, gen)
 
@@ -2024,18 +2059,37 @@ Act as plan builder, a tool capable of making plans to perform the user requeste
 Act as plan builder, a tool capable of making plans to perform the user requested operation.
 """
         if len(actions_list)>0:
-            template +="""The plan builder is an AI that responds in json format
-!@>actions_list:
+            template +="""The plan builder is an AI that responds in json format. It should plan a succession of actions in order to reach the objective.
+!@>list of action types information:
 [
 {{actions_list}} 
 ]
+The AI should respond in this format using data from actions_list:
+{
+    "actions": [
+    {
+        "name": name of the action 1,
+        "parameters":[
+            parameter name: parameter value
+        ]        
+    },
+    {
+        "name": name of the action 2,
+        "parameters":[
+            parameter name: parameter value
+        ]        
+    }
+    ...
+    ]
+}
 """
         if context!="":
             template += """!@>Context:                               
-{{context}}"""
+{{context}}Ok
+"""
         template +="""!@>request: {{request}}
 """
-        template +="""!@>planner: Analyzing the user prompt.\n!@>planner: Plan has been established.\n!@>planner: list of actions in json format:\n```json\n{\n  \"actions\": [\n"""
+        template +="""!@>plan: To acheive the requested objective, this is the list of actions to follow, formatted as requested in json format:\n```json\n"""
         pr  = PromptReshaper(template)
         prompt = pr.build({
                 "context":context,
@@ -2048,9 +2102,10 @@ Act as plan builder, a tool capable of making plans to perform the user requeste
                 ["previous_discussion"]
                 )
         gen = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
-        gen = self.remove_backticks(gen)
+        gen = self.remove_backticks(gen).strip()
+        if gen[-1]!="}":
+            gen+="}"
         self.print_prompt("full",prompt+gen)
-        gen = "{\n  \"actions\": [\n" + gen
         gen = fix_json(gen)
         return generate_actions(actions_list, gen)
 
