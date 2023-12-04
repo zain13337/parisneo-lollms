@@ -445,7 +445,7 @@ Date: {{date}}
                                 ).strip()    
         return self.bot_says
 
-    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None, debug=False, show_progress=False ):
+    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, repeat_last_n=None, callback=None, debug=False, show_progress=False ):
         ASCIIColors.info("Text generation started: Warming up")
         self.nb_received_tokens = 0
         self.bot_says = ""
@@ -460,6 +460,7 @@ Date: {{date}}
                                 top_k=self.model_top_k if top_k is None else top_k,
                                 top_p=self.model_top_p if top_p is None else top_p,
                                 repeat_penalty=self.model_repeat_penalty if repeat_penalty is None else repeat_penalty,
+                                repeat_last_n = self.model_repeat_last_n if repeat_last_n is None else repeat_last_n,
                                 ).strip()    
         return self.bot_says
 
@@ -669,14 +670,13 @@ Date: {{date}}
         if path.suffix in [".png",".jpg",".gif",".bmp",".webp"]:
             if self.callback:
                 try:
-                    if callback:
-                        pth = str(path).replace("\\","/").split('/')
-                        if "uploads" in pth:
-                            idx = pth.index("uploads")
-                            pth = "/".join(pth[idx:])
-                            self.new_message("",MSG_TYPE.MSG_TYPE_FULL)
-                            output = f'<img src="{pth}" width="300">\n\n'
-                            self.full(output)
+                    pth = str(path).replace("\\","/").split('/')
+                    if "uploads" in pth:
+                        idx = pth.index("uploads")
+                        pth = "/".join(pth[idx:])
+                        self.new_message("",MSG_TYPE.MSG_TYPE_FULL)
+                        output = f'<img src="{pth}" width="300">\n\n'
+                        self.full(output)
 
                     if self.model.binding_type not in [BindingType.TEXT_IMAGE, BindingType.TEXT_IMAGE_VIDEO]:
                         self.step_start("Understanding image (please wait)")
@@ -693,7 +693,6 @@ Date: {{date}}
                     else:
                         self.step_start("Importing image (please wait)")
                         self.step_end("Importing image (please wait)")
-                        self.full(output)
 
                 except Exception as ex:
                     trace_exception(ex)
@@ -1684,11 +1683,11 @@ class APScript(StateMachine):
         with open(path, 'w') as file:
             yaml.dump(data, file)
 
-    def generate_with_images(self, prompt, images, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None, debug=False ):
-        return self.personality.generate_with_images(prompt, images, max_size, temperature, top_k, top_p, repeat_penalty, callback, debug=debug)
+    def generate_with_images(self, prompt, images, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, repeat_last_n=None, callback=None, debug=False ):
+        return self.personality.generate_with_images(prompt, images, max_size, temperature, top_k, top_p, repeat_penalty, repeat_last_n, callback, debug=debug)
 
-    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, callback=None, debug=False ):
-        return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, callback, debug=debug)
+    def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, repeat_last_n=None, callback=None, debug=False ):
+        return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, repeat_last_n, callback, debug=debug)
 
     def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """
@@ -2133,7 +2132,7 @@ The AI should respond in this format using data from actions_list:
         Returns:
             bool: True if the user prompt is asking to generate an image, False otherwise.
         """
-        return self.multichoice_question(question, ["no","yes"],context, max_answer_length)==1
+        return self.multichoice_question(question, ["no","yes"], context, max_answer_length)>0
 
     def multichoice_question(self, question: str, possible_answers:list, context:str = "", max_answer_length: int = 50) -> int:
         """
@@ -2148,34 +2147,39 @@ The AI should respond in this format using data from actions_list:
             int: Index of the selected option within the possible_ansers list. Or -1 if there was not match found among any of them.
         """
         if context!="":
-            template = """!@>instruction:
-Act as prompt classifier, a tool capable of classifying the user prompt.
-!@>Context:                               
+            template = """!@>instructions:
+Answer this multi choices question.
+Answer with an id from the possible answers.
+Do not answer with an id outside this possible answers.
+!@>question: {{question}}
+!@>possible answers:
+{{choices}}
+!@>Context:
 {{context}}
+!@>answer:"""
+        else:
+            template = """!@>instructions:
+Answer this multi choices question.
+Answer with an id from the possible answers.
+Do not answer with an id outside this possible answers.
 !@>question: {{question}}
 !@>choices:
-{{choices}} 
-!@>prompt analyzer: After analyzing the user prompt, the most suitable choice is choice number """
-        else:
-            template = """!@>Instructions:
-Act as  prompt analyzer, a tool capable of analyzing the user prompt and answering yes or no this prompt asking to generate an image.
-!@>instruction: {{question}}
-!@>choices: {{choices}} 
-!@>prompt analyzer: After analyzing the user prompt, the most suitable choice is choice number """
+{{choices}}
+!@>answer:"""
 
         pr  = PromptReshaper(template)
         prompt = pr.build({
                 "context":context,
                 "question":question,
-                "choices":"\n".join([f"{i} - {possible_answer}" for i,possible_answer in enumerate(possible_answers)])
+                "choices":"\n".join([f"{i}. {possible_answer}" for i, possible_answer in enumerate(possible_answers)])
                 }, 
                 self.personality.model.tokenize, 
                 self.personality.model.detokenize, 
                 self.personality.model.config.ctx_size,
                 ["previous_discussion"]
                 )
-        gen = self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
-        selection = gen.split()[0]
+        gen = self.generate(prompt, max_answer_length, temperature=0.1, top_k=50, top_p=0.9, repeat_penalty=1.0, repeat_last_n=50).strip().replace("</s>","").replace("<s>","")
+        selection = gen.strip().split()[0].replace(",","")
         self.print_prompt("Multi choice selection",prompt+gen)
         try:
             return int(selection)

@@ -392,6 +392,7 @@ class LLMBinding:
             verbose (bool, optional): If true, the code will spit many informations about the generation process. Defaults to False.
         """
         pass
+    
     def tokenize(self, prompt:str):
         """
         Tokenizes the given prompt using the model's tokenizer.
@@ -489,9 +490,9 @@ class LLMBinding:
         print(LLMBinding.vram_usage())
         try:
             torch.cuda.empty_cache()
+            ASCIIColors.green("Cleared cache")
         except Exception as ex:
             ASCIIColors.error("Couldn't clear cuda memory")
-        ASCIIColors.red("Cleared cache")
         ASCIIColors.red("*-*-*-*-*-*-*-*")
         ASCIIColors.red("Cuda VRAM usage")
         ASCIIColors.red("*-*-*-*-*-*-*-*")

@@ -11,9 +11,12 @@ from safe_store import TextVectorizer, VectorizationMethod, VisualizationMethod
 from typing import Callable
 from ascii_colors import ASCIIColors
 from pathlib import Path
-
+from datetime import datetime
+from functools import partial
 import subprocess
 import importlib
+import sys
+
 class LollmsApplication:
     def __init__(
                     self, 
@@ -121,10 +124,65 @@ class LollmsApplication:
             )
         return self.long_term_memory
     
-    def learn_from_discussion(self, discussion):        
-        learned_skill = self.model.generate(f"{discussion}\n\n!@>What should we learn from this discussion?!@>Summerizer: Here is a summary of the most important informations extracted from the discussion:\n",)
-        return learned_skill
-    
+    def process_chunk(
+                        self, 
+                        chunk:str, 
+                        message_type,
+                        parameters:dict=None, 
+                        metadata:list=None, 
+                        personality=None
+                    ):
+        
+        pass
+
+    def default_callback(self, chunk, type, generation_infos:dict):
+        if generation_infos["nb_received_tokens"]==0:
+            self.start_time = datetime.now()
+        dt =(datetime.now() - self.start_time).seconds
+        if dt==0:
+            dt=1
+        spd = generation_infos["nb_received_tokens"]/dt
+        ASCIIColors.green(f"Received {generation_infos['nb_received_tokens']} tokens (speed: {spd:.2f}t/s)              ",end="\r",flush=True) 
+        sys.stdout = sys.__stdout__
+        sys.stdout.flush()
+        if chunk:
+            generation_infos["generated_text"] += chunk
+        antiprompt = self.personality.detect_antiprompt(generation_infos["generated_text"])
+        if antiprompt:
+            ASCIIColors.warning(f"\nDetected hallucination with antiprompt: {antiprompt}")
+            generation_infos["generated_text"] = self.remove_text_from_string(generation_infos["generated_text"],antiprompt)
+            return False
+        else:
+            generation_infos["nb_received_tokens"] += 1
+            generation_infos["first_chunk"]=False
+            # if stop generation is detected then stop
+            if not self.cancel_gen:
+                return True
+            else:
+                self.cancel_gen = False
+                ASCIIColors.warning("Generation canceled")
+                return False
+                
+    def learn_from_discussion(self, title, discussion, nb_gen=None, callback=None):
+        if self.config.summerize_discussion:
+            prompt = f"!@>discussion:\n--\n!@>title:{title}!@>content:\n{discussion}\n--\n!@>question:What should we learn from this discussion?!@>Summerizer: Here is a summary of the most important informations extracted from the discussion:\n"
+            if nb_gen is None:
+                nb_gen = self.config.max_summary_size
+            generated = ""
+            gen_infos={
+                "nb_received_tokens":0,
+                "generated_text":"",
+                "processing":False,
+                "first_chunk": True,
+            }
+            if callback is None:
+                callback = partial(self.default_callback, generation_infos=gen_infos)
+            self.model.generate(prompt, nb_gen, callback)
+            if self.config.debug:
+                ASCIIColors.yellow(gen_infos["generated_text"])
+            return gen_infos["generated_text"]
+        else:
+            return  discussion
     
     def remove_text_from_string(self, string, text_to_find):
         """
