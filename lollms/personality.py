@@ -2179,7 +2179,7 @@ Do not answer with an id outside this possible answers.
                 ["previous_discussion"]
                 )
         gen = self.generate(prompt, max_answer_length, temperature=0.1, top_k=50, top_p=0.9, repeat_penalty=1.0, repeat_last_n=50).strip().replace("</s>","").replace("<s>","")
-        selection = gen.strip().split()[0].replace(",","")
+        selection = gen.strip().split()[0].replace(",","").replace(".","")
         self.print_prompt("Multi choice selection",prompt+gen)
         try:
             return int(selection)
