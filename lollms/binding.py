@@ -103,7 +103,7 @@ class LLMBinding:
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
 
-    def notify(self, content:str, status:bool=True):
+    def notify(self, content:str, status:bool=True, duration=4,  notification_type=0):
         if self.notification_callback:
             self.notification_callback(content, status)
 

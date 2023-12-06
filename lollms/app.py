@@ -226,9 +226,9 @@ class LollmsApplication:
             generated_text = self.personality.model.generate(full_discussion, n_predict=n_predict, callback=callback)
         return generated_text
 
-    def notify(self, content, is_success=True, client_id=None):
+    def notify(self, content, is_success=True, duration=4, client_id=None, notification_type=0):
         if self.notification_callback:
-            return self.notification_callback(content, is_success, client_id)
+            return self.notification_callback(content, is_success, duration, client_id, notification_type)
 
         if is_success:
             ASCIIColors.yellow(content)
@@ -240,13 +240,16 @@ class LollmsApplication:
             binding = BindingBuilder().build_binding(self.config, self.lollms_paths, notification_callback=self.notify)
             return binding    
         except Exception as ex:
+            self.notify("Couldn't load binding", False)
+            self.notify("Trying to reinstall binding")
             print(ex)
             print(f"Couldn't find binding. Please verify your configuration file at {self.lollms_paths.personal_configuration_path}/local_configs.yaml or use the next menu to select a valid binding")
             print(f"Trying to reinstall binding")
             try:
                 binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
             except Exception as ex:
-                ASCIIColors.error("Couldn't reinstall model")
+                self.notify("Couldn't reinstall binding", False)
+                ASCIIColors.error("Couldn't reinstall binding")
                 trace_exception(ex)
             return None    
 
@@ -258,6 +261,7 @@ class LollmsApplication:
                 if personality is not None:
                     personality.model = model
         except Exception as ex:
+            self.notify("Couldn't load model.", False)
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
             trace_exception(ex)
