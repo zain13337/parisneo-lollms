@@ -190,7 +190,10 @@ class LLMBinding:
 
     def get_file_size(self, url):
         # Send a HEAD request to retrieve file metadata
-        response = urllib.request.urlopen(url)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        req = urllib.request.Request(url, headers=headers)
+        response = urllib.request.urlopen(req)
+        # response = urllib.request.urlopen(url, headers=headers)
         
         # Extract the Content-Length header value
         file_size = response.headers.get('Content-Length')
