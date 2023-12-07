@@ -437,7 +437,7 @@ class LLMBinding:
         """
         models = []
         for models_folder in self.models_folders:
-            if models_folder.name in ["ggml","gguf"]:
+            if models_folder.name in ["ggml","gguf","gpt4all"]:
                 models+=[f.name for f in models_folder.iterdir() if f.suffix in self.supported_file_extensions or f.suffix==".reference"]
             else:
                 models+=[f.name for f in models_folder.iterdir() if f.is_dir() and not f.stem.startswith(".") or f.suffix==".reference"]
