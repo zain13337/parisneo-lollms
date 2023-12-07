@@ -178,7 +178,50 @@ def models():
         for model in cv.binding.list_models(cv.config)
     ]
     return {'data': data, 'object': 'list'}
-     
+
+@app.route("/v1/completions", methods=['POST'])
+def completions():
+    request_data = request.get_json()
+    model = request_data.get('model', None).replace("neuro-", "")
+    prompt = request_data.get('prompt')
+    temperature = request_data.get('temperature')
+    max_tokens = request_data.get('max_tokens', 1024)
+
+    if model is not None:
+        # TODO add model selection
+        pass
+
+    completion_id = "".join(random.choices(string.ascii_letters + string.digits, k=28))
+    completion_timestamp = int(time.time())
+    
+    response = cv.safe_generate(full_discussion=prompt, temperature=temperature, n_predict=max_tokens)
+    completion_timestamp = int(time.time())
+    completion_id = ''.join(random.choices(
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
+
+    return {
+        "id": f"chatcmpl-{completion_id}",
+        "object": "chat.completion",
+        "created": completion_timestamp,
+        "model": model,
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": response,
+                },
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "total_tokens": None,
+        },
+    }
+
+  
 @app.route("/chat/completions", methods=['POST'])
 @app.route("/v1/chat/completions", methods=['POST'])
 @app.route("/", methods=['POST'])
