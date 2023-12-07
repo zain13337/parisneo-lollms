@@ -187,6 +187,9 @@ def completions():
     temperature = request_data.get('temperature')
     max_tokens = request_data.get('max_tokens', 1024)
 
+    prompt_tokens = cv.model.tokenize(prompt)
+    n_prompt_tokens = len(prompt_tokens)
+
     if model is not None:
         # TODO add model selection
         pass
@@ -195,33 +198,36 @@ def completions():
     completion_timestamp = int(time.time())
     
     response = cv.safe_generate(full_discussion=prompt, temperature=temperature, n_predict=max_tokens)
+    completion_tokens = cv.model.tokenize(response)
+    n_completion_tokens = len(completion_tokens)
+
     completion_timestamp = int(time.time())
     completion_id = ''.join(random.choices(
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
-
+    system_fingerprint = ''.join(random.choices(
+        'abcdefghijklmnopqrstuvwxyz0123456789', k=10))
     return {
-        "id": f"chatcmpl-{completion_id}",
-        "object": "chat.completion",
+        "id": f"cmpl-{completion_id}",
+        "object": "text_completion",
         "created": completion_timestamp,
         "model": model,
+        "system_fingerprint": "fp_"+system_fingerprint,
         "choices": [
             {
                 "index": 0,
-                "message": {
-                    "role": "assistant",
-                    "content": response,
-                },
+                "text": response,
+                "logprobs": None,
                 "finish_reason": "stop",
             }
         ],
         "usage": {
-            "prompt_tokens": None,
-            "completion_tokens": None,
-            "total_tokens": None,
+            "prompt_tokens": n_prompt_tokens,
+            "completion_tokens": n_completion_tokens,
+            "total_tokens": n_prompt_tokens + n_completion_tokens,
         },
     }
 
-  
+
 @app.route("/chat/completions", methods=['POST'])
 @app.route("/v1/chat/completions", methods=['POST'])
 @app.route("/", methods=['POST'])
@@ -248,9 +254,16 @@ def chat_completions():
 
     completion_id = "".join(random.choices(string.ascii_letters + string.digits, k=28))
     completion_timestamp = int(time.time())
+
+    prompt_tokens = cv.model.tokenize(full_discussion)
+    n_prompt_tokens = len(prompt_tokens)
+
     
     if not streaming_:
         response = cv.safe_generate(full_discussion=full_discussion, temperature=temperature, top_p=top_p, n_predict=max_tokens)
+        completion_tokens = cv.model.tokenize(response)
+        n_completion_tokens = len(completion_tokens)
+
         completion_timestamp = int(time.time())
         completion_id = ''.join(random.choices(
             'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=28))
@@ -271,9 +284,9 @@ def chat_completions():
                 }
             ],
             "usage": {
-                "prompt_tokens": None,
-                "completion_tokens": None,
-                "total_tokens": None,
+                "prompt_tokens": n_prompt_tokens,
+                "completion_tokens": n_completion_tokens,
+                "total_tokens": n_prompt_tokens + n_completion_tokens,
             },
         }
     else:
