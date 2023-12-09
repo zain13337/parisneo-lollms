@@ -74,8 +74,6 @@ class WebcamImageSender:
             image_base64 = base64.b64encode(buffer)
             self.socketio.emit("image", image_base64.decode('utf-8'))
 
-
-
         cap.release()
 
     def image_difference(self, image):
