@@ -13,7 +13,7 @@ if not PackageManager.check_package_installed("pygame"):
 else:
     import pygame
 import threading
-if not PackageManager.check_package_installed("opencv-python"):
+if not PackageManager.check_package_installed("cv2"):
     PackageManager.install_package("opencv-python")
     import cv2
 else:
