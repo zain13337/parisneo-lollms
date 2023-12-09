@@ -241,7 +241,7 @@ class LollmsSD:
                 ASCIIColors.info("Running on windows")
                 script_path = self.sd_folder / "lollms_sd.bat"
                 if share:
-                    subprocess.Popen(script_path+" --share", cwd=self.sd_folder)
+                    subprocess.Popen(str(script_path) +" --share", cwd=self.sd_folder)
                 else:
                     subprocess.Popen(script_path, cwd=self.sd_folder)
             else:

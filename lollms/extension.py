@@ -42,11 +42,10 @@ class LOLLMSExtension():
         self.configuration_path= self.configuration_path/"config.yaml"
 
         self.installation_option = installation_option
-        self.configuration_file_path            = self.configuration_path/f"config.yaml"
         # Installation
-        if (not self.configuration_file_path.exists() or self.installation_option==InstallOption.FORCE_INSTALL) and self.installation_option!=InstallOption.NEVER_INSTALL:
+        if (not self.configuration_path.exists() or self.installation_option==InstallOption.FORCE_INSTALL) and self.installation_option!=InstallOption.NEVER_INSTALL:
             self.install()
-            self.config.save(self.configuration_file_path)
+            self.config.save(self.configuration_path)
 
 
     def build_extension(self):
