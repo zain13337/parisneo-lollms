@@ -301,7 +301,7 @@ class LollmsApplication(LoLLMsCom):
 
     def load_binding(self):
         try:
-            binding = BindingBuilder().build_binding(self.config, self.lollms_paths, app=self)
+            binding = BindingBuilder().build_binding(self.config, self.lollms_paths, lollmsCom=self)
             return binding    
         except Exception as ex:
             self.error("Couldn't load binding")

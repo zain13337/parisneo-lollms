@@ -548,7 +548,7 @@ class BindingBuilder:
                         lollmsCom=None
                     )->LLMBinding:
 
-        binding:LLMBinding = self.getBinding(config, lollms_paths, installation_option)
+        binding:LLMBinding = self.getBinding(config, lollms_paths)
         return binding(
                 config,
                 lollms_paths=lollms_paths,
@@ -560,7 +560,6 @@ class BindingBuilder:
                         self, 
                         config: LOLLMSConfig, 
                         lollms_paths:LollmsPaths,
-                        installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY
                     )->LLMBinding:
         
         if len(str(config.binding_name).split("/"))>1:
