@@ -30,12 +30,25 @@ else:
     import pyaudio
     import wave
 
+
+if not PackageManager.check_package_installed("scipy"):
+    PackageManager.install_package("scipy")
+    from scipy import signal
+else:
+    from scipy import signal
+
+if not PackageManager.check_package_installed("matplotlib"):
+    PackageManager.install_package("matplotlib")
+    import matplotlib.pyplot as plt
+else:
+    import matplotlib.pyplot as plt
+
 from lollms.com import LoLLMsCom
 import time
 import json
 import base64
-
-
+import io
+import numpy as np
 
 class AudioRecorder:
     def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=0.01, silence_duration=2, app:LoLLMsCom=None):
@@ -81,10 +94,37 @@ class AudioRecorder:
             else:
                 self.last_sound_time = time.time()
 
+            # Update spectrogram every second
+            if len(self.audio_frames) % (self.sample_rate // self.chunk_size) == 0:
+                self._update_spectrogram()
+
     def _calculate_rms(self, data):
         squared_sum = sum([sample ** 2 for sample in data])
         rms = (squared_sum / len(data)) ** 0.5
         return rms
+
+    def _update_spectrogram(self):
+        audio_data = np.frombuffer(b''.join(self.audio_frames), dtype=np.int16)
+        frequencies, times, spectrogram = signal.spectrogram(audio_data, self.sample_rate)
+
+        # Plot spectrogram
+        plt.figure(figsize=(10, 4))
+        plt.imshow(np.log(spectrogram), aspect='auto', origin='lower', cmap='inferno')
+        plt.xlabel('Time')
+        plt.ylabel('Frequency')
+        plt.title('Spectrogram')
+        plt.colorbar(format='%+2.0f dB')
+
+        # Convert plot to base64 image
+        img_buffer = io.BytesIO()
+        plt.savefig(img_buffer, format='png')
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+
+        # Send base64 image using socketio
+        self.socketio.emit('update_spectrogram', img_base64)
+
+        plt.close()
 
     def stop_recording(self):
         self.is_recording = False
@@ -99,7 +139,6 @@ class AudioRecorder:
         audio.close()
 
         print(f"Recording saved to {self.filename}")
-
 
 
 class WebcamImageSender:
