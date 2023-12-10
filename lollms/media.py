@@ -7,6 +7,7 @@ Description: Media classes:
 License: Apache 2.0
 """
 from lollms.utilities import PackageManager
+from lollms.com import LoLLMsCom
 if not PackageManager.check_package_installed("pygame"):
     PackageManager.install_package("pygame")
     import pygame
@@ -39,9 +40,9 @@ else:
 
 if not PackageManager.check_package_installed("matplotlib"):
     PackageManager.install_package("matplotlib")
-    import matplotlib.pyplot as plt
-else:
-    import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 from lollms.com import LoLLMsCom
 import time
@@ -51,7 +52,7 @@ import io
 import numpy as np
 
 class AudioRecorder:
-    def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=0.01, silence_duration=2, app:LoLLMsCom=None):
+    def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=0.1, silence_duration=2, lollmsCom:LoLLMsCom=None):
         self.socketio = socketio
         self.filename = filename
         self.channels = channels
@@ -64,7 +65,7 @@ class AudioRecorder:
         self.silence_threshold = silence_threshold
         self.silence_duration = silence_duration
         self.last_sound_time = time.time()
-        self.app = app
+        self.lollmsCom = lollmsCom
 
     def start_recording(self):
         self.is_recording = True
@@ -76,7 +77,7 @@ class AudioRecorder:
             frames_per_buffer=self.chunk_size
         )
 
-        print("Recording started...")
+        self.lollmsCom.info("Recording started...")
 
         threading.Thread(target=self._record).start()
 
@@ -90,7 +91,10 @@ class AudioRecorder:
             if rms < self.silence_threshold:
                 current_time = time.time()
                 if current_time - self.last_sound_time >= self.silence_duration:
-                    self.stop_recording()
+                    self.lollmsCom.info("Analyzing")
+                    self.audio_stream.stop_stream()
+                    self.audio_stream.close()
+                    
             else:
                 self.last_sound_time = time.time()
 
@@ -131,14 +135,14 @@ class AudioRecorder:
         self.audio_stream.stop_stream()
         self.audio_stream.close()
 
-        audio = wave.open(self.filename, 'wb')
+        audio = wave.open(str(self.filename), 'wb')
         audio.setnchannels(self.channels)
         audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
         audio.setframerate(self.sample_rate)
         audio.writeframes(b''.join(self.audio_frames))
         audio.close()
 
-        print(f"Recording saved to {self.filename}")
+        self.lollmsCom.info(f"Recording saved to {self.filename}")
 
 
 class WebcamImageSender:
@@ -146,7 +150,7 @@ class WebcamImageSender:
     Class for capturing images from the webcam and sending them to a SocketIO client.
     """
 
-    def __init__(self, socketio):
+    def __init__(self, socketio, lollmsCom:LoLLMsCom=None):
         """
         Initializes the WebcamImageSender class.
 
@@ -158,6 +162,7 @@ class WebcamImageSender:
         self.last_change_time = None
         self.capture_thread = None
         self.is_running = False
+        self.lollmsCom = lollmsCom
 
     def start_capture(self):
         """
@@ -178,21 +183,24 @@ class WebcamImageSender:
         """
         Captures images from the webcam, checks if the image content has changed, and sends the image to the client if it remains the same for 3 seconds.
         """
-        cap = cv2.VideoCapture(0)
+        try:
+            cap = cv2.VideoCapture(0)
 
-        while self.is_running:
-            ret, frame = cap.read()
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            while self.is_running:
+                ret, frame = cap.read()
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            if self.last_image is None or self.image_difference(gray) > 2:
-                self.last_image = gray
-                self.last_change_time = time.time()
+                if self.last_image is None or self.image_difference(gray) > 2:
+                    self.last_image = gray
+                    self.last_change_time = time.time()
 
-            _, buffer = cv2.imencode('.jpg', frame)
-            image_base64 = base64.b64encode(buffer)
-            self.socketio.emit("image", image_base64.decode('utf-8'))
+                _, buffer = cv2.imencode('.jpg', frame)
+                image_base64 = base64.b64encode(buffer)
+                self.socketio.emit("image", image_base64.decode('utf-8'))
 
-        cap.release()
+            cap.release()
+        except:
+            self.lollmsCom.error("Couldn't start webcam")
 
     def image_difference(self, image):
         """

@@ -1002,7 +1002,7 @@ class LollmsSD:
                 if response.status_code == 200:
                     print("Service is available.")
                     if self.app is not None:
-                        self.app.notify("SD Service is now available.", True)
+                        self.app.success("SD Service is now available.")
                     return True
             except requests.exceptions.RequestException:
                 pass
@@ -1012,7 +1012,7 @@ class LollmsSD:
         if show_warning:
             print("Service did not become available within the given time.")
             if self.app is not None:
-                self.app.notify("SD Service did not become available within the given time.", False)
+                self.app.error("SD Service did not become available within the given time.")
         return False
     
     def get_available_image_name(self, save_folder, base_name):

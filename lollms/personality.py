@@ -1562,10 +1562,10 @@ class APScript(StateMachine):
                     callback            = None
                 ) -> None:
         super().__init__(states_dict)
-        self.notify = personality.app.notify
-        self.text_files = []
-        self.image_files = []
-        self.images_descriptions=[]
+        self.notify                             = personality.app.notify
+        self.text_files                         = []
+        self.image_files                        = []
+        self.images_descriptions                = []
 
         self.personality                        = personality
         self.personality_config                 = personality_config
