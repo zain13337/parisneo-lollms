@@ -4,8 +4,8 @@ from lollms.personality import PersonalityBuilder
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
-from lollms.helpers import NotificationType
-from lollms.helpers import ASCIIColors, trace_exception, NotificationType, NotificationDisplayType
+from lollms.helpers import ASCIIColors, trace_exception
+from lollms.com import NotificationType, NotificationDisplayType, LoLLMsCom
 from lollms.terminal import MainMenu
 from lollms.utilities import PromptReshaper
 from safe_store import TextVectorizer, VectorizationMethod, VisualizationMethod
@@ -18,7 +18,7 @@ import importlib
 import sys
 
 
-class LollmsApplication:
+class LollmsApplication(LoLLMsCom):
     def __init__(
                     self, 
                     app_name:str, 

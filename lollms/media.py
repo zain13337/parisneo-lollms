@@ -12,12 +12,25 @@ if not PackageManager.check_package_installed("pygame"):
     import pygame
 else:
     import pygame
+
 import threading
 if not PackageManager.check_package_installed("cv2"):
     PackageManager.install_package("opencv-python")
     import cv2
 else:
     import cv2
+
+
+if not PackageManager.check_package_installed("pyaudio"):
+    PackageManager.install_package("pyaudio")
+    PackageManager.install_package("wave")
+    import pyaudio
+    import wave
+else:
+    import pyaudio
+    import wave
+
+from lollms.com import LoLLMsCom
 import time
 import json
 import base64
@@ -25,7 +38,8 @@ import base64
 
 
 class AudioRecorder:
-    def __init__(self, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=0.01, silence_duration=2):
+    def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=0.01, silence_duration=2, app:LoLLMsCom=None):
+        self.socketio = socketio
         self.filename = filename
         self.channels = channels
         self.sample_rate = sample_rate
@@ -37,6 +51,7 @@ class AudioRecorder:
         self.silence_threshold = silence_threshold
         self.silence_duration = silence_duration
         self.last_sound_time = time.time()
+        self.app = app
 
     def start_recording(self):
         self.is_recording = True

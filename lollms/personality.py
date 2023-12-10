@@ -13,7 +13,7 @@ from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.binding import LLMBinding, BindingType
 from lollms.utilities import PromptReshaper, PackageManager
-from lollms.helpers import NotificationType, NotificationDisplayType
+from lollms.com import NotificationType, NotificationDisplayType
 
 import pkg_resources
 from pathlib import Path
@@ -33,7 +33,7 @@ import json
 from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
 from functools import partial
 import sys
-
+from lollms.com import LoLLMsCom
 from lollms.helpers import trace_exception
 from lollms.utilities import PackageManager
 def is_package_installed(package_name):
@@ -75,7 +75,7 @@ class AIPersonality:
                     lollms_paths:LollmsPaths, 
                     config:LOLLMSConfig,
                     model:LLMBinding=None,
-                    app=None,
+                    app:LoLLMsCom=None,
                     run_scripts=True, 
                     selected_language=None,
                     is_relative_path=True,
@@ -98,45 +98,6 @@ class AIPersonality:
         self.config = config
         self.callback = callback
         self.app = app
-        if app is not None:
-            self.error:Callable  = app.error
-            self.info:Callable  = app.info
-            self.success:Callable  = app.success
-            self.warning:Callable  = app.warning
-            self.notify:Callable  = app.notify
-            self.InfoMessage:Callable = app.InfoMessage
-        else:
-            def InfoMessage(content, duration:int=4, client_id=None, verbose:bool=True):
-                ASCIIColors.white(content)
-
-            def info(content, duration:int=4, client_id=None, verbose:bool=True):
-                ASCIIColors.info(content)
-
-            def warning(content, duration:int=4, client_id=None, verbose:bool=True):
-                ASCIIColors.warning(content)
-
-            def success(content, duration:int=4, client_id=None, verbose:bool=True):
-                ASCIIColors.success(content)
-                
-            def error(content, duration:int=4, client_id=None):
-                ASCIIColors.error(content)
-                
-            def notify(                         
-                        content, 
-                        notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, 
-                        duration:int=4, 
-                        client_id=None, 
-                        display_type:NotificationDisplayType=NotificationDisplayType.TOAST,
-                        verbose=True
-                    ):
-                ASCIIColors.white(content)
-
-            self.error:Callable  = error
-            self.info:Callable  = info
-            self.success:Callable  = success
-            self.warning:Callable  = warning
-            self.notify:Callable  = notify
-            self.InfoMessage:Callable = InfoMessage        
 
         self.text_files = []
         self.image_files = []
@@ -231,6 +192,47 @@ Date: {{date}}
             self.load_personality()
             self.personality_output_folder = lollms_paths.personal_outputs_path/self.name
             self.personality_output_folder.mkdir(parents=True, exist_ok=True)
+
+
+
+    def InfoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        if self.app:
+            return self.app.InfoMessage(content=content, duration=duration, client_id=client_id, verbose=verbose)
+        ASCIIColors.white(content)
+
+    def info(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        if self.app:
+            return self.app.info(content=content, duration=duration, client_id=client_id, verbose=verbose)
+        ASCIIColors.info(content)
+
+    def warning(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        if self.app:
+            return self.app.warning(content=content, duration=duration, client_id=client_id, verbose=verbose)
+        ASCIIColors.warning(content)
+
+    def success(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        if self.app:
+            return self.app.success(content=content, duration=duration, client_id=client_id, verbose=verbose)
+        ASCIIColors.success(content)
+        
+    def error(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        if self.app:
+            return self.app.error(content=content, duration=duration, client_id=client_id, verbose=verbose)
+        ASCIIColors.error(content)
+        
+    def notify( self,                        
+                content, 
+                notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, 
+                duration:int=4, 
+                client_id=None, 
+                display_type:NotificationDisplayType=NotificationDisplayType.TOAST,
+                verbose=True
+            ):
+        if self.app:
+            return self.app.error(content=content, notification_type=notification_type, duration=duration, client_id=client_id, display_type=display_type, verbose=verbose)
+        ASCIIColors.white(content)
+
+
 
     def new_message(self, message_text:str, message_type:MSG_TYPE= MSG_TYPE.MSG_TYPE_FULL, metadata=[], callback: Callable[[str, int, dict, list, Any], bool]=None):
         """This sends step rogress to front end
