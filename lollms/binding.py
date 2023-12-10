@@ -21,7 +21,7 @@ import importlib
 import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
-from lollms.helpers import NotificationType
+from lollms.helpers import NotificationType, NotificationDisplayType
 import urllib
 import inspect
 from enum import Enum
@@ -57,7 +57,7 @@ class LLMBinding:
                     supported_file_extensions='*.bin',
                     binding_type:BindingType=BindingType.TEXT_ONLY,
                     models_dir_names:list=None,
-                    notification_callback:Callable=None
+                    app:Callable=None
                 ) -> None:
         
         self.binding_type           = binding_type
@@ -80,7 +80,46 @@ class LLMBinding:
 
         self.supported_file_extensions         = supported_file_extensions
         self.seed                   = config["seed"]
-        self.notification_callback  = notification_callback
+
+        if app is not None:
+            self.error:Callable  = app.error
+            self.info:Callable  = app.info
+            self.success:Callable  = app.success
+            self.warning:Callable  = app.warning
+            self.notify:Callable  = app.notify
+            self.InfoMessage:Callable = app.InfoMessage
+        else:
+            def InfoMessage(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.white(content)
+
+            def info(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.info(content)
+
+            def warning(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.warning(content)
+
+            def success(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.success(content)
+                
+            def error(content, duration:int=4, client_id=None):
+                ASCIIColors.error(content)
+                
+            def notify(                         
+                        content, 
+                        notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, 
+                        duration:int=4, 
+                        client_id=None, 
+                        display_type:NotificationDisplayType=NotificationDisplayType.TOAST,
+                        verbose=True
+                    ):
+                ASCIIColors.white(content)
+
+            self.error:Callable  = error
+            self.info:Callable  = info
+            self.success:Callable  = success
+            self.warning:Callable  = warning
+            self.notify:Callable  = notify
+            self.InfoMessage:Callable = InfoMessage
 
         self.configuration_file_path = lollms_paths.personal_configuration_path/"bindings"/self.binding_folder_name/f"config.yaml"
         self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -103,21 +142,6 @@ class LLMBinding:
             self.models_dir_names = [self.binding_folder_name]
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
-
-    def notify(self, content:str, notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, duration=4,  verbose=True):
-        if verbose:
-            if notification_type==NotificationType.NOTIF_SUCCESS:
-                ASCIIColors.success(content)
-            elif notification_type==NotificationType.NOTIF_INFO:
-                ASCIIColors.info(content)
-            elif notification_type==NotificationType.NOTIF_WARNING:
-                ASCIIColors.warning(content)
-            else:
-                ASCIIColors.red(content)
-
-        if self.notification_callback:
-            self.notification_callback(content, notification_type, duration)
-
 
     def settings_updated(self):
         """
@@ -521,7 +545,7 @@ class BindingBuilder:
                         config: LOLLMSConfig, 
                         lollms_paths:LollmsPaths,
                         installation_option:InstallOption=InstallOption.INSTALL_IF_NECESSARY,
-                        notification_callback:Callable=None
+                        app=None
                     )->LLMBinding:
 
         binding:LLMBinding = self.getBinding(config, lollms_paths, installation_option)
@@ -529,7 +553,7 @@ class BindingBuilder:
                 config,
                 lollms_paths=lollms_paths,
                 installation_option = installation_option,
-                notification_callback=notification_callback
+                app=app
                 )
     
     def getBinding(

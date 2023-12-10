@@ -226,13 +226,13 @@ def main():
 
     if args.install_binding:
         settings_app.config.binding_name= args.install_binding
-        settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL)
+        settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL, app=settings_app)
         settings_app.config.save_config()
 
 
     if args.install_model:
         if not settings_app.binding:
-            settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL)
+            settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL, app=settings_app)
         
         def progress_callback(blocks, block_size, total_size):
             tqdm_bar.total=total_size
@@ -249,7 +249,7 @@ def main():
     if args.select_model:
         settings_app.config.model_name = args.select_model
         if not settings_app.binding:
-            settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL)
+            settings_app.binding = BindingBuilder().build_binding(settings_app.config, settings_app.lollms_paths,InstallOption.FORCE_INSTALL, app=settings_app)
         settings_app.model = settings_app.binding.build_model()
         settings_app.config.save_config()
 

@@ -5,12 +5,11 @@ from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
 from lollms.helpers import NotificationType
-from lollms.helpers import trace_exception
+from lollms.helpers import ASCIIColors, trace_exception, NotificationType, NotificationDisplayType
 from lollms.terminal import MainMenu
 from lollms.utilities import PromptReshaper
 from safe_store import TextVectorizer, VectorizationMethod, VisualizationMethod
 from typing import Callable
-from ascii_colors import ASCIIColors
 from pathlib import Path
 from datetime import datetime
 from functools import partial
@@ -30,7 +29,6 @@ class LollmsApplication:
                     try_select_binding=False, 
                     try_select_model=False,
                     callback=None,
-                    notification_callback:Callable=None
                 ) -> None:
         """
         Creates a LOLLMS Application
@@ -44,7 +42,6 @@ class LollmsApplication:
         self.personality            = None
 
         self.mounted_extensions     = []
-        self.notification_callback  = notification_callback
         self.binding                = None
         self.model:LLMBinding       = None
         self.long_term_memory       = None
@@ -228,7 +225,68 @@ class LollmsApplication:
             generated_text = self.personality.model.generate(full_discussion, n_predict=n_predict, callback=callback)
         return generated_text
 
-    def notify(self, content, notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, duration=4, client_id=None, verbose= True):
+
+
+
+    def InfoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_SUCCESS, 
+                duration=duration, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.MESSAGE_BOX,
+                verbose=verbose
+            )
+
+    def info(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_SUCCESS, 
+                duration=duration, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.TOAST,
+                verbose=verbose
+            )
+
+    def warning(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_WARNING, 
+                duration=duration, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.TOAST,
+                verbose=verbose
+            )
+
+    def success(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_SUCCESS, 
+                duration=duration, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.TOAST,
+                verbose=verbose
+            )
+        
+    def error(self, content, duration:int=4, client_id=None):
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_ERROR, 
+                duration=duration, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.TOAST
+            )
+        
+
+    def notify(
+                self, 
+                content, 
+                notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, 
+                duration:int=4, 
+                client_id=None, 
+                display_type:NotificationDisplayType=NotificationDisplayType.TOAST,
+                verbose=True
+            ):
         if verbose:
             if notification_type==NotificationType.NOTIF_SUCCESS:
                 ASCIIColors.success(content)
@@ -239,25 +297,20 @@ class LollmsApplication:
             else:
                 ASCIIColors.red(content)
 
-        if self.notification_callback:
-            return self.notification_callback(content, notification_type, duration, client_id)
 
 
     def load_binding(self):
         try:
-            binding = BindingBuilder().build_binding(self.config, self.lollms_paths, notification_callback=self.notify)
+            binding = BindingBuilder().build_binding(self.config, self.lollms_paths, app=self)
             return binding    
         except Exception as ex:
-            self.notify("Couldn't load binding", False)
-            self.notify("Trying to reinstall binding")
-            print(ex)
-            print(f"Couldn't find binding. Please verify your configuration file at {self.lollms_paths.personal_configuration_path}/local_configs.yaml or use the next menu to select a valid binding")
-            print(f"Trying to reinstall binding")
+            self.error("Couldn't load binding")
+            self.info("Trying to reinstall binding")
+            trace_exception(ex)
             try:
-                binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL)
+                binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL, app=self)
             except Exception as ex:
-                self.notify("Couldn't reinstall binding", False)
-                ASCIIColors.error("Couldn't reinstall binding")
+                self.error("Couldn't reinstall binding")
                 trace_exception(ex)
             return None    
 

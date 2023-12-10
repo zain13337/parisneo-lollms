@@ -425,7 +425,7 @@ class MainMenu(Menu):
             self.lollms_app.config['binding_name']=self.binding_infs[choice - 1]['name']
 
             try:
-                lollms_app.binding = BindingBuilder().build_binding(lollms_app.config, lollms_app.lollms_paths,InstallOption.FORCE_INSTALL)
+                lollms_app.binding = BindingBuilder().build_binding(lollms_app.config, lollms_app.lollms_paths,InstallOption.FORCE_INSTALL, app=self)
             except Exception as ex:
                 print(ex)
                 print(f"Couldn't find binding. Please verify your configuration file at {lollms_app.config.file_path} or use the next menu to select a valid binding")

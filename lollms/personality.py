@@ -13,6 +13,8 @@ from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.binding import LLMBinding, BindingType
 from lollms.utilities import PromptReshaper, PackageManager
+from lollms.helpers import NotificationType, NotificationDisplayType
+
 import pkg_resources
 from pathlib import Path
 from PIL import Image
@@ -97,9 +99,45 @@ class AIPersonality:
         self.callback = callback
         self.app = app
         if app is not None:
-            self.notify = app.notify
+            self.error:Callable  = app.error
+            self.info:Callable  = app.info
+            self.success:Callable  = app.success
+            self.warning:Callable  = app.warning
+            self.notify:Callable  = app.notify
+            self.InfoMessage:Callable = app.InfoMessage
         else:
-            self.notify = None
+            def InfoMessage(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.white(content)
+
+            def info(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.info(content)
+
+            def warning(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.warning(content)
+
+            def success(content, duration:int=4, client_id=None, verbose:bool=True):
+                ASCIIColors.success(content)
+                
+            def error(content, duration:int=4, client_id=None):
+                ASCIIColors.error(content)
+                
+            def notify(                         
+                        content, 
+                        notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, 
+                        duration:int=4, 
+                        client_id=None, 
+                        display_type:NotificationDisplayType=NotificationDisplayType.TOAST,
+                        verbose=True
+                    ):
+                ASCIIColors.white(content)
+
+            self.error:Callable  = error
+            self.info:Callable  = info
+            self.success:Callable  = success
+            self.warning:Callable  = warning
+            self.notify:Callable  = notify
+            self.InfoMessage:Callable = InfoMessage        
+
         self.text_files = []
         self.image_files = []
         self.images_descriptions = []
@@ -1631,10 +1669,10 @@ class APScript(StateMachine):
         return True
 
     def remove_file(self, path):
-        if path in self.text_files:
-            self.text_files.remove(path)
-        elif path in self.image_files:
-            self.image_files.remove(path)
+        if path in self.personality.text_files:
+            self.personality.text_files.remove(path)
+        elif path in self.personality.image_files:
+            self.personality.image_files.remove(path)
 
 
     def load_config_file(self, path, default_config=None):
