@@ -215,7 +215,7 @@ class LoLLMsServer(LollmsApplication):
                         for per in self.mounted_personalities:
                             per.model = None
                         gc.collect()
-                        self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths, app=self)
+                        self.binding = BindingBuilder().build_binding(self.config, self.lollms_paths, lollmsCom=self)
                         self.model = self.binding.build_model()
                         for per in self.mounted_personalities:
                             per.model = self.model

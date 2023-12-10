@@ -308,7 +308,7 @@ class LollmsApplication(LoLLMsCom):
             self.info("Trying to reinstall binding")
             trace_exception(ex)
             try:
-                binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL, app=self)
+                binding = BindingBuilder().build_binding(self.config, self.lollms_paths,installation_option=InstallOption.FORCE_INSTALL, lollmsCom=self)
             except Exception as ex:
                 self.error("Couldn't reinstall binding")
                 trace_exception(ex)
