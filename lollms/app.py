@@ -4,6 +4,7 @@ from lollms.personality import PersonalityBuilder
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
+from lollms.helpers import NotificationType
 from lollms.helpers import trace_exception
 from lollms.terminal import MainMenu
 from lollms.utilities import PromptReshaper
@@ -16,6 +17,7 @@ from functools import partial
 import subprocess
 import importlib
 import sys
+
 
 class LollmsApplication:
     def __init__(
@@ -226,14 +228,20 @@ class LollmsApplication:
             generated_text = self.personality.model.generate(full_discussion, n_predict=n_predict, callback=callback)
         return generated_text
 
-    def notify(self, content, is_success=True, duration=4, client_id=None, notification_type=0):
-        if self.notification_callback:
-            return self.notification_callback(content, is_success, duration, client_id, notification_type)
+    def notify(self, content, notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, duration=4, client_id=None, verbose= True):
+        if verbose:
+            if notification_type==NotificationType.NOTIF_SUCCESS:
+                ASCIIColors.success(content)
+            elif notification_type==NotificationType.NOTIF_INFO:
+                ASCIIColors.info(content)
+            elif notification_type==NotificationType.NOTIF_WARNING:
+                ASCIIColors.warning(content)
+            else:
+                ASCIIColors.red(content)
 
-        if is_success:
-            ASCIIColors.yellow(content)
-        else:
-            ASCIIColors.red(content)
+        if self.notification_callback:
+            return self.notification_callback(content, notification_type, duration, client_id)
+
 
     def load_binding(self):
         try:

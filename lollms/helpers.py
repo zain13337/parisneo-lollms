@@ -1,6 +1,29 @@
 import traceback
 from ascii_colors import ASCIIColors
+from enum import Enum
+class NotificationType(Enum):
+    """Notification types."""
+    
+    NOTIF_ERROR = 0
+    """This is an error notification."""
+    
+    NOTIF_SUCCESS = 1
+    """This is a success notification."""
 
+    NOTIF_INFO = 2
+    """This is an information notification."""
+
+    NOTIF_WARNING = 3
+    """This is a warining notification."""
+
+class NotificationDisplayType(Enum):
+    """Notification display types."""
+    
+    TOAST = 0
+    """This is a toast."""
+    
+    MESSAGE_BOX = 1
+    """This is a message box."""
 
 def get_trace_exception(ex):
     """

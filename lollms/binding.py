@@ -21,6 +21,7 @@ import importlib
 import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
+from lollms.helpers import NotificationType
 import urllib
 import inspect
 from enum import Enum
@@ -103,9 +104,19 @@ class LLMBinding:
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
 
-    def notify(self, content:str, status:bool=True, duration=4,  notification_type=0):
+    def notify(self, content:str, notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, duration=4,  verbose=True):
+        if verbose:
+            if notification_type==NotificationType.NOTIF_SUCCESS:
+                ASCIIColors.success(content)
+            elif notification_type==NotificationType.NOTIF_INFO:
+                ASCIIColors.info(content)
+            elif notification_type==NotificationType.NOTIF_WARNING:
+                ASCIIColors.warning(content)
+            else:
+                ASCIIColors.red(content)
+
         if self.notification_callback:
-            self.notification_callback(content, status)
+            self.notification_callback(content, notification_type, duration)
 
 
     def settings_updated(self):
