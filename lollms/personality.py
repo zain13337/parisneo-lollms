@@ -1759,10 +1759,10 @@ class APScript(StateMachine):
     def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start=""):
         summeries = []
         for i, chunk in enumerate(chunks):
-            self.step_start(f"Processing chunk : {i+1}")
+            self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
             summery = self.remove_backticks(f"```markdown\n{answer_start}"+ self.fast_gen(f"!@>instruction: {summary_instruction}\n{chunk_name}:\n{chunk}\n!@>summary:\n```markdown\n{answer_start}"))
             summeries.append(summery)
-            self.step_end(f"Processing chunk : {i+1}")
+            self.step_end(f"Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
     # ================================================= Sending commands to ui ===========================================

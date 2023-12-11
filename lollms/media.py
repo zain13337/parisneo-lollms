@@ -10,39 +10,35 @@ from lollms.utilities import PackageManager
 from lollms.com import LoLLMsCom
 if not PackageManager.check_package_installed("pygame"):
     PackageManager.install_package("pygame")
-    import pygame
-else:
-    import pygame
+import pygame
 
 import threading
 if not PackageManager.check_package_installed("cv2"):
     PackageManager.install_package("opencv-python")
-    import cv2
-else:
-    import cv2
+import cv2
 
 
 if not PackageManager.check_package_installed("pyaudio"):
     PackageManager.install_package("pyaudio")
     PackageManager.install_package("wave")
-    import pyaudio
-    import wave
-else:
-    import pyaudio
-    import wave
+import pyaudio
+import wave
 
 
 if not PackageManager.check_package_installed("scipy"):
     PackageManager.install_package("scipy")
     from scipy import signal
-else:
-    from scipy import signal
+from scipy import signal
 
 if not PackageManager.check_package_installed("matplotlib"):
     PackageManager.install_package("matplotlib")
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
+
+if not PackageManager.check_package_installed("whisper"):
+    PackageManager.install_package("openai-whisper")
+import whisper
 
 from lollms.com import LoLLMsCom
 import time
@@ -52,7 +48,7 @@ import io
 import numpy as np
 
 class AudioRecorder:
-    def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=0.1, silence_duration=2, lollmsCom:LoLLMsCom=None):
+    def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=200.0, silence_duration=2, callback=None, lollmsCom:LoLLMsCom=None):
         self.socketio = socketio
         self.filename = filename
         self.channels = channels
@@ -65,9 +61,14 @@ class AudioRecorder:
         self.silence_threshold = silence_threshold
         self.silence_duration = silence_duration
         self.last_sound_time = time.time()
+        self.callback = callback
         self.lollmsCom = lollmsCom
+        self.whisper_model = None
 
     def start_recording(self):
+        if self.whisper_model is None:
+            self.lollmsCom.info("Loading whisper model")
+            self.whisper_model=whisper.load_model("base")
         try:
             self.is_recording = True
             self.audio_stream = pyaudio.PyAudio().open(
@@ -87,22 +88,24 @@ class AudioRecorder:
         while self.is_recording:
             data = self.audio_stream.read(self.chunk_size)
             self.audio_frames.append(data)
+            # Update spectrogram every second
+            if len(self.audio_frames) % (self.sample_rate // self.chunk_size) == 0:
+                self._update_spectrogram()
 
             # Check for silence
             rms = self._calculate_rms(data)
             if rms < self.silence_threshold:
                 current_time = time.time()
                 if current_time - self.last_sound_time >= self.silence_duration:
-                    self.lollmsCom.info("Analyzing")
-                    self.audio_stream.stop_stream()
-                    self.audio_stream.close()
+                    if self.callback:
+                        self.lollmsCom.info("Analyzing")
+                        self.stop_recording()
+                        text = self.whisper_model.transcribe(np.ndarray(self.audio_frames))
+                        self.callback(text)
+                    self.last_sound_time = time.time()
 
             else:
                 self.last_sound_time = time.time()
-
-            # Update spectrogram every second
-            if len(self.audio_frames) % (self.sample_rate // self.chunk_size) == 0:
-                self._update_spectrogram()
 
     def _calculate_rms(self, data):
         squared_sum = sum([sample ** 2 for sample in data])
