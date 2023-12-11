@@ -68,13 +68,14 @@ class LoLLMsCom:
                 verbose=verbose
             )
         
-    def error(self, content, duration:int=4, client_id=None):
+    def error(self, content, duration:int=4, client_id=None, verbose:bool=True):
         self.notify(
                 content, 
                 notification_type=NotificationType.NOTIF_ERROR, 
                 duration=duration, 
                 client_id=client_id, 
-                display_type=NotificationDisplayType.TOAST
+                display_type=NotificationDisplayType.TOAST,
+                verbose = verbose
             )
         
 
