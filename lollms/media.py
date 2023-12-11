@@ -68,19 +68,21 @@ class AudioRecorder:
         self.lollmsCom = lollmsCom
 
     def start_recording(self):
-        self.is_recording = True
-        self.audio_stream = pyaudio.PyAudio().open(
-            format=self.audio_format,
-            channels=self.channels,
-            rate=self.sample_rate,
-            input=True,
-            frames_per_buffer=self.chunk_size
-        )
+        try:
+            self.is_recording = True
+            self.audio_stream = pyaudio.PyAudio().open(
+                format=self.audio_format,
+                channels=self.channels,
+                rate=self.sample_rate,
+                input=True,
+                frames_per_buffer=self.chunk_size
+            )
 
-        self.lollmsCom.info("Recording started...")
+            self.lollmsCom.info("Recording started...")
 
-        threading.Thread(target=self._record).start()
-
+            threading.Thread(target=self._record).start()
+        except:
+            self.lollmsCom.error("No audio input found!")
     def _record(self):
         while self.is_recording:
             data = self.audio_stream.read(self.chunk_size)
@@ -94,7 +96,7 @@ class AudioRecorder:
                     self.lollmsCom.info("Analyzing")
                     self.audio_stream.stop_stream()
                     self.audio_stream.close()
-                    
+
             else:
                 self.last_sound_time = time.time()
 
