@@ -48,7 +48,7 @@ import io
 import numpy as np
 
 class AudioRecorder:
-    def __init__(self, socketio, filename, channels=1, sample_rate=44100, chunk_size=1024, silence_threshold=200.0, silence_duration=2, callback=None, lollmsCom:LoLLMsCom=None):
+    def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom:LoLLMsCom=None):
         self.socketio = socketio
         self.filename = filename
         self.channels = channels
@@ -84,41 +84,70 @@ class AudioRecorder:
             threading.Thread(target=self._record).start()
         except:
             self.lollmsCom.error("No audio input found!")
+
+
     def _record(self):
+        first_recording = True  # Flag to track the first recording
+        silence_duration = 5
+        non_silent_start = None
+        non_silent_end = None
+        last_spectrogram_update = time.time()
+        self.audio_frames = None
         while self.is_recording:
             data = self.audio_stream.read(self.chunk_size)
-            self.audio_frames.append(data)
-            # Update spectrogram every second
-            if len(self.audio_frames) % (self.sample_rate // self.chunk_size) == 0:
+            buffered = np.frombuffer(data, dtype=np.int16)
+            if self.audio_frames is not None:
+                self.audio_frames = np.concatenate([self.audio_frames,buffered])
+            else:
+                self.audio_frames = buffered        
+            # Remove audio frames that are older than 30 seconds
+            if len(self.audio_frames) > self.sample_rate * 30:
+                self.audio_frames=self.audio_frames[-self.sample_rate * 30:]
+
+            # Update spectrogram every 3 seconds
+            if time.time() - last_spectrogram_update >= 1:
                 self._update_spectrogram()
+                last_spectrogram_update = time.time()
 
             # Check for silence
-            rms = self._calculate_rms(data)
+            rms = self._calculate_rms(buffered)
             if rms < self.silence_threshold:
                 current_time = time.time()
-                if current_time - self.last_sound_time >= self.silence_duration:
-                    if self.callback:
+                if current_time - self.last_sound_time >= silence_duration:
+                    if first_recording:
+                        first_recording = False
+                        silence_duration = self.silence_duration
+
+                    if self.callback and non_silent_start is not None and non_silent_end - non_silent_start >= 1:
                         self.lollmsCom.info("Analyzing")
-                        self.stop_recording()
-                        text = self.whisper_model.transcribe(np.ndarray(self.audio_frames))
+                        # Convert to float
+
+                        audio_data = self.audio_frames.astype(np.float32)
+                        # Transcribe the audio using the whisper model
+                        text = self.whisper_model.transcribe(audio_data[non_silent_start:non_silent_end])
+
                         self.callback(text)
+                        print(text["text"])
+
                     self.last_sound_time = time.time()
+                    non_silent_start = None
 
             else:
                 self.last_sound_time = time.time()
-
-    def _calculate_rms(self, data):
-        squared_sum = sum([sample ** 2 for sample in data])
-        rms = (squared_sum / len(data)) ** 0.5
-        return rms
+                if non_silent_start is None:
+                    non_silent_start = len(self.audio_frames) - 1
+                non_silent_end = len(self.audio_frames)
 
     def _update_spectrogram(self):
-        audio_data = np.frombuffer(b''.join(self.audio_frames), dtype=np.int16)
-        frequencies, times, spectrogram = signal.spectrogram(audio_data, self.sample_rate)
+        audio_data = self.audio_frames[-self.sample_rate*30:]
+        frequencies, _, spectrogram = signal.spectrogram(audio_data, self.sample_rate)
+
+        # Generate a new times array that only spans the last 30 seconds
+        times = np.linspace(0, 30, spectrogram.shape[1])
 
         # Plot spectrogram
         plt.figure(figsize=(10, 4))
-        plt.imshow(np.log(spectrogram), aspect='auto', origin='lower', cmap='inferno')
+        plt.imshow(np.log(spectrogram), aspect='auto', origin='lower', cmap='inferno', extent=[times.min(), times.max(), frequencies.min(), frequencies.max()])
         plt.xlabel('Time')
         plt.ylabel('Frequency')
         plt.title('Spectrogram')
@@ -132,8 +161,17 @@ class AudioRecorder:
 
         # Send base64 image using socketio
         self.socketio.emit('update_spectrogram', img_base64)
-
+        self.socketio.sleep(0.0)
         plt.close()
+
+    def _calculate_rms(self, data):
+        try:
+            squared_sum = sum([sample ** 2 for sample in data])
+            rms = np.sqrt(squared_sum / len(data))
+        except:
+            rms = 0
+        return rms
+
 
     def stop_recording(self):
         self.is_recording = False
