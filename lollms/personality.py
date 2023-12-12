@@ -715,7 +715,7 @@ Date: {{date}}
                         idx = pth.index("uploads")
                         pth = "/".join(pth[idx:])
                         self.new_message("",MSG_TYPE.MSG_TYPE_FULL)
-                        output = f'<img src="{pth}" width="300">\n\n'
+                        output = f'<img src="{pth}" width="800">\n\n'
                         self.full(output)
 
                     if self.model.binding_type not in [BindingType.TEXT_IMAGE, BindingType.TEXT_IMAGE_VIDEO]:

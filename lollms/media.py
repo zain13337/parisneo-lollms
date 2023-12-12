@@ -68,7 +68,7 @@ class AudioRecorder:
     def start_recording(self):
         if self.whisper_model is None:
             self.lollmsCom.info("Loading whisper model")
-            self.whisper_model=whisper.load_model("base")
+            self.whisper_model=whisper.load_model("base.en")
         try:
             self.is_recording = True
             self.audio_stream = pyaudio.PyAudio().open(
@@ -123,6 +123,7 @@ class AudioRecorder:
                         # Convert to float
 
                         audio_data = self.audio_frames.astype(np.float32)
+                        
                         # Transcribe the audio using the whisper model
                         text = self.whisper_model.transcribe(audio_data[non_silent_start:non_silent_end])
 

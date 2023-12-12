@@ -576,18 +576,22 @@ class PromptReshaper:
         def fill_template(template, data):
             for key, value in data.items():
                 placeholder = "{{" + key + "}}"
-                template = template.replace(placeholder, value)
+                n_text_tokens = len(tokenize(template))
+                if key in place_holders_to_sacrifice:
+                    n_remaining = max_nb_tokens - n_text_tokens
+                    t_value = tokenize(value)
+                    n_value = len(t_value)
+                    if n_value<n_remaining:
+                        template = template.replace(placeholder, value)
+                    else:
+                        value = detokenize(t_value[-n_remaining:])
+                        template = template.replace(placeholder, value)
+                        
+                else:
+                    template = template.replace(placeholder, value)
             return template
         
-        if max_nb_tokens-all_count>0 or len(place_holders_to_sacrifice)==0:
-            return fill_template(self.template, placeholders)
-        else:
-            to_remove = -int((max_nb_tokens - all_count)/len(place_holders_to_sacrifice))
-            for placeholder, text in placeholders.items():
-                if placeholder in place_holders_to_sacrifice:
-                    text_tokens = tokenize(text)[to_remove:]
-                    placeholders[placeholder]=detokenize(text_tokens)
-            return fill_template(self.template, placeholders)
+        return fill_template(self.template, placeholders)
 
 
 
