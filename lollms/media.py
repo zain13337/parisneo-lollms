@@ -16,11 +16,18 @@ import threading
 if not PackageManager.check_package_installed("cv2"):
     PackageManager.install_package("opencv-python")
 import cv2
-
+import platform
+import subprocess
 
 if not PackageManager.check_package_installed("pyaudio"):
-    PackageManager.install_package("pyaudio")
+    if platform.system() == "Windows":
+        PackageManager.install_package("pyaudio")
+    elif platform.system() == "Linux":
+        subprocess.check_call(["sudo", "apt", "install", "-y", "portaudio19-dev python3-pyaudio"])
+    elif platform.system() == "Darwin":
+        subprocess.check_call(["brew", "install", "portaudio19-dev python3-pyaudio"])
     PackageManager.install_package("wave")
+    
 import pyaudio
 import wave
 
