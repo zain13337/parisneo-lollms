@@ -248,7 +248,7 @@ class LollmsApplication(LoLLMsCom):
                 if personality is not None:
                     personality.model = model
         except Exception as ex:
-            self.notify("Couldn't load model.", False)
+            self.error("Couldn't load model.")
             ASCIIColors.error(f"Couldn't load model. Please verify your configuration file at {self.lollms_paths.personal_configuration_path} or use the next menu to select a valid model")
             ASCIIColors.error(f"Binding returned this exception : {ex}")
             trace_exception(ex)
