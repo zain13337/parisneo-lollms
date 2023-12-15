@@ -139,7 +139,7 @@ class LLMBinding:
                 verbose=True
             ):
         if self.lollmsCom:
-            return self.lollmsCom.error(content=content, notification_type=notification_type, duration=duration, client_id=client_id, display_type=display_type, verbose=verbose)
+            return self.lollmsCom.notify(content=content, notification_type=notification_type, duration=duration, client_id=client_id, display_type=display_type, verbose=verbose)
         ASCIIColors.white(content)
 
 
