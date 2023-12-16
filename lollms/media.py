@@ -247,7 +247,7 @@ class WebcamImageSender:
 
                 _, buffer = cv2.imencode('.jpg', frame)
                 image_base64 = base64.b64encode(buffer)
-                self.socketio.emit("image", image_base64.decode('utf-8'))
+                self.socketio.emit("video_stream_image", image_base64.decode('utf-8'))
 
             cap.release()
         except:
