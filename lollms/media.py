@@ -130,6 +130,13 @@ class AudioRecorder:
                         # Convert to float
 
                         audio_data = self.audio_frames.astype(np.float32)
+                        audio = wave.open(str(self.filename), 'wb')
+                        audio.setnchannels(self.channels)
+                        audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
+                        audio.setframerate(self.sample_rate)
+                        audio.writeframes(b''.join(self.audio_frames[non_silent_start:non_silent_end]))
+                        audio.close()
+                        
                         
                         # Transcribe the audio using the whisper model
                         text = self.whisper_model.transcribe(audio_data[non_silent_start:non_silent_end])
@@ -183,18 +190,20 @@ class AudioRecorder:
 
     def stop_recording(self):
         self.is_recording = False
-        self.audio_stream.stop_stream()
-        self.audio_stream.close()
+        if self.audio_stream:
+            self.audio_stream.stop_stream()
+            self.audio_stream.close()
 
-        audio = wave.open(str(self.filename), 'wb')
-        audio.setnchannels(self.channels)
-        audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
-        audio.setframerate(self.sample_rate)
-        audio.writeframes(b''.join(self.audio_frames))
-        audio.close()
+            audio = wave.open(str(self.filename), 'wb')
+            audio.setnchannels(self.channels)
+            audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
+            audio.setframerate(self.sample_rate)
+            audio.writeframes(b''.join(self.audio_frames))
+            audio.close()
 
-        self.lollmsCom.info(f"Recording saved to {self.filename}")
-
+            self.lollmsCom.info(f"Recording saved to {self.filename}")
+        else:
+            self.warning("No recording available")
 
 class WebcamImageSender:
     """
