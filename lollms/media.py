@@ -8,28 +8,15 @@ License: Apache 2.0
 """
 from lollms.utilities import PackageManager
 from lollms.com import LoLLMsCom
-if not PackageManager.check_package_installed("pygame"):
-    PackageManager.install_package("pygame")
-import pygame
+import platform
+import subprocess
+
 
 import threading
 if not PackageManager.check_package_installed("cv2"):
     PackageManager.install_package("opencv-python")
 import cv2
-import platform
-import subprocess
 
-if not PackageManager.check_package_installed("pyaudio"):
-    if platform.system() == "Windows":
-        PackageManager.install_package("pyaudio")
-    elif platform.system() == "Linux":
-        subprocess.check_call(["sudo", "apt", "install", "-y", "portaudio19-dev python3-pyaudio"])
-    elif platform.system() == "Darwin":
-        subprocess.check_call(["brew", "install", "portaudio19-dev python3-pyaudio"])
-    PackageManager.install_package("wave")
-    
-import pyaudio
-import wave
 
 
 if not PackageManager.check_package_installed("scipy"):
@@ -56,27 +43,59 @@ import numpy as np
 
 class AudioRecorder:
     def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom:LoLLMsCom=None):
-        self.socketio = socketio
-        self.filename = filename
-        self.channels = channels
-        self.sample_rate = sample_rate
-        self.chunk_size = chunk_size
-        self.audio_format = pyaudio.paInt16
-        self.audio_stream = None
-        self.audio_frames = []
-        self.is_recording = False
-        self.silence_threshold = silence_threshold
-        self.silence_duration = silence_duration
-        self.last_sound_time = time.time()
-        self.callback = callback
-        self.lollmsCom = lollmsCom
-        self.whisper_model = None
+        try:
+            if not PackageManager.check_package_installed("pyaudio"):
+                if platform.system() == "Windows":
+                    PackageManager.install_package("pyaudio")
+                elif platform.system() == "Linux":
+                    subprocess.check_call(["sudo", "apt", "install", "-y", "portaudio19-dev python3-pyaudio"])
+                elif platform.system() == "Darwin":
+                    subprocess.check_call(["brew", "install", "portaudio19-dev python3-pyaudio"])
+                PackageManager.install_package("wave")
+                
+            import pyaudio
+            import wave
+
+            self.socketio = socketio
+            self.filename = filename
+            self.channels = channels
+            self.sample_rate = sample_rate
+            self.chunk_size = chunk_size
+            self.audio_format = pyaudio.paInt16
+            self.audio_stream = None
+            self.audio_frames = []
+            self.is_recording = False
+            self.silence_threshold = silence_threshold
+            self.silence_duration = silence_duration
+            self.last_sound_time = time.time()
+            self.callback = callback
+            self.lollmsCom = lollmsCom
+            self.whisper_model = None
+        except:
+            self.socketio = socketio
+            self.filename = filename
+            self.channels = channels
+            self.sample_rate = sample_rate
+            self.chunk_size = chunk_size
+            self.audio_format = None
+            self.audio_stream = None
+            self.audio_frames = []
+            self.is_recording = False
+            self.silence_threshold = silence_threshold
+            self.silence_duration = silence_duration
+            self.last_sound_time = time.time()
+            self.callback = callback
+            self.lollmsCom = lollmsCom
+            self.whisper_model = None
+            
+        
 
     def start_recording(self):
         if self.whisper_model is None:
             self.lollmsCom.info("Loading whisper model")
             self.whisper_model=whisper.load_model("base.en")
         try:
+            import pyaudio
             self.is_recording = True
             self.audio_stream = pyaudio.PyAudio().open(
                 format=self.audio_format,
@@ -128,7 +147,8 @@ class AudioRecorder:
                     if self.callback and non_silent_start is not None and non_silent_end - non_silent_start >= 1:
                         self.lollmsCom.info("Analyzing")
                         # Convert to float
-
+                        import pyaudio
+                        import wave
                         audio_data = self.audio_frames.astype(np.float32)
                         audio = wave.open(str(self.filename), 'wb')
                         audio.setnchannels(self.channels)
@@ -193,7 +213,8 @@ class AudioRecorder:
         if self.audio_stream:
             self.audio_stream.stop_stream()
             self.audio_stream.close()
-
+            import pyaudio
+            import wave
             audio = wave.open(str(self.filename), 'wb')
             audio.setnchannels(self.channels)
             audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
@@ -300,6 +321,10 @@ class MusicPlayer(threading.Thread):
         """
         The main function that runs in a separate thread to play the music.
         """
+        if not PackageManager.check_package_installed("pygame"):
+            PackageManager.install_package("pygame")
+        import pygame
+
         pygame.mixer.init()
         pygame.mixer.music.load(self.file_path)
         pygame.mixer.music.play()
