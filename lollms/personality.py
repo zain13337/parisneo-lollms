@@ -1748,6 +1748,31 @@ class APScript(StateMachine):
     
 
     # ================================================= Advanced methods ===========================================
+    def compile_latex(self, file_path, pdf_latex_path=None):
+        try:
+            # Determine the pdflatex command based on the provided or default path
+            if pdf_latex_path:
+                pdflatex_command = pdf_latex_path
+            else:
+                pdflatex_command = 'pdflatex'
+
+            # Run the pdflatex command with the file path
+            subprocess.run([pdflatex_command, file_path], check=True)
+
+            # If the compilation is successful, you will get a PDF file
+            pdf_file = file_path.with_suffix('.pdf')
+            print(f"PDF file generated: {pdf_file}")
+
+        except subprocess.CalledProcessError as e:
+            print(f"Error occurred while compiling LaTeX: {e}") 
+            
+    def find_numeric_value(self, text):
+        pattern = r'\d+[.,]?\d*'
+        match = re.search(pattern, text)
+        if match:
+            return float(match.group().replace(',', '.'))
+        else:
+            return None
     def remove_backticks(self, text):
         if text.startswith("```"):
             split_text = text.split("\n")
@@ -1756,11 +1781,11 @@ class APScript(StateMachine):
             text= text[:-3]
         return text
         
-    def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start=""):
+    def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start="", max_generation_size=3000):
         summeries = []
         for i, chunk in enumerate(chunks):
             self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
-            summery = self.remove_backticks(f"```markdown\n{answer_start}"+ self.fast_gen(f"!@>instruction: {summary_instruction}\n{chunk_name}:\n{chunk}\n!@>summary:\n```markdown\n{answer_start}"))
+            summery = self.remove_backticks(f"```markdown\n{answer_start}"+ self.fast_gen(f"!@>instruction: {summary_instruction}\n{chunk_name}:\n{chunk}\n!@>summary:\n```markdown\n{answer_start}",max_generation_size=max_generation_size))
             summeries.append(summery)
             self.step_end(f"Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
