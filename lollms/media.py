@@ -13,9 +13,15 @@ import subprocess
 
 import os
 import threading
+
 if not PackageManager.check_package_installed("cv2"):
-    os.system('sudo apt-get update')
-    os.system('sudo apt-get install libgl1-mesa-glx python3-opencv -y')
+    if platform.system() == "Darwin":
+        os.system('brew install opencv')
+    elif platform.system() == "Windows":
+        os.system('pip install opencv-python')
+    else:
+        os.system('sudo apt-get update')
+        os.system('sudo apt-get install libgl1-mesa-glx python3-opencv -y')
 import cv2
 
 
@@ -47,7 +53,7 @@ try:
         PackageManager.install_package("sounddevice")
         PackageManager.install_package("wave")
 except:
-    os.system("sudo apt-get install portaudio19-dev")
+    os.system("sudo apt-get install portaudio19-dev -y")
     PackageManager.install_package("sounddevice")
     PackageManager.install_package("wave")
 
