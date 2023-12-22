@@ -11,9 +11,10 @@ from lollms.com import LoLLMsCom
 import platform
 import subprocess
 
-
+import os
 import threading
 if not PackageManager.check_package_installed("cv2"):
+    os.system('sudo apt-get install libgl1-mesa-glx')
     PackageManager.install_package("opencv-python")
 import cv2
 

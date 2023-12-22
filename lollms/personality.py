@@ -170,7 +170,7 @@ Date: {{date}}
             return
         else:
             parts = str(personality_package_path).split("/")
-            if parts[0]=="custom_personalities":
+            if parts[0] == "custom_personalities":
                 self.personality_package_path = self.lollms_paths.custom_personalities_path/parts[1]
             else:
                 if is_relative_path:
@@ -1644,7 +1644,7 @@ class APScript(StateMachine):
             self.personality_config.config.load_config()
         except:
             self.personality_config.config.save_config()
-        self.personality_config.sync()        
+        self.personality_config.sync()
        
     def install(self):
         """
