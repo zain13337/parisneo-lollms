@@ -14,8 +14,8 @@ import subprocess
 import os
 import threading
 if not PackageManager.check_package_installed("cv2"):
+    os.system('sudo apt-get update')
     os.system('sudo apt-get install libgl1-mesa-glx python3-opencv -y')
-    PackageManager.install_package("opencv-python")
 import cv2
 
 
@@ -41,28 +41,24 @@ import json
 import base64
 import io
 import numpy as np
+if not PackageManager.check_package_installed("sounddevice"):
+    if platform.system() == "Windows":
+        PackageManager.install_package("sounddevice")
+    elif platform.system() == "Linux":
+        subprocess.check_call(["sudo", "apt", "install", "-y", "portaudio19-dev python3-sounddevice"])
+    elif platform.system() == "Darwin":
+        subprocess.check_call(["brew", "install", "portaudio19-dev python3-sounddevice"])
+    PackageManager.install_package("wave")
+import sounddevice as sd
 
 class AudioRecorder:
-    def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom:LoLLMsCom=None):
+    def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom=None):
         try:
-            if not PackageManager.check_package_installed("pyaudio"):
-                if platform.system() == "Windows":
-                    PackageManager.install_package("pyaudio")
-                elif platform.system() == "Linux":
-                    subprocess.check_call(["sudo", "apt", "install", "-y", "portaudio19-dev python3-pyaudio"])
-                elif platform.system() == "Darwin":
-                    subprocess.check_call(["brew", "install", "portaudio19-dev python3-pyaudio"])
-                PackageManager.install_package("wave")
-                
-            import pyaudio
-            import wave
-
             self.socketio = socketio
             self.filename = filename
             self.channels = channels
             self.sample_rate = sample_rate
             self.chunk_size = chunk_size
-            self.audio_format = pyaudio.paInt16
             self.audio_stream = None
             self.audio_frames = []
             self.is_recording = False
@@ -78,7 +74,6 @@ class AudioRecorder:
             self.channels = channels
             self.sample_rate = sample_rate
             self.chunk_size = chunk_size
-            self.audio_format = None
             self.audio_stream = None
             self.audio_frames = []
             self.is_recording = False
@@ -88,91 +83,81 @@ class AudioRecorder:
             self.callback = callback
             self.lollmsCom = lollmsCom
             self.whisper_model = None
-            
-        
 
     def start_recording(self):
         if self.whisper_model is None:
             self.lollmsCom.info("Loading whisper model")
             self.whisper_model=whisper.load_model("base.en")
         try:
-            import pyaudio
             self.is_recording = True
-            self.audio_stream = pyaudio.PyAudio().open(
-                format=self.audio_format,
+            self.audio_stream = sd.InputStream(
                 channels=self.channels,
-                rate=self.sample_rate,
-                input=True,
-                frames_per_buffer=self.chunk_size
+                samplerate=self.sample_rate,
+                callback=self._record,
+                blocksize=self.chunk_size
             )
+            self.audio_stream.start()
 
             self.lollmsCom.info("Recording started...")
-
-            threading.Thread(target=self._record).start()
         except:
             self.lollmsCom.error("No audio input found!")
 
-
-    def _record(self):
+    def _record(self, indata, frames, time, status):
         first_recording = True  # Flag to track the first recording
         silence_duration = 5
         non_silent_start = None
         non_silent_end = None
         last_spectrogram_update = time.time()
         self.audio_frames = None
-        while self.is_recording:
-            data = self.audio_stream.read(self.chunk_size)
-            buffered = np.frombuffer(data, dtype=np.int16)
-            if self.audio_frames is not None:
-                self.audio_frames = np.concatenate([self.audio_frames,buffered])
-            else:
-                self.audio_frames = buffered        
-            # Remove audio frames that are older than 30 seconds
-            if len(self.audio_frames) > self.sample_rate * 30:
-                self.audio_frames=self.audio_frames[-self.sample_rate * 30:]
+        buffered = np.array(indata)
+        if self.audio_frames is not None:
+            self.audio_frames = np.concatenate([self.audio_frames, buffered])
+        else:
+            self.audio_frames = buffered
 
-            # Update spectrogram every 3 seconds
-            if time.time() - last_spectrogram_update >= 1:
-                self._update_spectrogram()
-                last_spectrogram_update = time.time()
+        # Remove audio frames that are older than 30 seconds
+        if len(self.audio_frames) > self.sample_rate * 30:
+            self.audio_frames=self.audio_frames[-self.sample_rate * 30:]
 
-            # Check for silence
-            rms = self._calculate_rms(buffered)
-            if rms < self.silence_threshold:
-                current_time = time.time()
-                if current_time - self.last_sound_time >= silence_duration:
-                    if first_recording:
-                        first_recording = False
-                        silence_duration = self.silence_duration
+        # Update spectrogram every 3 seconds
+        if time.time() - last_spectrogram_update >= 1:
+            self._update_spectrogram()
+            last_spectrogram_update = time.time()
 
-                    if self.callback and non_silent_start is not None and non_silent_end - non_silent_start >= 1:
-                        self.lollmsCom.info("Analyzing")
-                        # Convert to float
-                        import pyaudio
-                        import wave
-                        audio_data = self.audio_frames.astype(np.float32)
-                        audio = wave.open(str(self.filename), 'wb')
-                        audio.setnchannels(self.channels)
-                        audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
-                        audio.setframerate(self.sample_rate)
-                        audio.writeframes(b''.join(self.audio_frames[non_silent_start:non_silent_end]))
-                        audio.close()
-                        
-                        
-                        # Transcribe the audio using the whisper model
-                        text = self.whisper_model.transcribe(audio_data[non_silent_start:non_silent_end])
+        # Check for silence
+        rms = self._calculate_rms(buffered)
+        if rms < self.silence_threshold:
+            current_time = time.time()
+            if current_time - self.last_sound_time >= silence_duration:
+                if first_recording:
+                    first_recording = False
+                    silence_duration = self.silence_duration
 
-                        self.callback(text)
-                        print(text["text"])
+                if self.callback and non_silent_start is not None and non_silent_end - non_silent_start >= 1:
+                    self.lollmsCom.info("Analyzing")
+                    # Convert to float
+                    audio_data = self.audio_frames.astype(np.float32)
+                    audio = wave.open(str(self.filename), 'wb')
+                    audio.setnchannels(self.channels)
+                    audio.setsampwidth(audio_stream.dtype.itemsize)
+                    audio.setframerate(self.sample_rate)
+                    audio.writeframes(b''.join(self.audio_frames[non_silent_start:non_silent_end]))
+                    audio.close()
 
-                    self.last_sound_time = time.time()
-                    non_silent_start = None
+                    # Transcribe the audio using the whisper model
+                    text = self.whisper_model.transcribe(audio_data[non_silent_start:non_silent_end])
 
-            else:
+                    self.callback(text)
+                    print(text["text"])
+
                 self.last_sound_time = time.time()
-                if non_silent_start is None:
-                    non_silent_start = len(self.audio_frames) - 1
-                non_silent_end = len(self.audio_frames)
+                non_silent_start = None
+
+        else:
+            self.last_sound_time = time.time()
+            if non_silent_start is None:
+                non_silent_start = len(self.audio_frames) - 1
+            non_silent_end = len(self.audio_frames)
 
     def _update_spectrogram(self):
         audio_data = self.audio_frames[-self.sample_rate*30:]
@@ -208,17 +193,14 @@ class AudioRecorder:
             rms = 0
         return rms
 
-
     def stop_recording(self):
         self.is_recording = False
         if self.audio_stream:
-            self.audio_stream.stop_stream()
-            self.audio_stream.close()
-            import pyaudio
+            self.audio_stream.stop()
             import wave
             audio = wave.open(str(self.filename), 'wb')
             audio.setnchannels(self.channels)
-            audio.setsampwidth(pyaudio.PyAudio().get_sample_size(self.audio_format))
+            audio.setsampwidth(self.audio_stream.dtype.itemsize)
             audio.setframerate(self.sample_rate)
             audio.writeframes(b''.join(self.audio_frames))
             audio.close()
