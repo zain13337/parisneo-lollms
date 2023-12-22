@@ -42,12 +42,7 @@ import base64
 import io
 import numpy as np
 if not PackageManager.check_package_installed("sounddevice"):
-    if platform.system() == "Windows":
-        PackageManager.install_package("sounddevice")
-    elif platform.system() == "Linux":
-        subprocess.check_call(["sudo", "apt", "install", "-y", "portaudio19-dev python3-sounddevice"])
-    elif platform.system() == "Darwin":
-        subprocess.check_call(["brew", "install", "portaudio19-dev python3-sounddevice"])
+    PackageManager.install_package("sounddevice")
     PackageManager.install_package("wave")
 import sounddevice as sd
 
