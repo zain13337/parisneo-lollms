@@ -41,10 +41,16 @@ import json
 import base64
 import io
 import numpy as np
-if not PackageManager.check_package_installed("sounddevice"):
+try:
+    if not PackageManager.check_package_installed("sounddevice"):
+        os.system("sudo apt-get install portaudio19-dev")
+        PackageManager.install_package("sounddevice")
+        PackageManager.install_package("wave")
+except:
     os.system("sudo apt-get install portaudio19-dev")
     PackageManager.install_package("sounddevice")
     PackageManager.install_package("wave")
+
 import sounddevice as sd
 
 class AudioRecorder:
