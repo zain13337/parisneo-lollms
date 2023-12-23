@@ -117,6 +117,7 @@ class AIPersonality:
         self._name: str = "lollms"
         self._user_name: str = "user"
         self._category: str = "General"
+        self._category_desc: str = "General"
         self._supported_languages: str = []
         self._selected_language: str = selected_language
 
@@ -170,6 +171,7 @@ Date: {{date}}
             return
         else:
             parts = str(personality_package_path).split("/")
+            self._category = parts[0]
             if parts[0] == "custom_personalities":
                 self.personality_package_path = self.lollms_paths.custom_personalities_path/parts[1]
             else:
@@ -563,7 +565,7 @@ Date: {{date}}
         self._author = config.get("author", self._author)
         self._name = config.get("name", self._name)
         self._user_name = config.get("user_name", self._user_name)
-        self._category = config.get("category", self._category)
+        self._category_desc = config.get("category", self._category)
 
         self._personality_description = config.get("personality_description", self._personality_description)
         self._personality_conditioning = config.get("personality_conditioning", self._personality_conditioning)
@@ -605,13 +607,20 @@ Date: {{date}}
         self.languages_path = self.personality_package_path / "languages"
         # Get the data folder path
         self.data_path = self.personality_package_path / "data"
-
+        # Get the data folder path
+        self.audio_path = self.personality_package_path / "audio"
 
         # If not exist recreate
         self.assets_path.mkdir(parents=True, exist_ok=True)
 
         # If not exist recreate
         self.scripts_path.mkdir(parents=True, exist_ok=True)
+
+        # If not exist recreate
+        self.audio_path.mkdir(parents=True, exist_ok=True)
+
+        # samples
+        self.audio_samples = [f for f in self.audio_path.iterdir()]
 
         # Verify if the persona has a data folder
         self.database_path = self.data_path / "db.json"
@@ -920,10 +929,20 @@ Date: {{date}}
         """Get the category."""
         return self._category
 
+    @property
+    def category_desc(self) -> str:
+        """Get the category."""
+        return self._category_desc
+
     @category.setter
     def category(self, value: str):
         """Set the category."""
         self._category = value
+
+    @category_desc.setter
+    def category_desc(self, value: str):
+        """Set the category."""
+        self._category_desc = value
 
 
     @property

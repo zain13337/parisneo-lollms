@@ -8,6 +8,7 @@ License: Apache 2.0
 """
 from lollms.utilities import PackageManager
 from lollms.com import LoLLMsCom
+from ascii_colors import ASCIIColors
 import platform
 import subprocess
 
@@ -22,8 +23,11 @@ if not PackageManager.check_package_installed("cv2"):
     else:
         os.system('sudo apt-get update')
         os.system('sudo apt-get install libgl1-mesa-glx python3-opencv -y')
-import cv2
-
+        os.system('pip install opencv-python')
+try:
+    import cv2
+except:
+    ASCIIColors.error("Couldn't install opencv!")
 
 
 if not PackageManager.check_package_installed("scipy"):
@@ -58,6 +62,7 @@ except:
     PackageManager.install_package("wave")
 
 import sounddevice as sd
+import wave
 
 class AudioRecorder:
     def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom=None):

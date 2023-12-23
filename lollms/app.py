@@ -46,6 +46,8 @@ class LollmsApplication(LoLLMsCom):
         self.model:LLMBinding       = None
         self.long_term_memory       = None
 
+        self.tts                    = None
+
         try:
             if config.auto_update:
                 # Clone the repository to the target path

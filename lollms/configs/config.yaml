@@ -1,5 +1,5 @@
 # =================== Lord Of Large Language Models Configuration file =========================== 
-version: 30
+version: 31
 binding_name: null
 model_name: null
 
@@ -14,7 +14,7 @@ discussion_prompt_separator: "!@>"
 seed: -1
 n_predict: 1024
 ctx_size: 4084
-min_n_predict: 256
+min_n_predict: 512
 temperature: 0.9
 top_k: 50
 top_p: 0.95
@@ -53,6 +53,7 @@ auto_show_browser: true
 audio_in_language: 'en-US'
 audio_out_voice: null
 auto_speak: false
+auto_read: false
 audio_pitch: 1
 audio_auto_send_input: true
 audio_silenceTimer: 5000
@@ -71,3 +72,5 @@ data_vectorization_chunk_size: 512 # chunk size
 data_vectorization_overlap_size: 128 # overlap between chunks size
 data_vectorization_nb_chunks: 2 # number of chunks to use
 data_vectorization_build_keys_words: false # If true, when querrying the database, we use keywords generated from the user prompt instead of the prompt itself.
+data_vectorization_force_first_chunk: false # If true, the first chunk of the document will systematically be used
+data_vectorization_make_persistance: false # If true, the data will be persistant webween runs
