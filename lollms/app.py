@@ -275,6 +275,14 @@ class LollmsApplication(LoLLMsCom):
     def mount_personality(self, id:int, callback=None):
         try:
             personality = PersonalityBuilder(self.lollms_paths, self.config, self.model, self, callback=callback).build_personality(id)
+            if self.config.auto_read and len(personality.audio_samples)>0:
+                try:
+                    from lollms.audio_gen_modules.lollms_xtts import LollmsXTTS
+                    if self.tts is None:
+                        self.tts = LollmsXTTS(self, voice_samples_path=Path(personality.audio_samples[0]).parent)
+                except:
+                    self.warning(f"Personality {personality.name} request using custom voice but couldn't load XTTS")
+
             if personality.model is not None:
                 self.cond_tk = personality.model.tokenize(personality.personality_conditioning)
                 self.n_cond_tk = len(self.cond_tk)
