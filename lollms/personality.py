@@ -118,6 +118,7 @@ class AIPersonality:
         self._user_name: str = "user"
         self._category: str = "General"
         self._category_desc: str = "General"
+        self._language: str = "englsish"
         self._supported_languages: str = []
         self._selected_language: str = selected_language
 
@@ -566,6 +567,8 @@ Date: {{date}}
         self._name = config.get("name", self._name)
         self._user_name = config.get("user_name", self._user_name)
         self._category_desc = config.get("category", self._category)
+        self._language = config.get("language", self._language)
+        
 
         self._personality_description = config.get("personality_description", self._personality_description)
         self._personality_conditioning = config.get("personality_conditioning", self._personality_conditioning)
@@ -799,6 +802,7 @@ Date: {{date}}
             "name": self._name,
             "user_name": self._user_name,
             "category": self._category,
+            "language": self._language,
             "supported_languages": self._supported_languages,
             "selected_language": self._selected_language,
             "personality_description": self._personality_description,
@@ -840,6 +844,7 @@ Date: {{date}}
             "name": self._name,
             "user_name": self._user_name,
             "category": self._category,
+            "language": self._language,
             "supported_languages": self._supported_languages,
             "selected_language": self._selected_language,
             "personality_description": self._personality_description,
@@ -924,6 +929,12 @@ Date: {{date}}
         """Set the user name."""
         self._user_name = value
 
+        
+    @property
+    def language(self) -> str:
+        """Get the language."""
+        return self._language
+
     @property
     def category(self) -> str:
         """Get the category."""
@@ -933,6 +944,11 @@ Date: {{date}}
     def category_desc(self) -> str:
         """Get the category."""
         return self._category_desc
+
+    @language.setter
+    def language(self, value: str):
+        """Set the language."""
+        self._language = value
 
     @category.setter
     def category(self, value: str):
