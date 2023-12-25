@@ -25,6 +25,26 @@ from io import BytesIO
 import base64
 import importlib
 
+
+def convert_language_name(language_name):
+    # Remove leading and trailing spaces
+    language_name = language_name.strip()
+    
+    # Convert to lowercase
+    language_name = language_name.lower().replace(".","")
+    
+    # Define a dictionary mapping language names to their codes
+    language_codes = {
+        "english": "en",
+        "spanish": "es",
+        "french": "fr",
+        "german": "de",
+        # Add more language names and codes as needed
+    }
+    
+    # Return the corresponding language code if found, or None otherwise
+    return language_codes.get(language_name,"en")
+
 def load_image(image_file):
     s_image_file = str(image_file)
     if s_image_file.startswith('http://') or s_image_file.startswith('https://'):
