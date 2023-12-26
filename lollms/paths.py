@@ -53,6 +53,7 @@ class LollmsPaths:
         self.gptqlora_path                  = self.personal_trainers_path / "gptqlora"
 
         self.custom_personalities_path      = self.personal_path / "custom_personalities"
+        self.custom_voices_path             = self.personal_path / "custom_voices"
 
         self.binding_models_paths   = []
 
@@ -94,6 +95,8 @@ class LollmsPaths:
         ASCIIColors.yellow(f"{self.personal_data_path}")
         ASCIIColors.red("custom_personalities_path:",end="")
         ASCIIColors.yellow(f"{self.custom_personalities_path}")
+        ASCIIColors.red("custom_voices_path:",end="")
+        ASCIIColors.yellow(f"{self.custom_voices_path}")
         ASCIIColors.green("-------------------------------------------------------------")
 
 
@@ -145,6 +148,7 @@ class LollmsPaths:
         self.personal_user_infos_path.mkdir(parents=True, exist_ok=True)
         self.personal_trainers_path.mkdir(parents=True, exist_ok=True)
         self.custom_personalities_path.mkdir(parents=True, exist_ok=True)
+        self.custom_voices_path.mkdir(parents=True, exist_ok=True)
 
         
         if not self.bindings_zoo_path.exists():

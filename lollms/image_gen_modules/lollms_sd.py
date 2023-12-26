@@ -45,6 +45,8 @@ def install_sd(lollms_paths:LollmsPaths):
     shared_folder = root_dir/"shared"
     sd_folder = shared_folder / "auto_sd"
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
+    subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
+    
     ASCIIColors.green("Stable diffusion installed successfully")
 
 

@@ -1702,7 +1702,7 @@ class APScript(StateMachine):
     def add_file(self, path, callback=None):
         if callback is not None:
             callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-        self.personality.add_file(path)
+        self.personality.add_file(path,callback=callback)
         return True
 
     def remove_file(self, path):
