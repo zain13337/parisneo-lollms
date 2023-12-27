@@ -1,4 +1,5 @@
 from ascii_colors import ASCIIColors
+from flask_socketio import SocketIO
 from enum import Enum
 class NotificationType(Enum):
     """Notification types."""
@@ -24,10 +25,13 @@ class NotificationDisplayType(Enum):
     MESSAGE_BOX = 1
     """This is a message box."""
 
+    YESNO_MESSAGE = 2
+    """This is a yes not messagebox."""
+
 
 class LoLLMsCom:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, socketio:SocketIO=None) -> None:
+        self.socketio= socketio
     def InfoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
         self.notify(
                 content, 
@@ -37,6 +41,30 @@ class LoLLMsCom:
                 display_type=NotificationDisplayType.MESSAGE_BOX,
                 verbose=verbose
             )
+
+    def YesNoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
+        infos={
+            "wait":True,
+            "result":False
+        }
+        @self.socketio.on('yesNoRes')
+        def yesnores(result):
+            infos["result"] = result["yesRes"]
+            infos["wait"]=False
+
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_SUCCESS, 
+                duration=duration, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.YESNO_MESSAGE,
+                verbose=verbose
+            )
+        # wait
+        ASCIIColors.yellow("Waiting for yes no question to be answered")
+        while infos["wait"]:
+            self.socketio.sleep(1)
+        return infos["result"]
 
     def info(self, content, duration:int=4, client_id=None, verbose:bool=True):
         self.notify(

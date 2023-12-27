@@ -21,9 +21,10 @@ if not PackageManager.check_package_installed("cv2"):
     elif platform.system() == "Windows":
         os.system('pip install opencv-python')
     else:
-        os.system('sudo apt-get update')
-        os.system('sudo apt-get install libgl1-mesa-glx python3-opencv -y')
         os.system('pip install opencv-python')
+        # os.system('sudo apt-get update')
+        # os.system('sudo apt-get install libgl1-mesa-glx python3-opencv -y')
+        # os.system('pip install opencv-python')
 try:
     import cv2
 except:
@@ -53,17 +54,18 @@ import io
 import numpy as np
 try:
     if not PackageManager.check_package_installed("sounddevice"):
-        os.system("sudo apt-get install portaudio19-dev")
+        # os.system("sudo apt-get install portaudio19-dev")
         PackageManager.install_package("sounddevice")
         PackageManager.install_package("wave")
 except:
-    os.system("sudo apt-get install portaudio19-dev -y")
+    # os.system("sudo apt-get install portaudio19-dev -y")
     PackageManager.install_package("sounddevice")
     PackageManager.install_package("wave")
-
-import sounddevice as sd
-import wave
-
+try:
+    import sounddevice as sd
+    import wave
+except:
+    ASCIIColors.error("Couldn't load sound tools")
 class AudioRecorder:
     def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom=None):
         try:

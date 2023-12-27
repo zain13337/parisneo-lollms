@@ -70,21 +70,13 @@ class LLMBinding:
 
         self.lollmsCom = lollmsCom
 
+        self.add_default_configurations(binding_config)
 
-        binding_config.addConfigs([
-            {"name":"clip_model_name","type":"str","value":'ViT-L-14/openai','options':["ViT-L-14/openai","ViT-H-14/laion2b_s32b_b79k"], "help":"Clip model to be used for images understanding"},
-            {"name":"caption_model_name","type":"str","value":'blip-large','options':['blip-base', 'git-large-coco', 'blip-large','blip2-2.7b', 'blip2-flan-t5-xl'], "help":"Clip model to be used for images understanding"},
-            {"name":"vqa_model_name","type":"str","value":'Salesforce/blip-vqa-capfilt-large','options':['Salesforce/blip-vqa-capfilt-large', 'Salesforce/blip-vqa-base', 'Salesforce/blip-image-captioning-large','Salesforce/blip2-opt-2.7b', 'Salesforce/blip2-flan-t5-xxl'], "help":"Salesforce question/answer model"},
-            
-        ])
         self.interrogatorStorer = None
         self.supported_file_extensions          = supported_file_extensions
         self.seed                               = config["seed"]
 
-        self.configuration_file_path = lollms_paths.personal_configuration_path/"bindings"/self.binding_folder_name/f"config.yaml"
-        self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
-        self.binding_config.config.file_path = self.configuration_file_path
-
+        self.sync_configuration(self.binding_config, lollms_paths)
         # Installation
         if (not self.configuration_file_path.exists() or installation_option==InstallOption.FORCE_INSTALL) and installation_option!=InstallOption.NEVER_INSTALL:
             self.install()
@@ -103,7 +95,19 @@ class LLMBinding:
         for models_folder in self.models_folders:
             models_folder.mkdir(parents=True, exist_ok=True)
 
+    def sync_configuration(self, binding_config:TypedConfig, lollms_paths:LollmsPaths):
+        self.configuration_file_path = lollms_paths.personal_configuration_path/"bindings"/self.binding_folder_name/f"config.yaml"
+        self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
+        binding_config.config.file_path = self.configuration_file_path
 
+
+
+    def add_default_configurations(self, binding_config:TypedConfig):
+        binding_config.addConfigs([
+            {"name":"clip_model_name","type":"str","value":'ViT-L-14/openai','options':["ViT-L-14/openai","ViT-H-14/laion2b_s32b_b79k"], "help":"Clip model to be used for images understanding"},
+            {"name":"caption_model_name","type":"str","value":'blip-large','options':['blip-base', 'git-large-coco', 'blip-large','blip2-2.7b', 'blip2-flan-t5-xl'], "help":"Clip model to be used for images understanding"},
+            {"name":"vqa_model_name","type":"str","value":'Salesforce/blip-vqa-capfilt-large','options':['Salesforce/blip-vqa-capfilt-large', 'Salesforce/blip-vqa-base', 'Salesforce/blip-image-captioning-large','Salesforce/blip2-opt-2.7b', 'Salesforce/blip2-flan-t5-xxl'], "help":"Salesforce question/answer model"},
+        ])
 
     def InfoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
         if self.lollmsCom:
