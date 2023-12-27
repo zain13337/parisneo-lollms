@@ -105,8 +105,9 @@ class LoLLMsServer(LollmsApplication):
 
         def list_models():
             if self.binding is not None:
-                models = self.binding.list_models(self.config)
                 ASCIIColors.yellow("Listing models")
+                models = self.binding.list_models()
+                ASCIIColors.green("ok")
                 return jsonify(models)
             else:
                 return jsonify([])
@@ -117,7 +118,7 @@ class LoLLMsServer(LollmsApplication):
 
         def get_active_model():
             if self.binding is not None:
-                models = self.binding.list_models(self.config)
+                models = self.binding.list_models()
                 index = models.index(self.config.model_name)
                 ASCIIColors.yellow(f"Recovering active model: {models[index]}")
                 return jsonify({"model":models[index],"index":index})
@@ -137,7 +138,7 @@ class LoLLMsServer(LollmsApplication):
             """
             server_infos = {}
             if self.binding is not None:
-                models = self.binding.list_models(self.config)
+                models = self.binding.list_models()
                 index = models.index(self.config.model_name)
                 ASCIIColors.yellow(f"Recovering active model: {models[index]}")
                 server_infos["binding"]=self.binding.name
@@ -365,7 +366,7 @@ class LoLLMsServer(LollmsApplication):
             """
             if self.binding is None:
                emit('available_models_list', {'success':False, 'error': "No binding selected"}, room=request.sid)
-            model_list = self.binding.get_available_models()
+            model_list = self.binding.get_available_models(self)
 
             models = []
             for model in model_list:

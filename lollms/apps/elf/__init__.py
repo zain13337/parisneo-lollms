@@ -175,7 +175,7 @@ def models():
             "limits": None,
             "permission": []
         }
-        for model in cv.binding.list_models(cv.config)
+        for model in cv.binding.list_models()
     ]
     return {'data': data, 'object': 'list'}
 

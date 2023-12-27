@@ -467,7 +467,7 @@ class LLMBinding:
         pass
 
 
-    def list_models(self, config:dict):
+    def list_models(self):
         """Lists the models for this binding
         """
         models = []
@@ -479,7 +479,7 @@ class LLMBinding:
         return models
     
 
-    def get_available_models(self):
+    def get_available_models(self, app:LoLLMsCom=None):
         # Create the file path relative to the child class's directory
         full_data = []
         for models_dir_name in self.models_dir_names:
