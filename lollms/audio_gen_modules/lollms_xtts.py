@@ -96,8 +96,6 @@ class LollmsXTTS:
         self.auto_xtts_url = self.auto_xtts_base_url+"/sdapi/v1"
         shared_folder = root_dir/"shared"
         self.xtts_folder = shared_folder / "xtts"
-        self.output_dir = root_dir / "outputs/sd"
-        self.output_dir.mkdir(parents=True, exist_ok=True)
 
        
         ASCIIColors.red(".____    ________  .____    .____       _____    _________         ____  __________________________________ ")

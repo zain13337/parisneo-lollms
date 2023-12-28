@@ -1979,6 +1979,20 @@ class APScript(StateMachine):
         if callback:
             callback(code, MSG_TYPE.MSG_TYPE_CODE)
 
+    def chunk(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+        """This sends full text to front end
+
+        Args:
+            step_text (dict): The step text
+            callback (callable, optional): A callable with this signature (str, MSG_TYPE) to send the text to. Defaults to None.
+        """
+        if not callback and self.callback:
+            callback = self.callback
+
+        if callback:
+            callback(full_text, MSG_TYPE.MSG_TYPE_CHUNK)
+
+
     def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end
 
