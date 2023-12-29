@@ -96,18 +96,13 @@ def find_first_available_file_index(folder_path, prefix, extension=""):
     available_number = 1
     
     # Iterate through the files
-    for file in files:
-        # Extract the number from the file name
-        file_number = int(file.stem[len(prefix):])
-        
-        # If the file number is equal to the available number, increment the available number
-        if file_number == available_number:
+    while True:
+        f = folder/f"{prefix}{available_number}{extension}"
+        if f.exists():
             available_number += 1
         # If the file number is greater than the available number, break the loop
-        elif file_number > available_number:
-            break
-    
-    return available_number
+        else:
+            return available_number
 
 
 
@@ -369,7 +364,7 @@ class PackageManager:
     def install_package(package_name):
         import subprocess
         import sys
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package_name])
         
     @staticmethod
     def check_package_installed(package_name):

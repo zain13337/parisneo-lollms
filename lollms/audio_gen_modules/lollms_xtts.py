@@ -72,13 +72,13 @@ class LollmsXTTS:
     def __init__(
                     self, 
                     app:LollmsApplication, 
-                    auto_xtts_base_url=None,
+                    xtts_base_url=None,
                     share=False,
                     max_retries=10,
                     voice_samples_path=""
                     ):
-        if auto_xtts_base_url=="" or auto_xtts_base_url=="http://127.0.0.1:8020":
-            auto_xtts_base_url = None
+        if xtts_base_url=="" or xtts_base_url=="http://127.0.0.1:8020":
+            xtts_base_url = None
         # Get the current directory
         lollms_paths = app.lollms_paths
         self.app = app
@@ -86,14 +86,14 @@ class LollmsXTTS:
         self.voice_samples_path = voice_samples_path
         
         # Store the path to the script
-        if auto_xtts_base_url is None:
-            self.auto_xtts_base_url = "http://127.0.0.1:8020"
+        if xtts_base_url is None:
+            self.xtts_base_url = "http://127.0.0.1:8020"
             if not verify_xtts(lollms_paths):
                 install_xtts(app.lollms_paths)
         else:
-            self.auto_xtts_base_url = auto_xtts_base_url
+            self.xtts_base_url = xtts_base_url
 
-        self.auto_xtts_url = self.auto_xtts_base_url+"/sdapi/v1"
+        self.auto_xtts_url = self.xtts_base_url+"/sdapi/v1"
         shared_folder = root_dir/"shared"
         self.xtts_folder = shared_folder / "xtts"
 
@@ -108,7 +108,7 @@ class LollmsXTTS:
         ASCIIColors.red(" Forked from daswer123's XTTS server")
         ASCIIColors.red(" Integration in lollms by ParisNeo using daswer123's webapi ")
 
-        if not self.wait_for_service(1,False) and auto_xtts_base_url is None:
+        if not self.wait_for_service(1,False) and xtts_base_url is None:
             ASCIIColors.info("Loading lollms_xtts")
             os.environ['xtts_WEBUI_RESTARTING'] = '1' # To forbid sd webui from showing on the browser automatically
             # Launch the Flask service using the appropriate script for the platform
@@ -122,7 +122,7 @@ class LollmsXTTS:
 
 
     def wait_for_service(self, max_retries = 150, show_warning=True):
-        url = f"{self.auto_xtts_base_url}/languages"
+        url = f"{self.xtts_base_url}/languages"
         # Adjust this value as needed
         retries = 0
 
@@ -146,7 +146,7 @@ class LollmsXTTS:
         return False
 
     def set_speaker_folder(self, speaker_folder):
-        url = f"{self.auto_xtts_base_url}/set_speaker_folder"
+        url = f"{self.xtts_base_url}/set_speaker_folder"
 
         # Define the request body
         payload = {
@@ -166,7 +166,7 @@ class LollmsXTTS:
             return False
 
     def tts_to_file(self, text, speaker_wav, file_name_or_path, language="en"):
-        url = f"{self.auto_xtts_base_url}/tts_to_file"
+        url = f"{self.xtts_base_url}/tts_to_file"
 
         # Define the request body
         payload = {
