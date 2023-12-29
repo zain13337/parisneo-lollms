@@ -137,7 +137,7 @@ class LoLLMsCom:
 
     def notify(
                 self, 
-                content, 
+                content:str, 
                 notification_type:NotificationType=NotificationType.NOTIF_SUCCESS, 
                 duration:int=4, 
                 client_id=None, 
