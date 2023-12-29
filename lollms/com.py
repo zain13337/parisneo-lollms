@@ -28,19 +28,47 @@ class NotificationDisplayType(Enum):
     YESNO_MESSAGE = 2
     """This is a yes not messagebox."""
 
+    SHOW_BLOCKING_MESSAGE = 3
+    """This shows a blocking messagebox."""
+
+    HIDE_BLOCKING_MESSAGE = 4
+    """This hides a blocking messagebox."""
+
 
 class LoLLMsCom:
     def __init__(self, socketio:SocketIO=None) -> None:
         self.socketio= socketio
-    def InfoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
+
+    def InfoMessage(self, content, client_id=None, verbose:bool=True):
         self.notify(
                 content, 
                 notification_type=NotificationType.NOTIF_SUCCESS, 
-                duration=duration, 
+                duration=0, 
                 client_id=client_id, 
                 display_type=NotificationDisplayType.MESSAGE_BOX,
                 verbose=verbose
             )
+    def ShowBlockingMessage(self, content, client_id=None, verbose:bool=True):
+        self.notify(
+                content, 
+                notification_type=NotificationType.NOTIF_SUCCESS, 
+                duration=0, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.SHOW_BLOCKING_MESSAGE,
+                verbose=verbose
+            )        
+        
+    def HideBlockingMessage(self, client_id=None, verbose:bool=True):
+        self.notify(
+                "", 
+                notification_type=NotificationType.NOTIF_SUCCESS, 
+                duration=0, 
+                client_id=client_id, 
+                display_type=NotificationDisplayType.HIDE_BLOCKING_MESSAGE,
+                verbose=verbose
+            )        
+
+
 
     def YesNoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
         infos={

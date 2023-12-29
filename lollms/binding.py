@@ -109,10 +109,19 @@ class LLMBinding:
             {"name":"vqa_model_name","type":"str","value":'Salesforce/blip-vqa-capfilt-large','options':['Salesforce/blip-vqa-capfilt-large', 'Salesforce/blip-vqa-base', 'Salesforce/blip-image-captioning-large','Salesforce/blip2-opt-2.7b', 'Salesforce/blip2-flan-t5-xxl'], "help":"Salesforce question/answer model"},
         ])
 
-    def InfoMessage(self, content, duration:int=4, client_id=None, verbose:bool=True):
+    def InfoMessage(self, content, client_id=None, verbose:bool=True):
         if self.lollmsCom:
-            return self.lollmsCom.InfoMessage(content=content, duration=duration, client_id=client_id, verbose=verbose)
+            return self.lollmsCom.InfoMessage(content=content, client_id=client_id, verbose=verbose)
         ASCIIColors.white(content)
+
+    def ShowBlockingMessage(self, content, client_id=None, verbose:bool=True):
+        if self.lollmsCom:
+            return self.lollmsCom.ShowBlockingMessage(content=content, client_id=client_id, verbose=verbose)
+        ASCIIColors.white(content)
+        
+    def HideBlockingMessage(self, client_id=None, verbose:bool=True):
+        if self.lollmsCom:
+            return self.lollmsCom.HideBlockingMessage(client_id=client_id, verbose=verbose)
 
     def info(self, content, duration:int=4, client_id=None, verbose:bool=True):
         if self.lollmsCom:
