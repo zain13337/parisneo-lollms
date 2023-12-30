@@ -1799,7 +1799,7 @@ class APScript(StateMachine):
             if pdf_latex_path:
                 pdflatex_command = pdf_latex_path
             else:
-                pdflatex_command = 'pdflatex'
+                pdflatex_command = self.personality.config.pdf_latex_path if self.personality.config.pdf_latex_path is not None else 'pdflatex'
 
             # Run the pdflatex command with the file path
             subprocess.run([pdflatex_command, file_path], check=True)
