@@ -1801,15 +1801,23 @@ class APScript(StateMachine):
             else:
                 pdflatex_command = self.personality.config.pdf_latex_path if self.personality.config.pdf_latex_path is not None else 'pdflatex'
 
+            # Set the execution path to the folder containing the tmp_file
+            execution_path = file_path.parent
             # Run the pdflatex command with the file path
-            subprocess.run([pdflatex_command, file_path], check=True)
+            result = subprocess.run([pdflatex_command, "-interaction=nonstopmode", file_path], check=True, capture_output=True, text=True, cwd=execution_path)
+            # Check the return code of the pdflatex command
+            if result.returncode != 0:
+                error_message = result.stderr.strip()
+                return {"status":False,"error":error_message}
 
             # If the compilation is successful, you will get a PDF file
             pdf_file = file_path.with_suffix('.pdf')
             print(f"PDF file generated: {pdf_file}")
+            return {"status":True,"file_path":pdf_file}
 
         except subprocess.CalledProcessError as e:
             print(f"Error occurred while compiling LaTeX: {e}") 
+            return {"status":False,"error":e}
             
     def find_numeric_value(self, text):
         pattern = r'\d+[.,]?\d*'
