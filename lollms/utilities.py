@@ -72,6 +72,27 @@ def expand2square(pil_img, background_color):
         return result
 
 
+def add_period(text):
+    """
+    Adds a period at the end of each line in the given text, except for empty lines.
+
+    Args:
+        text (str): The input text.
+
+    Returns:
+        str: The preprocessed text with a period added at the end of each line that doesn't already have one.
+    """
+    lines = text.split('\n')
+    processed_lines = []
+    
+    for line in lines:
+        if line.strip():  # Check if line is not empty
+            if line[-1] != '.':
+                line += '.'
+        processed_lines.append(line)
+    
+    processed_text = '\n'.join(processed_lines)
+    return processed_text
 
 
 def find_first_available_file_index(folder_path, prefix, extension=""):
