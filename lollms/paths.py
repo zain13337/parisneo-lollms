@@ -4,6 +4,7 @@ from ascii_colors import ASCIIColors, trace_exception
 from lollms.config import BaseConfig
 import subprocess
 import os
+import yaml
 
 lollms_path = Path(__file__).parent
 lollms_default_cfg_path = lollms_path / "configs/config.yaml"
@@ -24,6 +25,19 @@ gptqlora_repo = "https://github.com/ParisNeo/gptqlora.git"
 class LollmsPaths:
     def __init__(self, global_paths_cfg_path=None, lollms_path=None, personal_path=None, custom_default_cfg_path=None, tool_prefix=""):
         self.global_paths_cfg_path  = global_paths_cfg_path
+        if self.global_paths_cfg_path is not None:
+            try:
+                with(open(self.global_paths_cfg_path,"r") as f):
+                    infos = yaml.safe_load(f)
+                    if lollms_path is None:
+                        lollms_path = infos["lollms_path"]
+                    if personal_path is None:
+                        personal_path = infos["lollms_personal_path"]
+            except Exception as ex:
+                ASCIIColors.error(ex)
+
+
+
         self.tool_prefix            = tool_prefix
         if lollms_path is None:
             lollms_path             = Path(__file__).parent
