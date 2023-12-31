@@ -10,12 +10,6 @@ wget
 setuptools
 requests
 
-matplotlib
-seaborn
-mplcursors
-scikit-learn
-
-ascii_colors
 safe_store
 ascii_colors>=0.1.3
 
