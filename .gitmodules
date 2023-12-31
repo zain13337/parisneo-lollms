@@ -1,4 +1,0 @@
-[submodule "zoos/personalities_zoo"]
-	path = zoos/personalities_zoo
-	url = https://github.com/ParisNeo/lollms_personalities_zoo.git
-	branch = main
