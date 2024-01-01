@@ -88,7 +88,7 @@ class LollmsPaths:
             self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
             self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
             self.extensions_zoo_path            = self.personal_path / "extensions_zoo"
-            self.models_zoo_path                = self.execution_path/ "models_zoo"
+            self.models_zoo_path                = self.personal_path / "models_zoo"
 
         ASCIIColors.green("----------------------Paths information-----------------------")
         ASCIIColors.red("personal_path:",end="")
