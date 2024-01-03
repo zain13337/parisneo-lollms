@@ -1,15 +1,19 @@
 from fastapi import APIRouter
-from lollms_webui import LoLLMSWebUI
+import pkg_resources
+from lollms.server.elf_server import LOLLMSElfServer
+from ascii_colors import ASCIIColors
 
 router = APIRouter()
-lollmsWebUI = LoLLMSWebUI.get_instance()
+lollmsWebUI = LOLLMSElfServer.get_instance()
 
-@router.get("/users")
-def get_users():
-    # Your code here
-    pass
+@router.get("/version")
+def get_version():
+    """
+    Get the version of the lollms package.
 
-@router.post("/users")
-def create_user():
-    # Your code here
-    pass
+    Returns:
+        dict: A dictionary containing the version of the lollms package.
+    """
+    version = pkg_resources.get_distribution('lollms').version
+    ASCIIColors.yellow("Lollms version: " + version)
+    return {"version": version}
