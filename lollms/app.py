@@ -27,6 +27,8 @@ class LollmsApplication(LoLLMsCom):
                     lollms_paths:LollmsPaths, 
                     load_binding=True, 
                     load_model=True, 
+                    load_voice_service=True,
+                    load_sd_service=True,
                     try_select_binding=False, 
                     try_select_model=False,
                     callback=None,
@@ -50,12 +52,20 @@ class LollmsApplication(LoLLMsCom):
         self.long_term_memory       = None
 
         self.tts                    = None
-        if self.config.enable_voice_service:
+
+        if self.config.enable_voice_service and load_voice_service:
             try:
                 from lollms.audio_gen_modules.lollms_xtts import LollmsXTTS
-                self.tts = LollmsXTTS(self, voice_samples_path=lollms_paths.custom_voices_path)
+                self.tts = LollmsXTTS(self, voice_samples_path=lollms_paths.custom_voices_path, xtts_base_url=self.config.xtts_base_url)
             except:
                 self.warning(f"Couldn't load XTTS")
+
+        if self.config.enable_sd_service and load_sd_service:
+            try:
+                from lollms.image_gen_modules.lollms_sd import LollmsSD
+                self.tts = LollmsSD(self, auto_sd_base_url=self.config.sd_base_url)
+            except:
+                self.warning(f"Couldn't load SD")
 
         try:
             if config.auto_update:
