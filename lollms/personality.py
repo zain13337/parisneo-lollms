@@ -452,9 +452,15 @@ Date: {{date}}
         return string
 
     def process(self, text:str, message_type:MSG_TYPE, callback=None, show_progress=False):
+        if callback is None:
+            callback = self.callback
         if text is None:
             return True
-        bot_says = self.bot_says + text
+        if message_type==MSG_TYPE.MSG_TYPE_CHUNK:
+            bot_says = self.bot_says + text
+        elif  message_type==MSG_TYPE.MSG_TYPE_FULL:
+            bot_says = text
+
         if show_progress:
             if self.nb_received_tokens==0:
                 self.start_time = datetime.now()
@@ -475,7 +481,7 @@ Date: {{date}}
             return False
         else:
             if callback:
-                callback(text,MSG_TYPE.MSG_TYPE_CHUNK)
+                callback(text,message_type)
             self.bot_says = bot_says
             return True
 
