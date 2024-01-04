@@ -182,7 +182,15 @@ def reinstall_pytorch_with_cuda():
     try:
         ASCIIColors.info("Installing cuda 12.1.1") # -c nvidia/label/cuda-12.1.1 -c nvidia -c conda-forge
         result = subprocess.run(["conda", "install", "-c", "nvidia/label/cuda-12.1.1", "-c", "nvidia", "-c", "conda-forge", "cuda-toolkit","-y"])
+    except Exception as ex:
+        ASCIIColors.error(ex)
+    try:
+        ASCIIColors.info("Installing ninja") # -c nvidia/label/cuda-12.1.1 -c nvidia -c conda-forge
         result = subprocess.run(["conda", "install", "-c", "nvidia/label/cuda-12.1.1", "-c", "nvidia", "-c", "conda-forge", "ninja", "-y"])
+    except Exception as ex:
+        ASCIIColors.error(ex)
+    try:
+        ASCIIColors.info("Installing cuda compiler") # -c nvidia/label/cuda-12.1.1 -c nvidia -c conda-forge
         result = subprocess.run(["conda", "install", "-c", "nvidia/label/cuda-12.1.1", "-c", "nvidia", "-c", "conda-forge", "cuda-compiler", "-y"])
     except Exception as ex:
         ASCIIColors.error(ex)
