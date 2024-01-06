@@ -24,6 +24,7 @@ import requests
 from io import BytesIO
 import base64
 import importlib
+import yaml
 
 
 def convert_language_name(language_name):
@@ -44,6 +45,19 @@ def convert_language_name(language_name):
     
     # Return the corresponding language code if found, or None otherwise
     return language_codes.get(language_name,"en")
+
+
+def load_config(file_path):
+    with open(file_path, 'r', encoding='utf-8') as stream:
+        config = yaml.safe_load(stream)
+
+    return config
+
+
+def save_config(config, filepath):
+    with open(filepath, "w") as f:
+        yaml.dump(config, f)
+
 
 def load_image(image_file):
     s_image_file = str(image_file)

@@ -9,6 +9,7 @@ This class provides a singleton instance of the LoLLMS web UI, allowing access t
 from lollms.app import LollmsApplication
 from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
+from pathlib import Path
 
 class LOLLMSElfServer(LollmsApplication):
     __instance = None
@@ -76,3 +77,9 @@ class LOLLMSElfServer(LollmsApplication):
             LOLLMSElfServer.__instance = self
 
     # Other methods and properties of the LoLLMSWebUI singleton class
+    def find_extension(self, path:Path, filename:str, exts:list)->Path:
+        for ext in exts:
+            full_path = path/(filename+ext)
+            if full_path.exists():
+                return full_path
+        return None

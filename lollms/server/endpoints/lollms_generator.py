@@ -1,3 +1,13 @@
+"""
+project: lollms
+file: lollms_generator.py 
+author: ParisNeo
+description: 
+    This module contains a set of FastAPI routes that provide information about the Lord of Large Language and Multimodal Systems (LoLLMs) Web UI
+    application. These routes are specific to the generation process
+
+"""
+
 from fastapi import APIRouter
 from lollms.server.elf_server import LOLLMSElfServer
 from pydantic import BaseModel
