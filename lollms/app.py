@@ -32,7 +32,8 @@ class LollmsApplication(LoLLMsCom):
                     try_select_binding=False, 
                     try_select_model=False,
                     callback=None,
-                    socketio:SocketIO=None
+                    socketio:SocketIO=None,
+                    free_mode=False
                 ) -> None:
         """
         Creates a LOLLMS Application
@@ -52,85 +53,85 @@ class LollmsApplication(LoLLMsCom):
         self.long_term_memory       = None
 
         self.tts                    = None
-
-        if self.config.enable_voice_service and load_voice_service:
-            try:
-                from lollms.audio_gen_modules.lollms_xtts import LollmsXTTS
-                self.tts = LollmsXTTS(self, voice_samples_path=lollms_paths.custom_voices_path, xtts_base_url=self.config.xtts_base_url)
-            except:
-                self.warning(f"Couldn't load XTTS")
-
-        if self.config.enable_sd_service and load_sd_service:
-            try:
-                from lollms.image_gen_modules.lollms_sd import LollmsSD
-                self.tts = LollmsSD(self, auto_sd_base_url=self.config.sd_base_url)
-            except:
-                self.warning(f"Couldn't load SD")
-
-        try:
-            if config.auto_update:
-                # Clone the repository to the target path
-                if self.lollms_paths.lollms_core_path.exists():
-                    ASCIIColors.info("Lollms_core found in the app space.\nPulling last lollms_core")
-                    subprocess.run(["git", "-C", self.lollms_paths.lollms_core_path, "pull"])            
-                if self.lollms_paths.safe_store_path.exists():
-                    ASCIIColors.info("safe_store_path found in the app space.\nPulling last safe_store_path")
-                    subprocess.run(["git", "-C", self.lollms_paths.safe_store_path, "pull"])            
-                # Pull the repository if it already exists
-                
-                ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
-                subprocess.run(["git", "-C", self.lollms_paths.bindings_zoo_path, "pull"])            
-                # Pull the repository if it already exists
-                ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
-                subprocess.run(["git", "-C", self.lollms_paths.personalities_zoo_path, "pull"])            
-                # Pull the repository if it already exists
-                ASCIIColors.info("Extensions zoo found in your personal space.\nPulling last Extensions zoo")
-                subprocess.run(["git", "-C", self.lollms_paths.extensions_zoo_path, "pull"])            
-                # Pull the repository if it already exists
-                ASCIIColors.info("Models zoo found in your personal space.\nPulling last Models zoo")
-                subprocess.run(["git", "-C", self.lollms_paths.models_zoo_path, "pull"])            
-        except Exception as ex:
-            ASCIIColors.error("Couldn't pull zoos. Please contact the main dev on our discord channel and report the problem.")
-            trace_exception(ex)
-
-        if self.config.binding_name is None:
-            ASCIIColors.warning(f"No binding selected")
-            if try_select_binding:
-                ASCIIColors.info("Please select a valid model or install a new one from a url")
-                self.menu.select_binding()
-        else:
-            if load_binding:
+        if not free_mode:
+            if self.config.enable_voice_service and load_voice_service:
                 try:
-                    ASCIIColors.info(f">Loading binding {self.config.binding_name}. Please wait ...")
-                    self.binding            = self.load_binding()
-                except Exception as ex:
-                    ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
-                    trace_exception(ex)
+                    from lollms.audio_gen_modules.lollms_xtts import LollmsXTTS
+                    self.tts = LollmsXTTS(self, voice_samples_path=lollms_paths.custom_voices_path, xtts_base_url=self.config.xtts_base_url)
+                except:
+                    self.warning(f"Couldn't load XTTS")
 
-                if self.binding is not None:
-                    ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
-                    if load_model:
-                        if self.config.model_name is None:
-                            ASCIIColors.warning(f"No model selected")
-                            if try_select_model:
-                                print("Please select a valid model")
-                                self.menu.select_model()
-                                
-                        if self.config.model_name is not None:
-                            try:
-                                ASCIIColors.info(f">Loading model {self.config.model_name}. Please wait ...")
-                                self.model          = self.load_model()
-                                if self.model is not None:
-                                    ASCIIColors.success(f"Model {self.config.model_name} loaded successfully.")
+            if self.config.enable_sd_service and load_sd_service:
+                try:
+                    from lollms.image_gen_modules.lollms_sd import LollmsSD
+                    self.tts = LollmsSD(self, auto_sd_base_url=self.config.sd_base_url)
+                except:
+                    self.warning(f"Couldn't load SD")
 
-                            except Exception as ex:
-                                ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
-                                trace_exception(ex)
-                else:
-                    ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
-            
-        self.mount_personalities()
-        self.mount_extensions()
+            try:
+                if config.auto_update:
+                    # Clone the repository to the target path
+                    if self.lollms_paths.lollms_core_path.exists():
+                        ASCIIColors.info("Lollms_core found in the app space.\nPulling last lollms_core")
+                        subprocess.run(["git", "-C", self.lollms_paths.lollms_core_path, "pull"])            
+                    if self.lollms_paths.safe_store_path.exists():
+                        ASCIIColors.info("safe_store_path found in the app space.\nPulling last safe_store_path")
+                        subprocess.run(["git", "-C", self.lollms_paths.safe_store_path, "pull"])            
+                    # Pull the repository if it already exists
+                    
+                    ASCIIColors.info("Bindings zoo found in your personal space.\nPulling last personalities zoo")
+                    subprocess.run(["git", "-C", self.lollms_paths.bindings_zoo_path, "pull"])            
+                    # Pull the repository if it already exists
+                    ASCIIColors.info("Personalities zoo found in your personal space.\nPulling last personalities zoo")
+                    subprocess.run(["git", "-C", self.lollms_paths.personalities_zoo_path, "pull"])            
+                    # Pull the repository if it already exists
+                    ASCIIColors.info("Extensions zoo found in your personal space.\nPulling last Extensions zoo")
+                    subprocess.run(["git", "-C", self.lollms_paths.extensions_zoo_path, "pull"])            
+                    # Pull the repository if it already exists
+                    ASCIIColors.info("Models zoo found in your personal space.\nPulling last Models zoo")
+                    subprocess.run(["git", "-C", self.lollms_paths.models_zoo_path, "pull"])            
+            except Exception as ex:
+                ASCIIColors.error("Couldn't pull zoos. Please contact the main dev on our discord channel and report the problem.")
+                trace_exception(ex)
+
+            if self.config.binding_name is None:
+                ASCIIColors.warning(f"No binding selected")
+                if try_select_binding:
+                    ASCIIColors.info("Please select a valid model or install a new one from a url")
+                    self.menu.select_binding()
+            else:
+                if load_binding:
+                    try:
+                        ASCIIColors.info(f">Loading binding {self.config.binding_name}. Please wait ...")
+                        self.binding            = self.load_binding()
+                    except Exception as ex:
+                        ASCIIColors.error(f"Failed to load binding.\nReturned exception: {ex}")
+                        trace_exception(ex)
+
+                    if self.binding is not None:
+                        ASCIIColors.success(f"Binding {self.config.binding_name} loaded successfully.")
+                        if load_model:
+                            if self.config.model_name is None:
+                                ASCIIColors.warning(f"No model selected")
+                                if try_select_model:
+                                    print("Please select a valid model")
+                                    self.menu.select_model()
+                                    
+                            if self.config.model_name is not None:
+                                try:
+                                    ASCIIColors.info(f">Loading model {self.config.model_name}. Please wait ...")
+                                    self.model          = self.load_model()
+                                    if self.model is not None:
+                                        ASCIIColors.success(f"Model {self.config.model_name} loaded successfully.")
+
+                                except Exception as ex:
+                                    ASCIIColors.error(f"Failed to load model.\nReturned exception: {ex}")
+                                    trace_exception(ex)
+                    else:
+                        ASCIIColors.warning(f"Couldn't load binding {self.config.binding_name}.")
+                
+            self.mount_personalities()
+            self.mount_extensions()
 
     def build_long_term_skills_memory(self):
         db_path:Path = self.lollms_paths.personal_databases_path/self.config.db_path.split(".")[0]

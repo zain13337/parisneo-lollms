@@ -17,13 +17,11 @@ from ascii_colors import ASCIIColors
 import socketio
 import uvicorn
 import argparse
+from socketio import ASGIApp
 
-app = FastAPI()
+
 sio = socketio.AsyncServer(async_mode="asgi")
-
-app.mount("/socket.io", socketio.ASGIApp(sio))
-#app.mount("/socket.io", StaticFiles(directory="path/to/socketio.js"))
-
+app = FastAPI()
 
 if __name__ == "__main__":
     # Parsong parameters
@@ -64,5 +62,7 @@ if __name__ == "__main__":
     
     
     app.include_router(lollms_generator_router)
-    
+    app = ASGIApp(socketio_server=sio, other_asgi_app=app)
+
+
     uvicorn.run(app, host=config.host, port=config.port)

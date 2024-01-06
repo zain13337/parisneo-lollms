@@ -8,9 +8,9 @@ import yaml
 
 lollms_path = Path(__file__).parent
 lollms_default_cfg_path = lollms_path / "configs/config.yaml"
-lollms_bindings_zoo_path = lollms_path / "bindings_zoo"
-lollms_personalities_zoo_path = lollms_path / "personalities_zoo"
-lollms_extensions_zoo_path = lollms_path / "extensions_zoo"
+lollms_bindings_zoo_path = lollms_path / "zoos/bindings_zoo"
+lollms_personalities_zoo_path = lollms_path / "zoos/personalities_zoo"
+lollms_extensions_zoo_path = lollms_path / "zoos/extensions_zoo"
 
 lollms_core_repo = "https://github.com/ParisNeo/lollms.git"
 safe_store_repo = "https://github.com/ParisNeo/safe_store.git"
@@ -23,7 +23,7 @@ gptqlora_repo = "https://github.com/ParisNeo/gptqlora.git"
 
 # Now we speify the personal folders
 class LollmsPaths:
-    def __init__(self, global_paths_cfg_path=None, lollms_path=None, personal_path=None, custom_default_cfg_path=None, tool_prefix=""):
+    def __init__(self, global_paths_cfg_path=None, lollms_path=None, personal_path=None, custom_default_cfg_path=None, tool_prefix="", prepare_configuration=True):
         self.global_paths_cfg_path  = global_paths_cfg_path
         if self.global_paths_cfg_path is not None:
             if self.global_paths_cfg_path.exists():
@@ -85,16 +85,20 @@ class LollmsPaths:
         ASCIIColors.yellow(f"Execution path : {self.execution_path}")
         if (self.execution_path/"zoos").exists():
             ASCIIColors.green("Local zoos folder found")
-            self.bindings_zoo_path              = self.execution_path/"zoos" / "bindings_zoo"
-            self.personalities_zoo_path         = self.execution_path/"zoos" / "personalities_zoo"
-            self.extensions_zoo_path            = self.execution_path/"zoos" / "extensions_zoo"
-            self.models_zoo_path                = self.execution_path/"zoos" / "models_zoo"
+            rt = self.execution_path / "zoos"
+            rt.mkdir(parents=True, exist_ok=True)
+            self.bindings_zoo_path              = rt / "bindings_zoo"
+            self.personalities_zoo_path         = rt / "personalities_zoo"
+            self.extensions_zoo_path            = rt / "extensions_zoo"
+            self.models_zoo_path                = rt / "models_zoo"
         else:
             ASCIIColors.orange("local zoos folder not found")
-            self.bindings_zoo_path              = self.personal_path / "bindings_zoo"
-            self.personalities_zoo_path         = self.personal_path / "personalities_zoo"
-            self.extensions_zoo_path            = self.personal_path / "extensions_zoo"
-            self.models_zoo_path                = self.personal_path / "models_zoo"
+            rt = self.personal_path / "zoos"
+            rt.mkdir(parents=True, exist_ok=True)
+            self.bindings_zoo_path              = rt / "bindings_zoo"
+            self.personalities_zoo_path         = rt / "personalities_zoo"
+            self.extensions_zoo_path            = rt / "extensions_zoo"
+            self.models_zoo_path                = rt / "models_zoo"
 
         ASCIIColors.green("----------------------Paths information-----------------------")
         ASCIIColors.red("personal_path:",end="")
@@ -131,8 +135,9 @@ class LollmsPaths:
         ASCIIColors.yellow(f"{self.models_zoo_path}")
         ASCIIColors.green("-------------------------------------------------------------")
 
-        self.create_directories()
-        self.copy_default_config()
+        if prepare_configuration:
+            self.create_directories()
+            self.copy_default_config()
 
     def __str__(self) -> str:
         directories = {
