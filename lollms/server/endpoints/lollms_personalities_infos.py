@@ -474,3 +474,10 @@ def post_to_personality(data):
     else:
         return {}
     
+
+@router.get("/post_to_personality")
+def get_current_personality_files_list():
+    if lollmsElfServer.personality is None:
+        return {"state":False, "error":"No personality selected"}
+    return {"state":True, "files":[{"name":Path(f).name, "size":Path(f).stat().st_size} for f in lollmsElfServer.personality.text_files]+[{"name":Path(f).name, "size":Path(f).stat().st_size} for f in lollmsElfServer.personality.image_files]}
+

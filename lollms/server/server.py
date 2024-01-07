@@ -42,17 +42,24 @@ if __name__ == "__main__":
         config.port=args.port
 
     LOLLMSElfServer.build_instance(config=config, lollms_paths=lollms_paths, socketio=sio)
+    from lollms.server.endpoints.lollms_binding_files_server import router as lollms_binding_files_server_router
     from lollms.server.endpoints.lollms_infos import router as lollms_infos_router
     from lollms.server.endpoints.lollms_hardware_infos import router as lollms_hardware_infos_router
     from lollms.server.endpoints.lollms_binding_infos import router as lollms_binding_infos_router
     from lollms.server.endpoints.lollms_models_infos import router as lollms_models_infos_router
     from lollms.server.endpoints.lollms_personalities_infos import router as lollms_personalities_infos_router
     from lollms.server.endpoints.lollms_extensions_infos import router as lollms_extensions_infos_router
+
+    from lollms.server.endpoints.lollms_configuration_infos import router as lollms_configuration_infos_router
+    
     
     
     from lollms.server.endpoints.lollms_generator import router as lollms_generator_router
     
 
+    from lollms.server.events.lollms_generation_events import add_events as lollms_generation_events_add
+
+    app.include_router(lollms_binding_files_server_router)
     app.include_router(lollms_infos_router)
     app.include_router(lollms_hardware_infos_router)
     app.include_router(lollms_binding_infos_router)
@@ -62,6 +69,12 @@ if __name__ == "__main__":
     
     
     app.include_router(lollms_generator_router)
+
+    app.include_router(lollms_configuration_infos_router)
+    
+
+
+    lollms_generation_events_add(sio)
     app = ASGIApp(socketio_server=sio, other_asgi_app=app)
 
 
