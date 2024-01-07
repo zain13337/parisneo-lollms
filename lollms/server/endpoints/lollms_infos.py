@@ -34,17 +34,6 @@ def get_version():
     return {"version": version}
 
 
-
-@router.get("/get_config")
-def get_config():
-    """
-    Get the configuration of the Lollms server.
-
-    Returns:
-        Config: The configuration object as a Pydantic model.
-    """    
-    return lollmsElfServer.config.to_dict()
-
 @router.get("/get_server_address")
 def get_server_address(request:Request):
     """

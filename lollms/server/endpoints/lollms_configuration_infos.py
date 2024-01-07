@@ -29,6 +29,17 @@ lollmsElfServer = LOLLMSElfServer.get_instance()
 
 
 # ----------------------------------- Settings -----------------------------------------
+
+@router.get("/get_config")
+def get_config():
+    """
+    Get the configuration of the Lollms server.
+
+    Returns:
+        Config: The configuration object as a Pydantic model.
+    """    
+    return lollmsElfServer.config.to_dict()
+
 @router.post("/update_setting")
 async def update_setting(request: Request):
     """
@@ -140,3 +151,14 @@ async def apply_settings(request: Request):
         trace_exception(ex)
         lollmsElfServer.error(ex)
         return {"status":False,"error":str(ex)}
+
+
+
+@router.post("/save_settings")
+def save_settings():
+    lollmsElfServer.config.save_config()
+    if lollmsElfServer.config["debug"]:
+        print("Configuration saved")
+    # Tell that the setting was changed
+    lollmsElfServer.socketio.emit('save_settings', {"status":True})
+    return {"status":True}
