@@ -387,7 +387,7 @@ def unmount_personality(data:PersonalityMountingInfos):
         return {"status": False, "error":"Couldn't unmount personality"}
     
 
-@router.post("/unmount_all_personalities")
+@router.get("/unmount_all_personalities")
 def unmount_all_personalities():
     lollmsElfServer.config.personalities=["generic/lollms"]
     lollmsElfServer.mounted_personalities=[]
