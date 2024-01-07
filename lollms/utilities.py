@@ -26,6 +26,27 @@ import base64
 import importlib
 import yaml
 
+import asyncio
+
+def run_async(func):
+    """
+    run_async(func) -> None
+
+    Utility function to run async functions in sync environment. Takes an async function as input and runs it within an async context.
+
+    Parameters:
+    func (function): The async function to run.
+
+    Returns:
+    None: Nothing is returned since the function is meant to perform side effects.
+    """
+  
+    async def wrapper(*args, **kwargs):
+        return await func(*args, **kwargs)
+    
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(wrapper())
+
 
 def terminate_thread(thread):
     if thread:
