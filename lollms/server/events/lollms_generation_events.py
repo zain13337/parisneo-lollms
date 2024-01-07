@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from lollms.binding import BindingBuilder, InstallOption
 from ascii_colors import ASCIIColors
 from lollms.personality import MSG_TYPE, AIPersonality
-from lollms.utilities import load_config, trace_exception, gc
+from lollms.utilities import load_config, trace_exception, gc, terminate_thread
 from pathlib import Path
 from typing import List
 import socketio
@@ -44,7 +44,7 @@ def add_events(sio:socketio):
         client_id = sid
         lollmsElfServer.connections[client_id]["requested_stop"]=True
         print(f"Client {client_id} requested canceling generation")
-        lollmsElfServer.socketio.emit("generation_canceled", {"message":"Generation is canceled."}, room=client_id)
+        lollmsElfServer.socketio.emit("generation_canceled", {"message":"Generation is canceled."}, to=client_id)
         lollmsElfServer.socketio.sleep(0)
         lollmsElfServer.busy = False
 
@@ -56,7 +56,7 @@ def add_events(sio:socketio):
         lollmsElfServer.cancel_gen = False
         ASCIIColors.info(f"Text generation requested by client: {client_id}")
         if lollmsElfServer.busy:
-            lollmsElfServer.socketio.emit("busy", {"message":"I am busy. Come back later."}, room=client_id)
+            lollmsElfServer.socketio.emit("busy", {"message":"I am busy. Come back later."}, to=client_id)
             lollmsElfServer.socketio.sleep(0)
             ASCIIColors.warning(f"OOps request {client_id}  refused!! Server busy")
             return
@@ -92,7 +92,7 @@ def add_events(sio:socketio):
                             ASCIIColors.success(f"generated:{len(lollmsElfServer.answer['full_text'].split())} words", end='\r')
                             if text is not None:
                                 lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
-                                lollmsElfServer.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
+                                lollmsElfServer.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, to=client_id)
                                 lollmsElfServer.socketio.sleep(0)
                         if client_id in lollmsElfServer.connections:# Client disconnected                      
                             if lollmsElfServer.connections[client_id]["requested_stop"]:
@@ -124,10 +124,10 @@ def add_events(sio:socketio):
                         if client_id in lollmsElfServer.connections:
                             if not lollmsElfServer.connections[client_id]["requested_stop"]:
                                 # Emit the generated text to the client
-                                lollmsElfServer.socketio.emit('text_generated', {'text': generated_text}, room=client_id)                
+                                lollmsElfServer.socketio.emit('text_generated', {'text': generated_text}, to=client_id)                
                                 lollmsElfServer.socketio.sleep(0)
                     except Exception as ex:
-                        lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                        lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, to=client_id)
                         ASCIIColors.error(f"\ndone")
                     lollmsElfServer.busy = False
                 else:
@@ -166,7 +166,7 @@ def add_events(sio:socketio):
                         def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                             if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
                                 lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
-                                lollmsElfServer.socketio.emit('text_chunk', {'chunk': text}, room=client_id)
+                                lollmsElfServer.socketio.emit('text_chunk', {'chunk': text}, to=client_id)
                                 lollmsElfServer.socketio.sleep(0)
                             try:
                                 if lollmsElfServer.connections[client_id]["requested_stop"]:
@@ -197,15 +197,15 @@ def add_events(sio:socketio):
                         ASCIIColors.success("\ndone")
 
                         # Emit the generated text to the client
-                        lollmsElfServer.socketio.emit('text_generated', {'text': generated_text}, room=client_id)
+                        lollmsElfServer.socketio.emit('text_generated', {'text': generated_text}, to=client_id)
                         lollmsElfServer.socketio.sleep(0)
                     except Exception as ex:
-                        lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                        lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, to=client_id)
                         ASCIIColors.error(f"\ndone")
                     lollmsElfServer.busy = False
             except Exception as ex:
                     trace_exception(ex)
-                    lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                    lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, to=client_id)
                     lollmsElfServer.busy = False
 
         # Start the text generation task in a separate thread

@@ -27,6 +27,23 @@ import importlib
 import yaml
 
 
+def terminate_thread(thread):
+    if thread:
+        if not thread.is_alive():
+            ASCIIColors.yellow("Thread not alive")
+            return
+
+        thread_id = thread.ident
+        exc = ctypes.py_object(SystemExit)
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, exc)
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, None)
+            del thread
+            gc.collect()
+            raise SystemError("Failed to terminate the thread.")
+        else:
+            ASCIIColors.yellow("Canceled successfully")
+
 def convert_language_name(language_name):
     # Remove leading and trailing spaces
     language_name = language_name.strip()
