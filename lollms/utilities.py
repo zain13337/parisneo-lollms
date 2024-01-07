@@ -42,11 +42,9 @@ def run_async(func):
     """
   
     async def wrapper(*args, **kwargs):
-        return await func(*args, **kwargs)
+        return asyncio.run(func(*args, **kwargs))
     
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(wrapper())
-
+    return wrapper()
 
 def terminate_thread(thread):
     if thread:

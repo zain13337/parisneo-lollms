@@ -81,6 +81,14 @@ class V1InstructGenerateRequest(BaseModel):
 router = APIRouter()
 elf_server = LOLLMSElfServer.get_instance()
 
+
+
+@router.get("/get_generation_status")
+def get_generation_status():
+    return {"status":elf_server.busy}
+
+
+
 @router.post("/generate")
 def lollms_generate(request_data: GenerateRequest):
     """

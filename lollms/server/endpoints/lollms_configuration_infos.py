@@ -80,7 +80,8 @@ def update_setting(data:SettingsInfos):
                 lollmsElfServer.binding = None
                 lollmsElfServer.model = None
                 for per in lollmsElfServer.mounted_personalities:
-                    per.model = None
+                    if per is not None:
+                        per.model = None
                 gc.collect()
                 lollmsElfServer.binding = BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.INSTALL_IF_NECESSARY, lollmsCom=lollmsElfServer)
                 lollmsElfServer.model = None
@@ -109,7 +110,8 @@ def update_setting(data:SettingsInfos):
             if lollmsElfServer.model is not None:
                 ASCIIColors.yellow("New model OK")
             for per in lollmsElfServer.mounted_personalities:
-                per.model = lollmsElfServer.model
+                if per is not None:
+                    per.model = lollmsElfServer.model
         except Exception as ex:
             trace_exception(ex)
             lollmsElfServer.InfoMessage(f"It looks like you we couldn't load the model.\nHere is the error message:\n{ex}")

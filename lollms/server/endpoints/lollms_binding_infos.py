@@ -84,7 +84,8 @@ def reload_binding( params: ReloadBindingParams):
         lollmsElfServer.binding = None
         lollmsElfServer.model = None
         for per in lollmsElfServer.mounted_personalities:
-            per.model = None
+            if per is not None:
+                per.model = None
         gc.collect()
         lollmsElfServer.binding = BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.INSTALL_IF_NECESSARY, lollmsCom=lollmsElfServer)
         lollmsElfServer.model = None
@@ -125,7 +126,8 @@ def install_binding(data:BindingInstallParams):
             lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, lollmsCom=lollmsElfServer)
             lollmsElfServer.model = lollmsElfServer.binding.build_model()
             for per in lollmsElfServer.mounted_personalities:
-                per.model = lollmsElfServer.model
+                if per is not None:
+                    per.model = lollmsElfServer.model
         return {"status": True}
     except Exception as ex:
         lollmsElfServer.error(f"Couldn't build binding: [{ex}]")
@@ -159,7 +161,8 @@ def reinstall_binding(data:BindingInstallParams):
         lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, lollmsCom=lollmsElfServer)
         lollmsElfServer.model = lollmsElfServer.binding.build_model()
         for per in lollmsElfServer.mounted_personalities:
-            per.model = lollmsElfServer.model
+            if per is not None:
+                per.model = lollmsElfServer.model
         
         return {"status": True}
     except Exception as ex:
@@ -196,7 +199,8 @@ def unInstall_binding(data:BindingInstallParams):
             lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, lollmsCom=lollmsElfServer)
             lollmsElfServer.model = lollmsElfServer.binding.build_model()
             for per in lollmsElfServer.mounted_personalities:
-                per.model = lollmsElfServer.model
+                if per is not None:
+                    per.model = lollmsElfServer.model
         else:
             lollmsElfServer.config.binding_name = None
         if lollmsElfServer.config.auto_save:

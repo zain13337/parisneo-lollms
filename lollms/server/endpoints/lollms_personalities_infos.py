@@ -168,6 +168,20 @@ def list_mounted_personalities(lollmsElfServer):
 
 
 
+
+@router.get("/get_current_personality_path_infos")
+def get_current_personality_path_infos():
+    if lollmsElfServer.personality is None:
+        return {
+            "personality_category":"", 
+            "personality_name":""
+        }
+    else:
+        return {
+            "personality_category":lollmsElfServer.personality_category, 
+            "personality_name":lollmsElfServer.personality_name
+        }
+
 # ----------------------------------- Installation/Uninstallation/Reinstallation ----------------------------------------
 
 
