@@ -299,3 +299,10 @@ def v1_instruct_generate(request_data: V1InstructGenerateRequest):
             return output["text"]
     else:
         return None
+
+
+
+@router.post("/stop_gen")
+def stop_gen():
+    elf_server.cancel_gen = True
+    return {"status": True} 
