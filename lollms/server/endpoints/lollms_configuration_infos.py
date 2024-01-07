@@ -27,32 +27,32 @@ lollmsElfServer = LOLLMSElfServer.get_instance()
 
 
 # ----------------------------------- Settings -----------------------------------------
-@router.get("/update_setting")
+@router.post("/update_setting")
 def update_setting(data:SettingsInfos):
     setting_name = data.setting_name
 
-    ASCIIColors.info(f"Requested updating of setting {data.setting_name} to {data['setting_value']}")
+    ASCIIColors.info(f"Requested updating of setting {data.setting_name} to {data.setting_value}")
     if setting_name== "temperature":
-        lollmsElfServer.config["temperature"]=float(data['setting_value'])
+        lollmsElfServer.config["temperature"]=float(data.setting_value)
     elif setting_name== "n_predict":
-        lollmsElfServer.config["n_predict"]=int(data['setting_value'])
+        lollmsElfServer.config["n_predict"]=int(data.setting_value)
     elif setting_name== "top_k":
-        lollmsElfServer.config["top_k"]=int(data['setting_value'])
+        lollmsElfServer.config["top_k"]=int(data.setting_value)
     elif setting_name== "top_p":
-        lollmsElfServer.config["top_p"]=float(data['setting_value'])
+        lollmsElfServer.config["top_p"]=float(data.setting_value)
         
     elif setting_name== "repeat_penalty":
-        lollmsElfServer.config["repeat_penalty"]=float(data['setting_value'])
+        lollmsElfServer.config["repeat_penalty"]=float(data.setting_value)
     elif setting_name== "repeat_last_n":
-        lollmsElfServer.config["repeat_last_n"]=int(data['setting_value'])
+        lollmsElfServer.config["repeat_last_n"]=int(data.setting_value)
 
     elif setting_name== "n_threads":
-        lollmsElfServer.config["n_threads"]=int(data['setting_value'])
+        lollmsElfServer.config["n_threads"]=int(data.setting_value)
     elif setting_name== "ctx_size":
-        lollmsElfServer.config["ctx_size"]=int(data['setting_value'])
+        lollmsElfServer.config["ctx_size"]=int(data.setting_value)
 
     elif setting_name== "personality_folder":
-        lollmsElfServer.personality_name=data['setting_value']
+        lollmsElfServer.personality_name=data.setting_value
         if len(lollmsElfServer.config["personalities"])>0:
             if lollmsElfServer.config["active_personality_id"]<len(lollmsElfServer.config["personalities"]):
                 lollmsElfServer.config["personalities"][lollmsElfServer.config["active_personality_id"]] = f"{lollmsElfServer.personality_category}/{lollmsElfServer.personality_name}"
@@ -68,12 +68,12 @@ def update_setting(data:SettingsInfos):
         else:
             lollmsElfServer.config["personalities"].append(f"{lollmsElfServer.personality_category}/{lollmsElfServer.personality_name}")
     elif setting_name== "override_personality_model_parameters":
-        lollmsElfServer.config["override_personality_model_parameters"]=bool(data['setting_value'])
+        lollmsElfServer.config["override_personality_model_parameters"]=bool(data.setting_value)
 
     elif setting_name== "binding_name":
-        if lollmsElfServer.config['binding_name']!= data['setting_value']:
-            print(f"New binding selected : {data['setting_value']}")
-            lollmsElfServer.config["binding_name"]=data['setting_value']
+        if lollmsElfServer.config['binding_name']!= data.setting_value:
+            print(f"New binding selected : {data.setting_value}")
+            lollmsElfServer.config["binding_name"]=data.setting_value
             try:
                 if lollmsElfServer.binding:
                     lollmsElfServer.binding.destroy_model()
@@ -92,13 +92,13 @@ def update_setting(data:SettingsInfos):
                 return {"status":False, 'error':str(ex)}
         else:
             if lollmsElfServer.config["debug"]:
-                print(f"Configuration {data.setting_name} set to {data['setting_value']}")
+                print(f"Configuration {data.setting_name} set to {data.setting_value}")
             return {'setting_name': data.setting_name, "status":True}
 
 
     elif setting_name == "model_name":
-        ASCIIColors.yellow(f"Changing model to: {data['setting_value']}")
-        lollmsElfServer.config["model_name"]=data['setting_value']
+        ASCIIColors.yellow(f"Changing model to: {data.setting_value}")
+        lollmsElfServer.config["model_name"]=data.setting_value
         lollmsElfServer.config.save_config()
         try:
             lollmsElfServer.model = None
@@ -117,14 +117,14 @@ def update_setting(data:SettingsInfos):
 
     else:
         if data.setting_name in lollmsElfServer.config.config.keys():
-            lollmsElfServer.config[data.setting_name] = data['setting_value']
+            lollmsElfServer.config[data.setting_name] = data.setting_value
         else:
             if lollmsElfServer.config["debug"]:
-                print(f"Configuration {data.setting_name} couldn't be set to {data['setting_value']}")
+                print(f"Configuration {data.setting_name} couldn't be set to {data.setting_value}")
             return {'setting_name': data.setting_name, "status":False}
 
     if lollmsElfServer.config["debug"]:
-        print(f"Configuration {data.setting_name} set to {data['setting_value']}")
+        print(f"Configuration {data.setting_name} set to {data.setting_value}")
         
     ASCIIColors.success(f"Configuration {data.setting_name} updated")
     if lollmsElfServer.config.auto_save:
