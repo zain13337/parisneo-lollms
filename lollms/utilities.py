@@ -28,6 +28,8 @@ import yaml
 
 import asyncio
 
+import ctypes
+
 def run_async(func):
     """
     run_async(func) -> None
@@ -40,12 +42,10 @@ def run_async(func):
     Returns:
     None: Nothing is returned since the function is meant to perform side effects.
     """
-  
-    async def wrapper(*args, **kwargs):
-        return asyncio.run(func(*args, **kwargs))
-    
-    return wrapper()
-
+    try:
+        return asyncio.run(func)
+    except:
+        return func
 def terminate_thread(thread):
     if thread:
         if not thread.is_alive():

@@ -24,11 +24,6 @@ import yaml
 class PersonalityListingInfos(BaseModel):
     category:str
 
-
-class PersonalityInstallInfos(BaseModel):
-    name:str
-
-
 class PersonalityMountingInfos(BaseModel):
     category:str
     folder:str
@@ -51,7 +46,7 @@ def list_personalities_categories():
     return personalities_categories
 
 @router.get("/list_personalities")
-def list_personalities(category:PersonalityListingInfos):
+def list_personalities(category:str):
     if not category:
         return []
     try:
@@ -159,7 +154,7 @@ def get_all_personalities():
 
 
 @router.get("/list_mounted_personalities")
-def list_mounted_personalities(lollmsElfServer):
+def list_mounted_personalities():
     ASCIIColors.yellow("- Listing mounted personalities")
     return {"status": True,
                     "personalities":lollmsElfServer.config["personalities"],
@@ -186,10 +181,18 @@ def get_current_personality_path_infos():
 
 
 @router.post("/reinstall_personality")
-def reinstall_personality(data: PersonalityInstallInfos):
-    if not 'name' in data:
-        data['name']=lollmsElfServer.config.personalities[lollmsElfServer.config["active_personality_id"]]
+async def reinstall_personality(request: Request):
+    """
+    Endpoint to apply configuration settings.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+
     try:
+        data = (await request.json())
+        if not 'name' in data:
+            data['name']=lollmsElfServer.config.personalities[lollmsElfServer.config["active_personality_id"]]
         personality_path = lollmsElfServer.lollms_paths.personalities_zoo_path / data['name']
         ASCIIColors.info(f"- Reinstalling personality {data['name']}...")
         ASCIIColors.info("Unmounting personality")
