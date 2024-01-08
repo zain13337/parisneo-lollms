@@ -1,0 +1,45 @@
+"""
+project: lollms
+file: lollms_personality_events.py 
+author: ParisNeo
+description: 
+    This module contains a set of socketio events that provide information about the Lord of Large Language and Multimodal Systems (LoLLMs) Web UI
+    application. These events are specific to personality
+
+"""
+from fastapi import APIRouter, Request
+from fastapi import HTTPException
+from pydantic import BaseModel
+import pkg_resources
+from lollms.server.elf_server import LOLLMSElfServer
+from fastapi.responses import FileResponse
+from lollms.binding import BindingBuilder, InstallOption
+from ascii_colors import ASCIIColors
+from lollms.personality import MSG_TYPE, AIPersonality
+from lollms.utilities import load_config, trace_exception, gc, terminate_thread
+from pathlib import Path
+from typing import List
+import socketio
+from functools import partial
+from datetime import datetime
+import os
+
+router = APIRouter()
+lollmsElfServer = LOLLMSElfServer.get_instance()
+
+
+# ----------------------------------- events -----------------------------------------
+def add_events(sio:socketio):
+    @sio.on('execute_command')
+    def execute_command(sid, data):
+        client_id = sid
+        command = data["command"]
+        parameters = data["parameters"]
+        if lollmsElfServer.personality.processor is not None:
+            lollmsElfServer.start_time = datetime.now()
+            lollmsElfServer.personality.processor.callback = partial(lollmsElfServer.process_chunk, client_id=client_id)
+            lollmsElfServer.personality.processor.execute_command(command, parameters)
+        else:
+            lollmsElfServer.warning("Non scripted personalities do not support commands",client_id=client_id)
+        lollmsElfServer.close_message(client_id)
+    
