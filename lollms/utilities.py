@@ -30,6 +30,12 @@ import asyncio
 
 import ctypes
 
+def is_asyncio_loop_running():
+    try:
+        return asyncio.get_event_loop().is_running()
+    except RuntimeError:  # This gets raised if there's no running event loop
+        return False
+
 def run_async(func):
     """
     run_async(func) -> None
@@ -42,10 +48,13 @@ def run_async(func):
     Returns:
     None: Nothing is returned since the function is meant to perform side effects.
     """
-    try:
-        return asyncio.run(func)
-    except:
-        return func
+    if is_asyncio_loop_running():
+        # We're in a running event loop, so we can call the function with asyncio.create_task
+        asyncio.create_task(func())
+    else: 
+        # We're not in a running event loop, so we need to create one and run the function in it
+        asyncio.run(func()) 
+        
 def terminate_thread(thread):
     if thread:
         if not thread.is_alive():
