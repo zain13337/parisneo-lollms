@@ -98,15 +98,19 @@ def encode_image(image_path, max_image_width=-1):
     image = Image.open(image_path)
     width, height = image.size
 
+    # Check and convert image format if needed
+    if image.format not in ['PNG', 'JPEG', 'GIF', 'WEBP']:
+        image = image.convert('JPEG')
+
+
     if max_image_width != -1 and width > max_image_width:
         ratio = max_image_width / width
         new_width = max_image_width
         new_height = int(height * ratio)
+        f = image.format
         image = image.resize((new_width, new_height))
+        image.format = f
 
-    # Check and convert image format if needed
-    if image.format not in ['PNG', 'JPEG', 'GIF', 'WEBP']:
-        image = image.convert('JPEG')
 
     # Save the image to a BytesIO object
     byte_arr = io.BytesIO()
