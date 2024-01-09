@@ -92,6 +92,28 @@ def convert_language_name(language_name):
     return language_codes.get(language_name,"en")
 
 
+# Function to encode the image
+def encode_image(image_path, max_image_width=-1):
+    image = Image.open(image_path)
+    width, height = image.size
+
+    if max_image_width != -1 and width > max_image_width:
+        ratio = max_image_width / width
+        new_width = max_image_width
+        new_height = int(height * ratio)
+        image = image.resize((new_width, new_height))
+
+    # Check and convert image format if needed
+    if image.format not in ['PNG', 'JPEG', 'GIF', 'WEBP']:
+        image = image.convert('JPEG')
+
+    # Save the image to a BytesIO object
+    byte_arr = io.BytesIO()
+    image.save(byte_arr, format=image.format)
+    byte_arr = byte_arr.getvalue()
+
+    return base64.b64encode(byte_arr).decode('utf-8')
+
 def load_config(file_path):
     with open(file_path, 'r', encoding='utf-8') as stream:
         config = yaml.safe_load(stream)

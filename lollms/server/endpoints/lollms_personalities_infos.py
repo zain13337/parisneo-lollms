@@ -32,8 +32,7 @@ class PersonalityMountingInfos(BaseModel):
 class PersonalitySelectionInfos(BaseModel):
     id:int
 
-# --------------------- Route -------------------------------
-
+# ----------------------- Defining router and main class ------------------------------
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 

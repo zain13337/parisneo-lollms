@@ -22,6 +22,7 @@ class ModelReferenceParams(BaseModel):
     path: str
 
 
+# ----------------------- Defining router and main class ------------------------------
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 

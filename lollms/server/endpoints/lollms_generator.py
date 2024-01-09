@@ -77,18 +77,20 @@ class V1InstructGenerateRequest(BaseModel):
     temperature: float
     max_tokens: float
 
+# ----------------------- Defining router and main class ------------------------------
 
 router = APIRouter()
 elf_server = LOLLMSElfServer.get_instance()
 
 
+# ----------------------------------- Generation status -----------------------------------------
 
 @router.get("/get_generation_status")
 def get_generation_status():
     return {"status":elf_server.busy}
 
 
-
+# ----------------------------------- Generation -----------------------------------------
 @router.post("/generate")
 def lollms_generate(request_data: GenerateRequest):
     """

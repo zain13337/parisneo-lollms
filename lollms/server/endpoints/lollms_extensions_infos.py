@@ -28,7 +28,8 @@ class ExtensionMountingInfos(BaseModel):
     folder:str
     language:str
 
-# --------------------- Route -------------------------------
+# ----------------------- Defining router and main class ------------------------------
+
     
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()

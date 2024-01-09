@@ -18,6 +18,7 @@ from typing import List
 import psutil
 import subprocess
 
+# ----------------------- Defining router and main class ------------------------------
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 

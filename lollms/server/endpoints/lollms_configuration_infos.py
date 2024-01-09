@@ -24,6 +24,8 @@ class SettingsInfos(BaseModel):
     setting_name:str
     setting_value:str
 
+# ----------------------- Defining router and main class ------------------------------
+
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 

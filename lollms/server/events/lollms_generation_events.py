@@ -22,14 +22,13 @@ from typing import List
 import socketio
 import os
 
-router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 
 
 # ----------------------------------- events -----------------------------------------
 def add_events(sio:socketio):
     @sio.on('cancel_generation')
-    def cancel_generation(sid, environ):
+    def cancel_generation(sid):
         client_id = sid
         lollmsElfServer.cancel_gen = True
         #kill thread
@@ -40,7 +39,7 @@ def add_events(sio:socketio):
     
     
     @sio.on('cancel_text_generation')
-    def cancel_text_generation(sid, environ):
+    def cancel_text_generation(sid):
         client_id = sid
         lollmsElfServer.connections[client_id]["requested_stop"]=True
         print(f"Client {client_id} requested canceling generation")
@@ -51,7 +50,7 @@ def add_events(sio:socketio):
 
     # A copy of the original lollms-server generation code needed for playground
     @sio.on('generate_text')
-    def handle_generate_text(sid, environ, data):
+    def handle_generate_text(sid, data):
         client_id = sid
         lollmsElfServer.cancel_gen = False
         ASCIIColors.info(f"Text generation requested by client: {client_id}")

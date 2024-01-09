@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import List
 import shutil
 
+# ----------------------- Defining router and main class ------------------------------
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 

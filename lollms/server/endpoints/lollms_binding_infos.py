@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import List
 import json
 
+# ----------------------------------- Personal files -----------------------------------------
 class ReloadBindingParams(BaseModel):
     binding_name: str
 
@@ -25,6 +26,7 @@ class BindingInstallParams(BaseModel):
     name: str
 
 
+# ----------------------- Defining router and main class ------------------------------
 router = APIRouter()
 lollmsElfServer = LOLLMSElfServer.get_instance()
 
@@ -74,11 +76,52 @@ def list_bindings():
     return bindings
 
 # ----------------------------------- Reloading ----------------------------------------
-@router.post("/reload_binding")
-def reload_binding( params: ReloadBindingParams):
-    print(f"Roloading binding selected : {params.binding_name}")
-    lollmsElfServer.config["binding_name"]=params.binding_name
+
+@router.post("/open_code_in_vs_code")
+async def open_code_in_vs_code(request: Request):
+    """
+    Opens code in vs code.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+
     try:
+        data = (await request.json())
+        discussion_id = data.get("discussion_id","unknown_discussion")
+        message_id = data.get("message_id","")
+        code = data["code"]
+        discussion_id = data.get("discussion_id","unknown_discussion")
+        message_id = data.get("message_id","unknown_message")
+        language = data.get("language","python")
+
+        ASCIIColors.info("Opening folder:")
+        # Create a temporary file.
+        root_folder = lollmsElfServer.lollms_paths.personal_outputs_path/"discussions"/f"d_{discussion_id}"/f"{message_id}.py"
+        root_folder.mkdir(parents=True,exist_ok=True)
+        tmp_file = root_folder/f"ai_code_{message_id}.py"
+        with open(tmp_file,"w") as f:
+            f.write(code)
+        os.system('code ' + str(root_folder))
+        return {"output": "OK", "execution_time": 0}
+    except Exception as ex:
+        trace_exception(ex)
+        lollmsElfServer.error(ex)
+        return {"status":False,"error":str(ex)}
+
+@router.post("/reload_binding")
+async def reload_binding(request: Request):
+    """
+    Opens code in vs code.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+
+    try:
+        data = (await request.json())
+        print(f"Roloading binding selected : {data['binding_name']}")
+        lollmsElfServer.config["binding_name"]=data['binding_name']
         if lollmsElfServer.binding:
             lollmsElfServer.binding.destroy_model()
         lollmsElfServer.binding = None
@@ -226,29 +269,44 @@ def get_active_binding_settings():
     else:
         return {}
 
-def set_active_binding_settings(data):
-    print("- Setting binding settings")
-    
-    if lollmsElfServer.binding is not None:
-        if hasattr(lollmsElfServer.binding,"binding_config"):
-            for entry in data:
-                if entry["type"]=="list" and type(entry["value"])==str:
-                    try:
-                        v = json.loads(entry["value"])
-                    except:
-                        v= ""
-                    if type(v)==list:
-                        entry["value"] = v
-                    else:
-                        entry["value"] = [entry["value"]]
-            lollmsElfServer.binding.binding_config.update_template(data)
-            lollmsElfServer.binding.binding_config.config.save_config()
-            lollmsElfServer.binding.settings_updated()
-            if lollmsElfServer.config.auto_save:
-                ASCIIColors.info("Saving configuration")
-                lollmsElfServer.config.save_config()
-            return {'status':True}
+
+@router.post("/set_active_binding_settings")
+async def set_active_binding_settings(request: Request):
+    """
+    Opens code in vs code.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+
+    try:
+        data = (await request.json())
+        print("- Setting binding settings")
+        
+        if lollmsElfServer.binding is not None:
+            if hasattr(lollmsElfServer.binding,"binding_config"):
+                for entry in data:
+                    if entry["type"]=="list" and type(entry["value"])==str:
+                        try:
+                            v = json.loads(entry["value"])
+                        except:
+                            v= ""
+                        if type(v)==list:
+                            entry["value"] = v
+                        else:
+                            entry["value"] = [entry["value"]]
+                lollmsElfServer.binding.binding_config.update_template(data)
+                lollmsElfServer.binding.binding_config.config.save_config()
+                lollmsElfServer.binding.settings_updated()
+                if lollmsElfServer.config.auto_save:
+                    ASCIIColors.info("Saving configuration")
+                    lollmsElfServer.config.save_config()
+                return {'status':True}
+            else:
+                return {'status':False}
         else:
             return {'status':False}
-    else:
-        return {'status':False}
+    except Exception as ex:
+        trace_exception(ex)
+        lollmsElfServer.error(ex)
+        return {"status":False,"error":str(ex)}
