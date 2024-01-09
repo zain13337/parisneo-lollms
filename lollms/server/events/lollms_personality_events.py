@@ -1,10 +1,9 @@
 """
 project: lollms
-file: lollms_personality_events.py 
+file: lollms_files_events.py 
 author: ParisNeo
 description: 
-    This module contains a set of socketio events that provide information about the Lord of Large Language and Multimodal Systems (LoLLMs) Web UI
-    application. These events are specific to personality
+    Events related to socket io personality events
 
 """
 from fastapi import APIRouter, Request
@@ -30,6 +29,50 @@ lollmsElfServer = LOLLMSElfServer.get_instance()
 
 # ----------------------------------- events -----------------------------------------
 def add_events(sio:socketio):
+            
+    @sio.on('get_personality_files')
+    def get_personality_files(sid, data):
+        client_id = sid
+        lollmsElfServer.connections[client_id]["generated_text"]       = ""
+        lollmsElfServer.connections[client_id]["cancel_generation"]    = False
+        
+        try:
+            lollmsElfServer.personality.setCallback(partial(lollmsElfServer.process_chunk,client_id = client_id))
+        except Exception as ex:
+            trace_exception(ex)        
+
+    @sio.on('send_file_chunk')
+    def send_file_chunk(sid, data):
+        client_id = sid
+        filename = data['filename']
+        chunk = data['chunk']
+        offset = data['offset']
+        is_last_chunk = data['isLastChunk']
+        chunk_index = data['chunkIndex']
+        path:Path = lollmsElfServer.lollms_paths.personal_uploads_path / lollmsElfServer.personality.personality_folder_name
+        path.mkdir(parents=True, exist_ok=True)
+        file_path = path / data["filename"]
+        # Save the chunk to the server or process it as needed
+        # For example:
+        if chunk_index==0:
+            with open(file_path, 'wb') as file:
+                file.write(chunk)
+        else:
+            with open(file_path, 'ab') as file:
+                file.write(chunk)
+
+        if is_last_chunk:
+            print('File received and saved successfully')
+            if lollmsElfServer.personality.processor:
+                result = lollmsElfServer.personality.processor.add_file(file_path, partial(lollmsElfServer.process_chunk, client_id=client_id))
+            else:
+                result = lollmsElfServer.personality.add_file(file_path, partial(lollmsElfServer.process_chunk, client_id=client_id))
+
+            lollmsElfServer.run_async(partial(sio.emit,'file_received', {'status': True, 'filename': filename}))
+        else:
+            # Request the next chunk from the client
+            lollmsElfServer.run_async(partial(sio.emit,'request_next_chunk', {'offset': offset + len(chunk)}))
+
     @sio.on('execute_command')
     def execute_command(sid, data):
         client_id = sid

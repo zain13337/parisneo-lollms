@@ -154,7 +154,7 @@ class AudioRecorder:
                     audio_data = self.audio_frames.astype(np.float32)
                     audio = wave.open(str(self.filename), 'wb')
                     audio.setnchannels(self.channels)
-                    audio.setsampwidth(audio_stream.dtype.itemsize)
+                    audio.setsampwidth(self.audio_stream.dtype.itemsize)
                     audio.setframerate(self.sample_rate)
                     audio.writeframes(b''.join(self.audio_frames[non_silent_start:non_silent_end]))
                     audio.close()

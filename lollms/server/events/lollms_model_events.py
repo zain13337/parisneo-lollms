@@ -1,10 +1,9 @@
 """
 project: lollms
-file: lollms_binding_files_server.py 
+file: lollms_files_events.py 
 author: ParisNeo
 description: 
-    This module contains a set of FastAPI routes that provide information about the Lord of Large Language and Multimodal Systems (LoLLMs) Web UI
-    application. These routes are specific to serving files
+    Events related to socket io model events
 
 """
 from fastapi import APIRouter, Request

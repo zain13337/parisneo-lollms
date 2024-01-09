@@ -1,10 +1,9 @@
 """
 project: lollms
-file: lollms_binding_files_server.py 
+file: lollms_generation_events.py 
 author: ParisNeo
 description: 
-    This module contains a set of FastAPI routes that provide information about the Lord of Large Language and Multimodal Systems (LoLLMs) Web UI
-    application. These routes are specific to serving files
+    Events related to socket io generation
 
 """
 from fastapi import APIRouter, Request
@@ -16,12 +15,14 @@ from fastapi.responses import FileResponse
 from lollms.binding import BindingBuilder, InstallOption
 from ascii_colors import ASCIIColors
 from lollms.personality import MSG_TYPE, AIPersonality
-from lollms.utilities import load_config, trace_exception, gc, terminate_thread
+from lollms.types import SENDER_TYPES
+from lollms.utilities import load_config, trace_exception, gc, terminate_thread, run_async
 from pathlib import Path
 from typing import List
 import socketio
 import os
-
+from functools import partial
+import threading
 lollmsElfServer = LOLLMSElfServer.get_instance()
 
 
@@ -43,8 +44,7 @@ def add_events(sio:socketio):
         client_id = sid
         lollmsElfServer.connections[client_id]["requested_stop"]=True
         print(f"Client {client_id} requested canceling generation")
-        lollmsElfServer.socketio.emit("generation_canceled", {"message":"Generation is canceled."}, to=client_id)
-        lollmsElfServer.socketio.sleep(0)
+        run_async(partial(lollmsElfServer.socketio.emit,"generation_canceled", {"message":"Generation is canceled."}, to=client_id))
         lollmsElfServer.busy = False
 
 
@@ -55,8 +55,7 @@ def add_events(sio:socketio):
         lollmsElfServer.cancel_gen = False
         ASCIIColors.info(f"Text generation requested by client: {client_id}")
         if lollmsElfServer.busy:
-            lollmsElfServer.socketio.emit("busy", {"message":"I am busy. Come back later."}, to=client_id)
-            lollmsElfServer.socketio.sleep(0)
+            run_async(partial(lollmsElfServer.socketio.emit,"busy", {"message":"I am busy. Come back later."}, to=client_id))
             ASCIIColors.warning(f"OOps request {client_id}  refused!! Server busy")
             return
         def generate_text():
@@ -91,8 +90,7 @@ def add_events(sio:socketio):
                             ASCIIColors.success(f"generated:{len(lollmsElfServer.answer['full_text'].split())} words", end='\r')
                             if text is not None:
                                 lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
-                                lollmsElfServer.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, to=client_id)
-                                lollmsElfServer.socketio.sleep(0)
+                                run_async(partial(lollmsElfServer.socketio.emit,'text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, to=client_id))
                         if client_id in lollmsElfServer.connections:# Client disconnected                      
                             if lollmsElfServer.connections[client_id]["requested_stop"]:
                                 return False
@@ -123,10 +121,9 @@ def add_events(sio:socketio):
                         if client_id in lollmsElfServer.connections:
                             if not lollmsElfServer.connections[client_id]["requested_stop"]:
                                 # Emit the generated text to the client
-                                lollmsElfServer.socketio.emit('text_generated', {'text': generated_text}, to=client_id)                
-                                lollmsElfServer.socketio.sleep(0)
+                                run_async(partial(lollmsElfServer.socketio.emit,'text_generated', {'text': generated_text}, to=client_id))   
                     except Exception as ex:
-                        lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, to=client_id)
+                        run_async(partial(lollmsElfServer.socketio.emit,'generation_error', {'error': str(ex)}, to=client_id))
                         ASCIIColors.error(f"\ndone")
                     lollmsElfServer.busy = False
                 else:
@@ -165,8 +162,7 @@ def add_events(sio:socketio):
                         def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                             if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
                                 lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
-                                lollmsElfServer.socketio.emit('text_chunk', {'chunk': text}, to=client_id)
-                                lollmsElfServer.socketio.sleep(0)
+                                run_async(partial(lollmsElfServer.socketio.emit,'text_chunk', {'chunk': text}, to=client_id))
                             try:
                                 if lollmsElfServer.connections[client_id]["requested_stop"]:
                                     return False
@@ -196,16 +192,106 @@ def add_events(sio:socketio):
                         ASCIIColors.success("\ndone")
 
                         # Emit the generated text to the client
-                        lollmsElfServer.socketio.emit('text_generated', {'text': generated_text}, to=client_id)
-                        lollmsElfServer.socketio.sleep(0)
+                        run_async(partial(lollmsElfServer.socketio.emit,'text_generated', {'text': generated_text}, to=client_id))
                     except Exception as ex:
-                        lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, to=client_id)
+                        run_async(partial(lollmsElfServer.socketio.emit,'generation_error', {'error': str(ex)}, to=client_id))
                         ASCIIColors.error(f"\ndone")
                     lollmsElfServer.busy = False
             except Exception as ex:
                     trace_exception(ex)
-                    lollmsElfServer.socketio.emit('generation_error', {'error': str(ex)}, to=client_id)
+                    run_async(partial(lollmsElfServer.socketio.emit,'generation_error', {'error': str(ex)}, to=client_id))
                     lollmsElfServer.busy = False
 
         # Start the text generation task in a separate thread
         task = lollmsElfServer.socketio.start_background_task(target=generate_text)
+
+
+
+    @sio.on('generate_msg')
+    def generate_msg(sid, data):
+        client_id = sid
+        lollmsElfServer.cancel_gen = False
+        lollmsElfServer.connections[client_id]["generated_text"]=""
+        lollmsElfServer.connections[client_id]["cancel_generation"]=False
+        lollmsElfServer.connections[client_id]["continuing"]=False
+        lollmsElfServer.connections[client_id]["first_chunk"]=True
+        
+
+        
+        if not lollmsElfServer.model:
+            ASCIIColors.error("Model not selected. Please select a model")
+            lollmsElfServer.error("Model not selected. Please select a model", client_id=client_id)
+            return
+
+        if not lollmsElfServer.busy:
+            if lollmsElfServer.connections[client_id]["current_discussion"] is None:
+                if lollmsElfServer.db.does_last_discussion_have_messages():
+                    lollmsElfServer.connections[client_id]["current_discussion"] = lollmsElfServer.db.create_discussion()
+                else:
+                    lollmsElfServer.connections[client_id]["current_discussion"] = lollmsElfServer.db.load_last_discussion()
+
+            prompt = data["prompt"]
+            ump = lollmsElfServer.config.discussion_prompt_separator +lollmsElfServer.config.user_name.strip() if lollmsElfServer.config.use_user_name_in_discussions else lollmsElfServer.personality.user_message_prefix
+            message = lollmsElfServer.connections[client_id]["current_discussion"].add_message(
+                message_type    = MSG_TYPE.MSG_TYPE_FULL.value,
+                sender_type     = SENDER_TYPES.SENDER_TYPES_USER.value,
+                sender          = ump.replace(lollmsElfServer.config.discussion_prompt_separator,"").replace(":",""),
+                content=prompt,
+                metadata=None,
+                parent_message_id=lollmsElfServer.message_id
+            )
+
+            ASCIIColors.green("Starting message generation by "+lollmsElfServer.personality.name)
+            lollmsElfServer.connections[client_id]['generation_thread'] = threading.Thread(target=lollmsElfServer.start_message_generation, args=(message, message.id, client_id))
+            lollmsElfServer.connections[client_id]['generation_thread'].start()
+            
+            lollmsElfServer.socketio.sleep(0.01)
+            ASCIIColors.info("Started generation task")
+            lollmsElfServer.busy=True
+            #tpe = threading.Thread(target=lollmsElfServer.start_message_generation, args=(message, message_id, client_id))
+            #tpe.start()
+        else:
+            lollmsElfServer.error("I am busy. Come back later.", client_id=client_id)
+
+    @sio.on('generate_msg_from')
+    def generate_msg_from(sid, data):
+        client_id = sid
+        lollmsElfServer.cancel_gen = False
+        lollmsElfServer.connections[client_id]["continuing"]=False
+        lollmsElfServer.connections[client_id]["first_chunk"]=True
+        
+        if lollmsElfServer.connections[client_id]["current_discussion"] is None:
+            ASCIIColors.warning("Please select a discussion")
+            lollmsElfServer.error("Please select a discussion first", client_id=client_id)
+            return
+        id_ = data['id']
+        generation_type = data.get('msg_type',None)
+        if id_==-1:
+            message = lollmsElfServer.connections[client_id]["current_discussion"].current_message
+        else:
+            message = lollmsElfServer.connections[client_id]["current_discussion"].load_message(id_)
+        if message is None:
+            return            
+        lollmsElfServer.connections[client_id]['generation_thread'] = threading.Thread(target=lollmsElfServer.start_message_generation, args=(message, message.id, client_id, False, generation_type))
+        lollmsElfServer.connections[client_id]['generation_thread'].start()
+
+    @sio.on('continue_generate_msg_from')
+    def handle_connection(sid, data):
+        client_id = sid
+        lollmsElfServer.cancel_gen = False
+        lollmsElfServer.connections[client_id]["continuing"]=True
+        lollmsElfServer.connections[client_id]["first_chunk"]=True
+        
+        if lollmsElfServer.connections[client_id]["current_discussion"] is None:
+            ASCIIColors.yellow("Please select a discussion")
+            lollmsElfServer.error("Please select a discussion", client_id=client_id)
+            return
+        id_ = data['id']
+        if id_==-1:
+            message = lollmsElfServer.connections[client_id]["current_discussion"].current_message
+        else:
+            message = lollmsElfServer.connections[client_id]["current_discussion"].load_message(id_)
+
+        lollmsElfServer.connections[client_id]["generated_text"]=message.content
+        lollmsElfServer.connections[client_id]['generation_thread'] = threading.Thread(target=lollmsElfServer.start_message_generation, args=(message, message.id, client_id, True))
+        lollmsElfServer.connections[client_id]['generation_thread'].start()
