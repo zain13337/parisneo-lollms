@@ -54,8 +54,10 @@ def run_async(func):
         asyncio.create_task(func())
     else: 
         # We're not in a running event loop, so we need to create one and run the function in it
-        asyncio.run(func()) 
-        
+        try:
+            asyncio.run(func()) 
+        except:
+            func()        
 def terminate_thread(thread):
     if thread:
         if not thread.is_alive():

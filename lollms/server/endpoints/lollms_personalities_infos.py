@@ -8,6 +8,8 @@ description:
 
 """
 from fastapi import APIRouter, Request
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import pkg_resources
 from lollms.server.elf_server import LOLLMSElfServer
@@ -482,7 +484,7 @@ def set_active_personality_settings(data):
 
 
 # ------------------------------------------- Interaction with personas ------------------------------------------------
-@router.get("/post_to_personality")
+@router.post("/post_to_personality")
 def post_to_personality(data):
     """Post data to a personality"""
     if hasattr(lollmsElfServer.personality.processor,'handle_request'):
@@ -491,7 +493,7 @@ def post_to_personality(data):
         return {}
     
 
-@router.get("/post_to_personality")
+@router.get("/get_current_personality_files_list")
 def get_current_personality_files_list():
     if lollmsElfServer.personality is None:
         return {"state":False, "error":"No personality selected"}

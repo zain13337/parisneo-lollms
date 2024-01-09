@@ -159,7 +159,7 @@ async def serve_outputs(path: str):
     Returns:
         FileResponse: The file response containing the requested output file.
     """
-    root_dir = lollmsElfServer.lollms_paths.personal_path / "outputs"
+    root_dir = lollmsElfServer.lollms_paths.personal_outputs_path
     root_dir.mkdir(exist_ok=True, parents=True)
     file_path = root_dir / path
 
