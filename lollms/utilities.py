@@ -29,6 +29,7 @@ import yaml
 import asyncio
 
 import ctypes
+import io
 
 def is_asyncio_loop_running():
     try:
