@@ -8,7 +8,7 @@ description:
 
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from lollms.server.elf_server import LOLLMSElfServer
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse
@@ -16,21 +16,7 @@ from lollms.types import MSG_TYPE
 from lollms.utilities import detect_antiprompt, remove_text_from_string
 from ascii_colors import ASCIIColors
 class GenerateRequest(BaseModel):
-    """
-    Data model for the Generate Request.
-
-    Attributes:
-    - text: str representing the input text prompt for text generation.
-    - n_predict: int representing the number of predictions to generate.
-    - stream: bool indicating whether to stream the generated text or not.
-    - temperature: float representing the temperature parameter for text generation.
-    - top_k: int representing the top_k parameter for text generation.
-    - top_p: float representing the top_p parameter for text generation.
-    - repeat_penalty: float representing the repeat_penalty parameter for text generation.
-    - repeat_last_n: int representing the repeat_last_n parameter for text generation.
-    - seed: int representing the seed for text generation.
-    - n_threads: int representing the number of threads for text generation.
-    """    
+ 
     text: str
     n_predict: int = 1024
     stream: bool = False
@@ -92,22 +78,35 @@ def get_generation_status():
 
 # ----------------------------------- Generation -----------------------------------------
 @router.post("/generate")
-def lollms_generate(request_data: GenerateRequest):
+def lollms_generate(request_data: Request):
     """
     Endpoint for generating text from prompts using the lollms fastapi server.
 
     Args:
-    - request_data: GenerateRequest object containing the input text, number of predictions, and stream flag.
+    Data model for the Generate Request.
 
+    Attributes:
+    - text: str representing the input text prompt for text generation.
+    - n_predict: int representing the number of predictions to generate.
+    - stream: bool indicating whether to stream the generated text or not.
+    - temperature: float representing the temperature parameter for text generation.
+    - top_k: int representing the top_k parameter for text generation.
+    - top_p: float representing the top_p parameter for text generation.
+    - repeat_penalty: float representing the repeat_penalty parameter for text generation.
+    - repeat_last_n: int representing the repeat_last_n parameter for text generation.
+    - seed: int representing the seed for text generation.
+    - n_threads: int representing the number of threads for text generation.
+
+    
     Returns:
     - If the elf_server binding is not None:
         - If stream is True, returns a StreamingResponse of generated text chunks.
         - If stream is False, returns the generated text as a string.
     - If the elf_server binding is None, returns None.
-    """    
-    text = request_data.text
-    n_predict = request_data.n_predict
-    stream = request_data.stream
+    """ 
+    text = request_data["text"]
+    n_predict = request_data.get("n_predict", 1024)
+    stream = request_data.get("stream", False)
     
     if elf_server.binding is not None:
         if stream:
