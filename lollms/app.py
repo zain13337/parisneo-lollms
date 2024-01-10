@@ -1,6 +1,6 @@
 from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
-from lollms.personality import PersonalityBuilder
+from lollms.personality import PersonalityBuilder, AIPersonality
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
 from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
@@ -39,31 +39,32 @@ class LollmsApplication(LoLLMsCom):
         Creates a LOLLMS Application
         """
         super().__init__(socketio)
-        self.app_name               = app_name
-        self.config                 = config
-        self.lollms_paths           = lollms_paths
+        self.app_name                   = app_name
+        self.config                     = config
+        self.lollms_paths               = lollms_paths
 
-        self.menu                   = MainMenu(self, callback)
-        self.mounted_personalities  = []
-        self.personality            = None
+        self.menu                       = MainMenu(self, callback)
+        self.mounted_personalities      = []
+        self.personality:AIPersonality  = None
 
-        self.mounted_extensions     = []
-        self.binding                = None
-        self.model:LLMBinding       = None
-        self.long_term_memory       = None
+        self.mounted_extensions         = []
+        self.binding                    = None
+        self.model:LLMBinding           = None
+        self.long_term_memory           = None
 
-        self.tts                    = None
+        self.tts                        = None
+
         if not free_mode:
             if self.config.enable_voice_service and load_voice_service:
                 try:
-                    from lollms.audio_gen_modules.lollms_xtts import LollmsXTTS
+                    from lollms.services.xtts.lollms_xtts import LollmsXTTS
                     self.tts = LollmsXTTS(self, voice_samples_path=lollms_paths.custom_voices_path, xtts_base_url=self.config.xtts_base_url)
                 except:
                     self.warning(f"Couldn't load XTTS")
 
             if self.config.enable_sd_service and load_sd_service:
                 try:
-                    from lollms.image_gen_modules.lollms_sd import LollmsSD
+                    from lollms.services.sd.lollms_sd import LollmsSD
                     self.tts = LollmsSD(self, auto_sd_base_url=self.config.sd_base_url)
                 except:
                     self.warning(f"Couldn't load SD")

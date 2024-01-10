@@ -464,7 +464,7 @@ def get_active_personality_settings():
     else:
         return {}
 
-@router.post("/get_active_personality_settings")
+@router.post("/set_active_personality_settings")
 def set_active_personality_settings(data):
     print("- Setting personality settings")
     
@@ -475,6 +475,7 @@ def set_active_personality_settings(data):
             if lollmsElfServer.config.auto_save:
                 ASCIIColors.info("Saving configuration")
                 lollmsElfServer.config.save_config()
+            lollmsElfServer.personality.settings_updated()
             return {'status':True}
         else:
             return {'status':False}
@@ -492,10 +493,3 @@ def post_to_personality(data):
     else:
         return {}
     
-
-@router.get("/get_current_personality_files_list")
-def get_current_personality_files_list():
-    if lollmsElfServer.personality is None:
-        return {"state":False, "error":"No personality selected"}
-    return {"state":True, "files":[{"name":Path(f).name, "size":Path(f).stat().st_size} for f in lollmsElfServer.personality.text_files]+[{"name":Path(f).name, "size":Path(f).stat().st_size} for f in lollmsElfServer.personality.image_files]}
-

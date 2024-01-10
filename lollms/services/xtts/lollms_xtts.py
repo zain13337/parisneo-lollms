@@ -63,7 +63,7 @@ def get_xtts(lollms_paths:LollmsPaths):
         ASCIIColors.success("lollms_xtts found.")
         ASCIIColors.success("Loading source file...",end="")
         # use importlib to load the module from the file path
-        from lollms.audio_gen_modules.lollms_xtts import LollmsXTTS
+        from lollms.services.xtts.lollms_xtts import LollmsXTTS
         ASCIIColors.success("ok")
         return LollmsXTTS
 

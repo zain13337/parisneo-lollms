@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from lollms.binding import BindingBuilder, InstallOption
 from ascii_colors import ASCIIColors
 from lollms.personality import MSG_TYPE, AIPersonality
-from lollms.utilities import load_config, trace_exception, gc, terminate_thread
+from lollms.utilities import load_config, trace_exception, gc, terminate_thread, run_async
 from pathlib import Path
 from typing import List
 import socketio
@@ -68,10 +68,10 @@ def add_events(sio:socketio):
             else:
                 result = lollmsElfServer.personality.add_file(file_path, partial(lollmsElfServer.process_chunk, client_id=client_id))
 
-            lollmsElfServer.run_async(partial(sio.emit,'file_received', {'status': True, 'filename': filename}))
+            run_async(partial(sio.emit,'file_received', {'status': True, 'filename': filename}))
         else:
             # Request the next chunk from the client
-            lollmsElfServer.run_async(partial(sio.emit,'request_next_chunk', {'offset': offset + len(chunk)}))
+            run_async(partial(sio.emit,'request_next_chunk', {'offset': offset + len(chunk)}))
 
     @sio.on('execute_command')
     def execute_command(sid, data):

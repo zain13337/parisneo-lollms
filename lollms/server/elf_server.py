@@ -9,6 +9,7 @@ This class provides a singleton instance of the LoLLMS web UI, allowing access t
 from lollms.app import LollmsApplication
 from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
+from lollms.personality import AIPersonality
 from pathlib import Path
 
 class LOLLMSElfServer(LollmsApplication):

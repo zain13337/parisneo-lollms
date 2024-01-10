@@ -61,7 +61,7 @@ def get_sd(lollms_paths:LollmsPaths):
         ASCIIColors.success("lollms_sd found.")
         ASCIIColors.success("Loading source file...",end="")
         # use importlib to load the module from the file path
-        from lollms.image_gen_modules.lollms_sd import LollmsSD
+        from lollms.services.sd.lollms_sd import LollmsSD
         ASCIIColors.success("ok")
         return LollmsSD
 

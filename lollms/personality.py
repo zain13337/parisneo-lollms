@@ -679,6 +679,12 @@ Date: {{date}}
         self._assets_list = contents
         return config
     
+    def settings_updated(self):
+        """
+        To be implemented by the bindings when the settings have changed
+        """
+        pass
+
     def remove_file(self, path, callback=None):
         try:
             if path in self.text_files:
@@ -1780,21 +1786,31 @@ class APScript(StateMachine):
     def generate(self, prompt, max_size, temperature = None, top_k = None, top_p=None, repeat_penalty=None, repeat_last_n=None, callback=None, debug=False ):
         return self.personality.generate(prompt, max_size, temperature, top_k, top_p, repeat_penalty, repeat_last_n, callback, debug=debug)
 
-    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+    def run_workflow(self, prompt:str, previous_discussion_text:str="", callback: Callable[[str, MSG_TYPE, dict, list], bool]=None, context_details=None):
         """
-        Runs the workflow for processing the model input and output.
-
-        This method should be called to execute the processing workflow.
+        This function generates code based on the given parameters.
 
         Args:
-            generate_fn (function): A function that generates model output based on the input prompt.
-                The function should take a single argument (prompt) and return the generated text.
-            prompt (str): The input prompt for the model.
-            previous_discussion_text (str, optional): The text of the previous discussion. Default is an empty string.
+            full_prompt (str): The full prompt for code generation.
+            prompt (str): The prompt for code generation.
+            context_details (dict): A dictionary containing the following context details for code generation:
+                - conditionning (str): The conditioning information.
+                - documentation (str): The documentation information.
+                - knowledge (str): The knowledge information.
+                - user_description (str): The user description information.
+                - discussion_messages (str): The discussion messages information.
+                - positive_boost (str): The positive boost information.
+                - negative_boost (str): The negative boost information.
+                - force_language (str): The force language information.
+                - ai_prefix (str): The AI prefix information.
+            n_predict (int): The number of predictions to generate.
+            client_id: The client ID for code generation.
+            callback (function, optional): The callback function for code generation.
 
         Returns:
             None
         """
+
         return None
     
 
@@ -1849,6 +1865,43 @@ class APScript(StateMachine):
             self.step_end(f"Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
+
+    def build_prompt(self, prompt_parts:List[str], sacrifice_id:int=-1, context_size:int=None, minimum_spare_context_size:int=None):
+        """
+        Builds the prompt for code generation.
+
+        Args:
+            prompt_parts (List[str]): A list of strings representing the parts of the prompt.
+            sacrifice_id (int, optional): The ID of the part to sacrifice.
+            context_size (int, optional): The size of the context.
+            minimum_spare_context_size (int, optional): The minimum spare context size.
+
+        Returns:
+            str: The built prompt.
+        """        
+        if context_size is None:
+            context_size = self.personality.config.ctx_size
+        if minimum_spare_context_size is None:
+            minimum_spare_context_size = self.personality.config.min_n_predict
+
+        if sacrifice_id == -1 or len(prompt_parts[sacrifice_id])<50:
+            return "\n".join([s for s in prompt_parts if s!=""])
+        else:
+            part_tokens=[]
+            nb_tokens=0
+            for i,part in enumerate(prompt_parts):
+                tk = self.personality.model.tokenize(part)
+                part_tokens.append(tk)
+                if i != sacrifice_id:
+                    nb_tokens += len(tk)
+            if len(part_tokens[sacrifice_id])>0:
+                sacrifice_tk = part_tokens[sacrifice_id]
+                sacrifice_tk= sacrifice_tk[-(context_size-nb_tokens-minimum_spare_context_size):]
+                sacrifice_text = self.personality.model.detokenize(sacrifice_tk)
+            else:
+                sacrifice_text = ""
+            prompt_parts[sacrifice_id] = sacrifice_text
+            return "\n".join([s for s in prompt_parts if s!=""])
     # ================================================= Sending commands to ui ===========================================
 
     def step_start(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
