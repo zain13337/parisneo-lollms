@@ -464,24 +464,39 @@ def get_active_personality_settings():
     else:
         return {}
 
-@router.post("/set_active_personality_settings")
-def set_active_personality_settings(data):
-    print("- Setting personality settings")
-    
-    if lollmsElfServer.personality.processor is not None:
-        if hasattr(lollmsElfServer.personality.processor,"personality_config"):
-            lollmsElfServer.personality.processor.personality_config.update_template(data)
-            lollmsElfServer.personality.processor.personality_config.config.save_config()
-            if lollmsElfServer.config.auto_save:
-                ASCIIColors.info("Saving configuration")
-                lollmsElfServer.config.save_config()
-            lollmsElfServer.personality.settings_updated()
-            return {'status':True}
-        else:
-            return {'status':False}
-    else:
-        return {'status':False}  
 
+@router.post("/set_active_personality_settings")
+async def set_active_personality_settings(request: Request):
+    """
+    sets the active personality settings.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+
+    try:
+        config_data = (await request.json())
+
+        print("- Setting personality settings")
+        
+        if lollmsElfServer.personality.processor is not None:
+            if hasattr(lollmsElfServer.personality.processor,"personality_config"):
+                lollmsElfServer.personality.processor.personality_config.update_template(config_data)
+                lollmsElfServer.personality.processor.personality_config.config.save_config()
+                if lollmsElfServer.config.auto_save:
+                    ASCIIColors.info("Saving configuration")
+                    lollmsElfServer.config.save_config()
+                if lollmsElfServer.personality.processor:
+                    lollmsElfServer.personality.processor.settings_updated()
+                return {'status':True}
+            else:
+                return {'status':False}
+        else:
+            return {'status':False}  
+    except Exception as ex:
+        trace_exception(ex)
+        lollmsElfServer.error(ex)
+        return {"status":False,"error":str(ex)}
 
 
 # ------------------------------------------- Interaction with personas ------------------------------------------------

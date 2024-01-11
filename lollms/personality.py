@@ -679,11 +679,7 @@ Date: {{date}}
         self._assets_list = contents
         return config
     
-    def settings_updated(self):
-        """
-        To be implemented by the bindings when the settings have changed
-        """
-        pass
+
 
     def remove_file(self, path, callback=None):
         try:
@@ -1641,6 +1637,12 @@ class APScript(StateMachine):
         else:
             self.load_personality_config()
 
+    def settings_updated(self):
+        """
+        To be implemented by the processor when the settings have changed
+        """
+        pass
+    
     def mounted(self):
         """
         triggered when mounted
