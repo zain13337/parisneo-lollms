@@ -86,9 +86,9 @@ class Service:
 
         # run ollama
         if platform.system() == 'Windows':
-            subprocess.run(['wsl', 'bash', '~/run_ollama.sh'])
+            subprocess.Popen(['wsl', 'bash', '~/run_ollama.sh'])
         else:
-            subprocess.run(['bash', '~/run_ollama.sh'])
+            subprocess.Popen(['bash', '~/run_ollama.sh'])
 
                         
 

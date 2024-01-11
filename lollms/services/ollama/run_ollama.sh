@@ -4,12 +4,12 @@
 OLLAMA_HOST="0.0.0.0:11434"
 
 # Start the OLLAMA server
-ollama serve &
+OLLAMA_MODELS=~/ollama/models ollama serve &
 
 # Check if models.txt exists
 if [ ! -f models.txt ]; then
     # Create models.txt and add "mixtral" to it
-    echo "mixtral" > models.txt
+    echo "mistral" > models.txt
 fi
 
 # Read the models from the file
