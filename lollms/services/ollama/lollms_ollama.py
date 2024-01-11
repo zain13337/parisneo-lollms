@@ -55,9 +55,10 @@ def install_ollama(lollms_app:LollmsApplication):
         subprocess.run(['wsl', 'bash', '~/install_ollama.sh'])
     else:
         root_path = str(Path(__file__).parent)
-        subprocess.run(['cp {} ~'.format( root_path + '/install_ollama.sh')])
-        subprocess.run(['cp {} ~'.format( root_path + '/run_ollama.sh')])
-        subprocess.run(['bash', '~/install_ollama.sh'])
+        home = Path.home()
+        subprocess.run(['cp {} {}'.format( root_path + '/install_ollama.sh', home)])
+        subprocess.run(['cp {} {}'.format( root_path + '/run_ollama.sh', home)])
+        subprocess.run(['bash', f'{home}/install_ollama.sh'])
     return True
 class Service:
     def __init__(
@@ -88,7 +89,7 @@ class Service:
         if platform.system() == 'Windows':
             subprocess.Popen(['wsl', 'bash', '~/run_ollama.sh'])
         else:
-            subprocess.Popen(['bash', '~/run_ollama.sh'])
+            subprocess.Popen(['bash', f'{Path.home()}/run_ollama.sh'])
 
                         
 
