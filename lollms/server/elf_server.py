@@ -11,6 +11,7 @@ from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.personality import AIPersonality
 from pathlib import Path
+from socketio import AsyncServer
 
 class LOLLMSElfServer(LollmsApplication):
     __instance = None
@@ -26,7 +27,7 @@ class LOLLMSElfServer(LollmsApplication):
         try_select_binding=False,
         try_select_model=False,
         callback=None,
-        socketio = None
+        socketio:AsyncServer = None
     ):
         if LOLLMSElfServer.__instance is None:
             LOLLMSElfServer(
@@ -57,7 +58,7 @@ class LOLLMSElfServer(LollmsApplication):
         try_select_binding=False,
         try_select_model=False,
         callback=None,
-        socketio=None
+        socketio:AsyncServer=None
     ) -> None:
         super().__init__(
             "LOLLMSElfServer",
