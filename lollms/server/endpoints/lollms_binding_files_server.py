@@ -118,7 +118,7 @@ async def serve_audio(path: str):
         FileResponse: The file response containing the requested audio file.
     """
     root_dir = lollmsElfServer.lollms_paths.personal_outputs_path
-    file_path = os.path.join(root_dir, 'audio_out/') / path
+    file_path = Path(root_dir)/ 'audio_out' / path
 
     if not Path(file_path).exists():
         raise HTTPException(status_code=404, detail="File not found")
