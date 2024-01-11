@@ -1,5 +1,5 @@
 # =================== Lord Of Large Language Models Configuration file =========================== 
-version: 40
+version: 41
 binding_name: null
 model_name: null
 
@@ -60,6 +60,10 @@ current_language: en
 enable_sd_service: false
 sd_base_url: http://127.0.0.1:7860
 
+# ollama service
+enable_ollama_service: false
+ollama_base_url: http://0.0.0.0:11434
+
 # Audio
 media_on: false
 audio_in_language: 'en-US'
@@ -94,3 +98,4 @@ pdf_latex_path: null
 positive_boost: null
 negative_boost: null
 force_output_language_to_be: null
+fun_mode: False
