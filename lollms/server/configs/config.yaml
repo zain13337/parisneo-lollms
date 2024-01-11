@@ -1,5 +1,5 @@
 # =================== Lord Of Large Language Models Configuration file =========================== 
-version: 41
+version: 42
 binding_name: null
 model_name: null
 
@@ -98,3 +98,4 @@ pdf_latex_path: null
 positive_boost: null
 negative_boost: null
 force_output_language_to_be: null
+fun_mode: False
