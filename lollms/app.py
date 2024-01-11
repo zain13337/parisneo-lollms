@@ -16,7 +16,8 @@ from functools import partial
 from flask_socketio import SocketIO
 import subprocess
 import importlib
-import sys
+import sys, os
+import platform
 
 
 class LollmsApplication(LoLLMsCom):
@@ -55,6 +56,15 @@ class LollmsApplication(LoLLMsCom):
         self.tts                        = None
 
         if not free_mode:
+            if self.config.enable_ollama_service:
+                try:
+                    from lollms.services.ollama.lollms_ollama import Service
+                    self.tts = Service(self, base_url=self.config.ollama_base_url)
+                except Exception as ex:
+                    trace_exception(ex)
+                    self.warning(f"Couldn't load Ollama")
+
+
             if self.config.enable_voice_service and load_voice_service:
                 try:
                     from lollms.services.xtts.lollms_xtts import LollmsXTTS

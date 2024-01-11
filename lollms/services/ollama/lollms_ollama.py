@@ -43,20 +43,22 @@ def verify_ollama(lollms_paths:LollmsPaths):
     return sd_folder.exists()
     
 
-def install_ollama():
+def install_ollama(lollms_app:LollmsApplication):
     if platform.system() == 'Windows':
-        if os.path.exists('C:\\Windows\\System32\\wsl.exe'):
-            subprocess.run(['wsl', 'bash', '-c', 'cp {} ~'.format(str(Path(__file__).parent / 'install.sh'))])
-            subprocess.run(['wsl', 'bash', '-c', 'cp {} ~'.format(str(Path(__file__).parent / 'run_ollama.sh'))])
-            subprocess.run(['wsl', 'bash', str(Path.home() / 'install.sh')])
-        else:
+        root_path = "/mnt/"+"".join(str(Path(__file__).parent).replace("\\","/").split(":"))
+        if not os.path.exists('C:\\Windows\\System32\\wsl.exe'):
+            if not lollms_app.YesNoMessage("No WSL is detected on your system. Do you want me to install it for you? Ollama won't be abble to work without wsl."):
+                return False
             subprocess.run(['wsl', '--install', 'Ubuntu'])
-            subprocess.run(['wsl', 'bash', '-c', 'cp {} ~'.format(str(Path(__file__).parent / 'install.sh'))])
-            subprocess.run(['wsl', 'bash', '-c', 'cp {} ~'.format(str(Path(__file__).parent / 'run_ollama.sh'))])
-            subprocess.run(['wsl', 'bash', str(Path.home() / 'install.sh')])
+        subprocess.run(['wsl', 'bash', '-c', 'cp {} ~'.format( root_path + '/install_ollama.sh')])
+        subprocess.run(['wsl', 'bash', '-c', 'cp {} ~'.format( root_path + '/run_ollama.sh')])
+        subprocess.run(['wsl', 'bash', '~/install_ollama.sh'])
     else:
-        subprocess.run(['bash', str(Path(__file__).parent / 'install.sh')])
-
+        root_path = str(Path(__file__).parent)
+        subprocess.run(['cp {} ~'.format( root_path + '/install_ollama.sh')])
+        subprocess.run(['cp {} ~'.format( root_path + '/run_ollama.sh')])
+        subprocess.run(['bash', '~/install_ollama.sh'])
+    return True
 class Service:
     def __init__(
                     self, 
@@ -64,8 +66,7 @@ class Service:
                     base_url="http://127.0.0.1:11434",
                     wait_max_retries = 5
                 ):
-        if base_url=="" or base_url=="http://127.0.0.1:11434":
-            base_url = None
+        self.base_url = base_url
         # Get the current directory
         lollms_paths = app.lollms_paths
         self.app = app
@@ -85,17 +86,17 @@ class Service:
 
         # run ollama
         if platform.system() == 'Windows':
-            if os.path.exists('C:\\Windows\\System32\\wsl.exe'):
-                subprocess.run(['wsl', 'bash', str(Path(__file__).parent / 'run_ollama.sh')])
+            subprocess.run(['wsl', 'bash', '~/run_ollama.sh'])
         else:
-            subprocess.run(['bash', str(Path(__file__).parent / 'install.sh')])
+            subprocess.run(['bash', '~/run_ollama.sh'])
+
                         
 
         # Wait until the service is available at http://127.0.0.1:7860/
         self.wait_for_service(max_retries=wait_max_retries)
 
     def wait_for_service(self, max_retries = 150, show_warning=True):
-        url = f"{self.xtts_base_url}/languages"
+        url = f"{self.base_url}"
         # Adjust this value as needed
         retries = 0
 

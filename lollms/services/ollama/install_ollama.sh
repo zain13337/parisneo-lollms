@@ -9,7 +9,7 @@ error() { echo "ERROR $*"; exit 1; }
 warning() { echo "WARNING: $*"; }
 
 OLLAMA_DIR=~/ollama
-
+echo ""
 if [ ! -d $OLLAMA_DIR ]; then
     mkdir $OLLAMA_DIR
     echo "Folder $OLLAMA_DIR created successfully!"
@@ -56,7 +56,7 @@ if [ -n "$NEEDS" ]; then
 fi
 
 status "Downloading ollama..."
-curl --fail --show-error --location --progress-bar -o $OLLAMA_DIR "https://ollama.ai/download/ollama-linux-$ARCH"
+curl --fail --show-error --location --progress-bar -o $OLLAMA_DIR/ollama "https://ollama.ai/download/ollama-linux-$ARCH"
 
 status "Installing ollama to OLLAMA_DIR..."
 
