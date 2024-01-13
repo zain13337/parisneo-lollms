@@ -61,6 +61,9 @@ def list_personalities(category:str):
         ASCIIColors.error(f"No personalities found. Using default one {ex}")
     return personalities
 
+@router.get("/list_mounted_personalities")
+def list_mounted_personalities():
+    return lollmsElfServer.config.personalities
 
 @router.get("/get_all_personalities")
 def get_all_personalities():
@@ -501,10 +504,17 @@ async def set_active_personality_settings(request: Request):
 
 # ------------------------------------------- Interaction with personas ------------------------------------------------
 @router.post("/post_to_personality")
-def post_to_personality(data):
+async def post_to_personality(request: Request):
     """Post data to a personality"""
-    if hasattr(lollmsElfServer.personality.processor,'handle_request'):
-        return lollmsElfServer.personality.processor.handle_request(data)
-    else:
-        return {}
+
+    try:
+        config_data = (await request.json())
+        if hasattr(lollmsElfServer.personality.processor,'handle_request'):
+            return lollmsElfServer.personality.processor.handle_request(config_data)
+        else:
+            return {}
+    except Exception as ex:
+        trace_exception(ex)
+        lollmsElfServer.error(ex)
+        return {"status":False,"error":str(ex)}
     

@@ -44,6 +44,9 @@ class LollmsApplication(LoLLMsCom):
         self.config                     = config
         self.lollms_paths               = lollms_paths
 
+        # TODO : implement
+        self.embedding_models           = []
+
         self.menu                       = MainMenu(self, callback)
         self.mounted_personalities      = []
         self.personality:AIPersonality  = None
