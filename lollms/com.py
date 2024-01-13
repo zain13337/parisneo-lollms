@@ -1,5 +1,5 @@
 from ascii_colors import ASCIIColors
-from flask_socketio import SocketIO
+import socketio
 from enum import Enum
 class NotificationType(Enum):
     """Notification types."""
@@ -36,9 +36,10 @@ class NotificationDisplayType(Enum):
 
 
 class LoLLMsCom:
-    def __init__(self, socketio:SocketIO=None) -> None:
+    def __init__(self, socketio:socketio.AsyncServer=None) -> None:
         self.socketio= socketio
 
+        
     def InfoMessage(self, content, client_id=None, verbose:bool=True):
         self.notify(
                 content, 
