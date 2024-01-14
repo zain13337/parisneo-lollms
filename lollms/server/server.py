@@ -52,13 +52,16 @@ if __name__ == "__main__":
 
     from lollms.server.endpoints.lollms_configuration_infos import router as lollms_configuration_infos_router
     
-    
+
     
     from lollms.server.endpoints.lollms_generator import router as lollms_generator_router
     
 
     from lollms.server.events.lollms_generation_events import add_events as lollms_generation_events_add
     from lollms.server.events.lollms_personality_events import add_events as lollms_personality_events_add
+    from lollms.server.events.lollms_model_events import add_events as lollms_model_events_add
+    from lollms.server.events.lollms_rag_events import add_events as lollms_rag_events_add
+    
 
     app.include_router(lollms_binding_files_server_router)
     app.include_router(lollms_infos_router)
@@ -77,6 +80,9 @@ if __name__ == "__main__":
 
     lollms_generation_events_add(sio)
     lollms_personality_events_add(sio)
+    lollms_model_events_add(sio)
+    lollms_rag_events_add(sio)
+
     app = ASGIApp(socketio_server=sio, other_asgi_app=app)
 
 
