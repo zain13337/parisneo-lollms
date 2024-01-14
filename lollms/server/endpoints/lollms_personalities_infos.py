@@ -61,10 +61,6 @@ def list_personalities(category:str):
         ASCIIColors.error(f"No personalities found. Using default one {ex}")
     return personalities
 
-@router.get("/list_mounted_personalities")
-def list_mounted_personalities():
-    return lollmsElfServer.config.personalities
-
 @router.get("/get_all_personalities")
 def get_all_personalities():
     ASCIIColors.yellow("Listing all personalities")
@@ -161,9 +157,9 @@ def get_all_personalities():
 def list_mounted_personalities():
     ASCIIColors.yellow("- Listing mounted personalities")
     return {"status": True,
-                    "personalities":lollmsElfServer.config["personalities"],
-                    "active_personality_id":lollmsElfServer.config["active_personality_id"]
-                    }   
+            "personalities":lollmsElfServer.config["personalities"],
+            "active_personality_id":lollmsElfServer.config["active_personality_id"]
+            }   
 
 
 
@@ -348,7 +344,7 @@ def remount_personality(data:PersonalityMountingInfos):
         return {"status": False, "error":f"Personality not found @ {pth}"}  
     
 
-@router.post("/remount_personality")
+@router.post("/unmount_personality")
 def unmount_personality(data:PersonalityMountingInfos):
     print("- Unmounting personality ...")
     category = data.category

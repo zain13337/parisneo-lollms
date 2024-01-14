@@ -2,6 +2,8 @@
 # This script installs Ollama on Linux.
 # It detects the current operating system architecture and installs the appropriate version of Ollama.
 
+cd ~/
+
 set -eu
 
 status() { echo ">>> $*" >&2; }

@@ -117,7 +117,7 @@ class AudioRecorder:
         except:
             self.lollmsCom.error("No audio input found!")
 
-    def _record(self, indata, frames, time, status):
+    def _record(self, indata, frames, time_, status):
         first_recording = True  # Flag to track the first recording
         silence_duration = 5
         non_silent_start = None

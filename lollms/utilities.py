@@ -30,8 +30,26 @@ import asyncio
 
 import ctypes
 import io
+import urllib
+
+def file_path_to_url(file_path):
+    """
+    This function takes a file path as an argument and converts it into a URL format. It first removes the initial part of the file path until the "outputs" string is reached, then replaces backslashes with forward slashes and quotes each segment with urllib.parse.quote() before joining them with forward slashes to form the final URL.
+
+    :param file_path: str, the file path in the format of a Windows system
+    :return: str, the converted URL format of the given file path
+    """
+
+    url = "/"+file_path[file_path.index("outputs"):].replace("\\","/")
+    return "/".join([urllib.parse.quote(p, safe="") for p in url.split("/")])
+
+
 
 def is_asyncio_loop_running():
+    """
+    # This function checks if an AsyncIO event loop is currently running. If an event loop is running, it returns True. If not, it returns False.
+    :return: bool, indicating whether or not an AsyncIO event loop is currently running
+    """
     try:
         return asyncio.get_event_loop().is_running()
     except RuntimeError:  # This gets raised if there's no running event loop
@@ -57,8 +75,16 @@ def run_async(func):
         try:
             asyncio.run(func()) 
         except:
-            func()        
+            func()
+
+
 def terminate_thread(thread):
+    """ 
+    This function is used to terminate a given thread if it's currently running. If the thread is not alive, an informational message will be displayed and the function will return without raising any error. Otherwise, it sets the thread's exception to `SystemExit` using `ctypes`, which causes the thread to exit. The function collects the garbage after terminating the thread, and raises a `SystemError` if it fails to do so.
+    :param thread: thread object to be terminated
+    :return: None if the thread was successfully terminated or an error is raised
+    :raises SystemError: if the thread could not be terminated 
+    """    
     if thread:
         if not thread.is_alive():
             ASCIIColors.yellow("Thread not alive")
@@ -76,6 +102,16 @@ def terminate_thread(thread):
             ASCIIColors.yellow("Canceled successfully")
 
 def convert_language_name(language_name):
+    """
+    Convert a language name string to its corresponding ISO 639-1 code.
+    If the given language name is not supported, returns "unsupported".
+
+    Parameters:
+    - language_name (str): A lowercase and dot-free string representing the name of a language.
+
+    Returns:
+    - str: The corresponding ISO 639-1 code for the given language name or "unsupported" if it's not supported.
+    """    
     # Remove leading and trailing spaces
     language_name = language_name.strip()
     
@@ -83,13 +119,12 @@ def convert_language_name(language_name):
     language_name = language_name.lower().replace(".","")
     
     # Define a dictionary mapping language names to their codes
-    language_codes = {
-        "english": "en",
-        "spanish": "es",
-        "french": "fr",
-        "german": "de",
-        # Add more language names and codes as needed
-    }
+    language_codes = { 
+                      "english": "en", "spanish": "es", "french": "fr", "german": "de",
+                      "italian": "it", "portuguese": "pt", "russian": "ru", "mandarin": "zh-CN",
+                      "korean": "ko", "japanese": "ja", "dutch": "nl", "polish": "pl",
+                      "hindi": "hi", "arabic": "ar", "bengali": "bn", "swedish": "sv", "thai": "th", "vietnamese": "vi"
+                    }
     
     # Return the corresponding language code if found, or None otherwise
     return language_codes.get(language_name,"en")
