@@ -17,7 +17,7 @@ from lollms.personality import AIPersonality, InstallOption
 from ascii_colors import ASCIIColors
 from lollms.utilities import load_config, trace_exception, gc
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 import psutil
 import yaml
 
@@ -26,10 +26,6 @@ import yaml
 class PersonalityListingInfos(BaseModel):
     category:str
 
-class PersonalityMountingInfos(BaseModel):
-    category:str
-    folder:str
-    language:str
 
 class PersonalitySelectionInfos(BaseModel):
     id:int
@@ -237,6 +233,10 @@ def clear_personality_files_list():
 
 # ------------------------------------------- Mounting/Unmounting/Remounting ------------------------------------------------
 
+class PersonalityMountingInfos(BaseModel):
+    category:str
+    folder:str
+    language:Optional[str] = None
 
 @router.post("/mount_personality")
 def mount_personality(data:PersonalityMountingInfos):

@@ -8,8 +8,10 @@ License: Apache 2.0
 """
 from lollms.utilities import PackageManager
 from lollms.com import LoLLMsCom
+from lollms.utilities import trace_exception, run_async
 from ascii_colors import ASCIIColors
 import platform
+from functools import partial
 import subprocess
 
 import os
@@ -46,12 +48,8 @@ if not PackageManager.check_package_installed("whisper"):
     PackageManager.install_package("openai-whisper")
 import whisper
 
+import socketio
 from lollms.com import LoLLMsCom
-import time
-import json
-import base64
-import io
-import numpy as np
 try:
     if not PackageManager.check_package_installed("sounddevice"):
         # os.system("sudo apt-get install portaudio19-dev")
@@ -66,38 +64,45 @@ try:
     import wave
 except:
     ASCIIColors.error("Couldn't load sound tools")
+
+import time
+import base64
+import io
+import socketio
+from scipy.io.wavfile import write
+from matplotlib import pyplot as plt
+import numpy as np
+from scipy.signal import spectrogram
+
 class AudioRecorder:
-    def __init__(self, socketio, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom=None):
-        try:
-            self.socketio = socketio
-            self.filename = filename
-            self.channels = channels
-            self.sample_rate = sample_rate
-            self.chunk_size = chunk_size
-            self.audio_stream = None
-            self.audio_frames = []
-            self.is_recording = False
-            self.silence_threshold = silence_threshold
-            self.silence_duration = silence_duration
-            self.last_sound_time = time.time()
-            self.callback = callback
-            self.lollmsCom = lollmsCom
-            self.whisper_model = None
-        except:
-            self.socketio = socketio
-            self.filename = filename
-            self.channels = channels
-            self.sample_rate = sample_rate
-            self.chunk_size = chunk_size
-            self.audio_stream = None
-            self.audio_frames = []
-            self.is_recording = False
-            self.silence_threshold = silence_threshold
-            self.silence_duration = silence_duration
-            self.last_sound_time = time.time()
-            self.callback = callback
-            self.lollmsCom = lollmsCom
-            self.whisper_model = None
+    def __init__(self, sio:socketio.Client, filename, channels=1, sample_rate=16000, chunk_size=24678, silence_threshold=150.0, silence_duration=2, callback=None, lollmsCom:LoLLMsCom=None):
+        self.sio = sio
+        self.sio = sio
+        self.filename = filename
+        self.channels = channels
+        self.sample_rate = sample_rate
+        self.chunk_size = chunk_size
+        self.silence_threshold = silence_threshold
+        self.silence_duration = silence_duration
+        self.callback = callback
+        self.lollmsCom = lollmsCom
+        self.buffer = []
+        self.is_recording = False
+        self.start_time = time.time()
+        self.last_sound_time = time.time()
+        self.whisper_model = None
+
+    def audio_callback(self, indata, frames, time_, status):
+        volume_norm = np.linalg.norm(indata)*10
+        # if volume_norm > self.silence_threshold:
+        #     self.last_sound_time = time.time()
+        #     if not self.is_recording:
+        #         self.is_recording = True
+        #         self.start_time = time.time()
+        if self.is_recording:
+            self.buffer = np.append(self.buffer, indata.copy())
+            # if time.time() - self.last_sound_time > self.silence_duration:
+            #     self.stop_recording()
 
     def start_recording(self):
         if self.whisper_model is None:
@@ -105,138 +110,50 @@ class AudioRecorder:
             self.whisper_model=whisper.load_model("base.en")
         try:
             self.is_recording = True
-            self.audio_stream = sd.InputStream(
-                channels=self.channels,
-                samplerate=self.sample_rate,
-                callback=self._record,
-                blocksize=self.chunk_size
-            )
+            self.buffer = np.array([], dtype=np.float32)
+            self.audio_stream = sd.InputStream(callback=self.audio_callback, channels=self.channels, samplerate=self.sample_rate)
             self.audio_stream.start()
-
-            self.lollmsCom.info("Recording started...")
-        except:
-            self.lollmsCom.error("No audio input found!")
-
-    def _record(self, indata, frames, time_, status):
-        first_recording = True  # Flag to track the first recording
-        silence_duration = 5
-        non_silent_start = None
-        non_silent_end = None
-        last_spectrogram_update = time.time()
-        self.audio_frames = None
-        buffered = np.array(indata)
-        if self.audio_frames is not None:
-            self.audio_frames = np.concatenate([self.audio_frames, buffered])
-        else:
-            self.audio_frames = buffered
-
-        # Remove audio frames that are older than 30 seconds
-        if len(self.audio_frames) > self.sample_rate * 30:
-            self.audio_frames=self.audio_frames[-self.sample_rate * 30:]
-
-        # Update spectrogram every 3 seconds
-        if time.time() - last_spectrogram_update >= 1:
-            self._update_spectrogram()
-            last_spectrogram_update = time.time()
-
-        # Check for silence
-        rms = self._calculate_rms(buffered)
-        if rms < self.silence_threshold:
-            current_time = time.time()
-            if current_time - self.last_sound_time >= silence_duration:
-                if first_recording:
-                    first_recording = False
-                    silence_duration = self.silence_duration
-
-                if self.callback and non_silent_start is not None and non_silent_end - non_silent_start >= 1:
-                    self.lollmsCom.info("Analyzing")
-                    # Convert to float
-                    audio_data = self.audio_frames.astype(np.float32)
-                    audio = wave.open(str(self.filename), 'wb')
-                    audio.setnchannels(self.channels)
-                    audio.setsampwidth(self.audio_stream.dtype.itemsize)
-                    audio.setframerate(self.sample_rate)
-                    audio.writeframes(b''.join(self.audio_frames[non_silent_start:non_silent_end]))
-                    audio.close()
-
-                    # Transcribe the audio using the whisper model
-                    text = self.whisper_model.transcribe(audio_data[non_silent_start:non_silent_end])
-
-                    self.callback(text)
-                    print(text["text"])
-
-                self.last_sound_time = time.time()
-                non_silent_start = None
-
-        else:
-            self.last_sound_time = time.time()
-            if non_silent_start is None:
-                non_silent_start = len(self.audio_frames) - 1
-            non_silent_end = len(self.audio_frames)
-
-    def _update_spectrogram(self):
-        audio_data = self.audio_frames[-self.sample_rate*30:]
-        frequencies, _, spectrogram = signal.spectrogram(audio_data, self.sample_rate)
-
-        # Generate a new times array that only spans the last 30 seconds
-        times = np.linspace(0, 30, spectrogram.shape[1])
-
-        # Plot spectrogram
-        plt.figure(figsize=(10, 4))
-        plt.imshow(np.log(spectrogram), aspect='auto', origin='lower', cmap='inferno', extent=[times.min(), times.max(), frequencies.min(), frequencies.max()])
-        plt.xlabel('Time')
-        plt.ylabel('Frequency')
-        plt.title('Spectrogram')
-        plt.colorbar(format='%+2.0f dB')
-
-        # Convert plot to base64 image
-        img_buffer = io.BytesIO()
-        plt.savefig(img_buffer, format='png')
-        img_buffer.seek(0)
-        img_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
-
-        # Send base64 image using socketio
-        self.socketio.emit('update_spectrogram', img_base64)
-        self.socketio.sleep(0.0)
-        plt.close()
-
-    def _calculate_rms(self, data):
-        try:
-            squared_sum = sum([sample ** 2 for sample in data])
-            rms = np.sqrt(squared_sum / len(data))
-        except:
-            rms = 0
-        return rms
-
+        except Exception as ex:
+            self.lollmsCom.InfoMessage("Couldn't start recording.\nMake sure your input device is connected and operational")
+            trace_exception(ex)
     def stop_recording(self):
         self.is_recording = False
-        if self.audio_stream:
-            self.audio_stream.stop()
-            import wave
-            audio = wave.open(str(self.filename), 'wb')
-            audio.setnchannels(self.channels)
-            audio.setsampwidth(self.audio_stream.dtype.itemsize)
-            audio.setframerate(self.sample_rate)
-            audio.writeframes(b''.join(self.audio_frames))
-            audio.close()
+        self.audio_stream.stop()
+        self.audio_stream.close()
+        write(self.filename, self.sample_rate, self.buffer)
+        self.lollmsCom.info(f"Saved to {self.filename}")
+        time.sleep(2)
+        self.lollmsCom.info(f"Transcribing ... ")
+        result = self.whisper_model.transcribe(str(self.filename))
+        with open(self.filename.replace("wav","txt"), "w") as f:
+            f.write(result["text"])
+        self.lollmsCom.info(f"Saved to {self.filename}")
 
-            self.lollmsCom.info(f"Recording saved to {self.filename}")
-        else:
-            self.warning("No recording available")
+    def update_spectrogram(self):
+        f, t, Sxx = spectrogram(self.buffer[-30*self.sample_rate:], self.sample_rate)
+        plt.pcolormesh(t, f, 10 * np.log10(Sxx))
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        image_base64 = base64.b64encode(buf.read())
+        self.sio.emit('update_spectrogram', {'image': image_base64.decode('utf-8')})
+        self.last_spectrogram_update = time.perf_counter()
+        buf.close()
+        plt.clf()
 
 class WebcamImageSender:
     """
     Class for capturing images from the webcam and sending them to a SocketIO client.
     """
 
-    def __init__(self, socketio, lollmsCom:LoLLMsCom=None):
+    def __init__(self, sio:socketio, lollmsCom:LoLLMsCom=None):
         """
         Initializes the WebcamImageSender class.
 
         Args:
             socketio (socketio.Client): The SocketIO client object.
         """
-        self.socketio = socketio
+        self.socketio = sio
         self.last_image = None
         self.last_change_time = None
         self.capture_thread = None
@@ -278,8 +195,9 @@ class WebcamImageSender:
                 self.socketio.emit("video_stream_image", image_base64.decode('utf-8'))
 
             cap.release()
-        except:
+        except Exception as ex:
             self.lollmsCom.error("Couldn't start webcam")
+            trace_exception(ex)
 
     def image_difference(self, image):
         """
@@ -349,5 +267,6 @@ class MusicPlayer(threading.Thread):
         """
         Stops the music.
         """
+        import pygame
         self.stopped = True
         pygame.mixer.music.stop()
