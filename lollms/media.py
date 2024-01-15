@@ -89,7 +89,7 @@ class AudioRecorder:
         self.buffer = []
         self.is_recording = False
         self.start_time = time.time()
-        self.last_sound_time = time.time()
+        self.last_time = time.time()
         self.whisper_model = None
 
     def audio_callback(self, indata, frames, time_, status):
@@ -101,8 +101,8 @@ class AudioRecorder:
         #         self.start_time = time.time()
         if self.is_recording:
             self.buffer = np.append(self.buffer, indata.copy())
-            # if time.time() - self.last_sound_time > self.silence_duration:
-            #     self.stop_recording()
+            if (time.time() - self.last_time) > self.silence_duration:
+                self.update_spectrogram()
 
     def start_recording(self):
         if self.whisper_model is None:
@@ -131,13 +131,13 @@ class AudioRecorder:
     def update_spectrogram(self):
         f, t, Sxx = spectrogram(self.buffer[-30*self.sample_rate:], self.sample_rate)
         plt.pcolormesh(t, f, 10 * np.log10(Sxx))
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png')
-        buf.seek(0)
-        image_base64 = base64.b64encode(buf.read())
-        self.sio.emit('update_spectrogram', {'image': image_base64.decode('utf-8')})
+        # Convert plot to base64 image
+        img_buffer = io.BytesIO()
+        plt.savefig(img_buffer, format='png')
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+        run_async(partial(self.sio.emit,'update_spectrogram', img_base64))
         self.last_spectrogram_update = time.perf_counter()
-        buf.close()
         plt.clf()
 
 class WebcamImageSender:
@@ -191,7 +191,7 @@ class WebcamImageSender:
 
                 _, buffer = cv2.imencode('.jpg', frame)
                 image_base64 = base64.b64encode(buffer)
-                self.socketio.emit("video_stream_image", image_base64.decode('utf-8'))
+                run_async(partial(self.socketio.emit,"video_stream_image", image_base64.decode('utf-8')))
 
             cap.release()
         except Exception as ex:
