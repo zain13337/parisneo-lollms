@@ -310,3 +310,12 @@ async def set_active_binding_settings(request: Request):
         trace_exception(ex)
         lollmsElfServer.error(ex)
         return {"status":False,"error":str(ex)}
+    
+@router.get("/update_binding_settings")
+def update_binding_settings(self):
+    if lollmsElfServer.binding:
+        lollmsElfServer.binding.settings_updated()
+        ASCIIColors.green("Binding setting updated successfully")
+        return {"status":True}
+    else:
+        return {"status":False, 'error':"no binding found"}

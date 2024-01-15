@@ -26,8 +26,8 @@ def get_all_files(path):
 
 setuptools.setup(
     name="lollms",
-    version="7.1.0",
-    author="Saifeddine ALOUI",
+    version="7.1.1",
+    author="Saifeddine ALOUI (ParisNeo)",
     author_email="aloui.saifeddine@gmail.com",
     description="A python library for AI personality definition",
     long_description=long_description,
@@ -38,17 +38,12 @@ setuptools.setup(
     install_requires=requirements,
     entry_points={
         'console_scripts': [
-            'lollms-elf = lollms.apps.elf:main',
-            'lollms-server = lollms.server.server:main',
-            'lollms-console = lollms.apps.console:main',
-            'lollms-settings = lollms.apps.settings:main',
-            'lollms-discord = lollms.apps.discord_bot:main',
-            'lollms-playground = lollms.apps.playground:main'
+            'lollms-elf = lollms.server.elf:main',
         ],
     },
     extras_require={"dev": requirements_dev},
     classifiers=[
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],

@@ -23,7 +23,7 @@ from socketio import ASGIApp
 sio = socketio.AsyncServer(async_mode="asgi")
 app = FastAPI()
 
-if __name__ == "__main__":
+def main():
     # Parsong parameters
     parser = argparse.ArgumentParser(description="Start the chatbot FastAPI app.")
     
@@ -87,3 +87,6 @@ if __name__ == "__main__":
 
 
     uvicorn.run(app, host=config.host, port=config.port)
+
+if __name__ == "__main__":
+    main()
