@@ -122,7 +122,6 @@ class AudioRecorder:
         self.audio_stream.close()
         write(self.filename, self.sample_rate, self.buffer)
         self.lollmsCom.info(f"Saved to {self.filename}")
-        time.sleep(2)
         self.lollmsCom.info(f"Transcribing ... ")
         result = self.whisper_model.transcribe(str(self.filename))
         with open(self.filename.replace("wav","txt"), "w") as f:
