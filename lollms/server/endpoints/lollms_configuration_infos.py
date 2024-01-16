@@ -162,5 +162,5 @@ def save_settings():
     if lollmsElfServer.config["debug"]:
         print("Configuration saved")
     # Tell that the setting was changed
-    lollmsElfServer.socketio.emit('save_settings', {"status":True})
+    lollmsElfServer.sio.emit('save_settings', {"status":True})
     return {"status":True}

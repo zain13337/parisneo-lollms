@@ -16,25 +16,25 @@ class ServerConnector(QObject):
 
     def __init__(self, parent=None):
         super(ServerConnector, self).__init__(parent)
-        self.socketio = Client()
+        self.sio = Client()
         self.connected = False
         self.personalities = []
         self.selected_personality_id = 0
 
-        self.socketio.on('connect', self.handle_connect)
-        self.socketio.on('text_chunk', self.handle_text_chunk)
-        self.socketio.on('text_generated', self.handle_text_generated)
-        self.socketio.on('active_personalities_list', self.handle_personalities_received)
+        self.sio.on('connect', self.handle_connect)
+        self.sio.on('text_chunk', self.handle_text_chunk)
+        self.sio.on('text_generated', self.handle_text_generated)
+        self.sio.on('active_personalities_list', self.handle_personalities_received)
 
     def handle_connect(self):
-        self.socketio.emit('connect')
+        self.sio.emit('connect')
         self.list_personalities()
 
 
     def connect_to_server(self):
         if not self.connected:
             try:
-                self.socketio.connect('http://localhost:9600')
+                self.sio.connect('http://localhost:9600')
                 self.connected = True
                 self.connection_status_changed.emit(True)
             except ConnectionError:
@@ -43,12 +43,12 @@ class ServerConnector(QObject):
 
     def disconnect_from_server(self):
         if self.connected:
-            self.socketio.disconnect()
+            self.sio.disconnect()
             self.connected = False
             self.connection_status_changed.emit(False)
 
     def list_personalities(self):
-        self.socketio.emit('list_active_personalities')
+        self.sio.emit('list_active_personalities')
 
     @pyqtSlot(str)
     def generate_text(self, prompt):
@@ -57,11 +57,11 @@ class ServerConnector(QObject):
             return
 
         data = {
-            'client_id': self.socketio.sid,
+            'client_id': self.sio.sid,
             'prompt': prompt,
             'personality': self.selected_personality_id
         }
-        self.socketio.emit('generate_text', data)
+        self.sio.emit('generate_text', data)
 
     def handle_personalities_list(self, data):
         personalities = data['personalities']

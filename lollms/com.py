@@ -36,8 +36,8 @@ class NotificationDisplayType(Enum):
 
 
 class LoLLMsCom:
-    def __init__(self, socketio:socketio.AsyncServer=None) -> None:
-        self.socketio= socketio
+    def __init__(self, sio:socketio.AsyncServer=None) -> None:
+        self.sio= sio
 
         
     def InfoMessage(self, content, client_id=None, verbose:bool=True):
@@ -76,7 +76,7 @@ class LoLLMsCom:
             "wait":True,
             "result":False
         }
-        @self.socketio.on('yesNoRes')
+        @self.sio.on('yesNoRes')
         def yesnores(result):
             infos["result"] = result["yesRes"]
             infos["wait"]=False
@@ -92,7 +92,7 @@ class LoLLMsCom:
         # wait
         ASCIIColors.yellow("Waiting for yes no question to be answered")
         while infos["wait"]:
-            self.socketio.sleep(1)
+            self.sio.sleep(1)
         return infos["result"]
 
     def info(self, content, duration:int=4, client_id=None, verbose:bool=True):
@@ -154,3 +154,20 @@ class LoLLMsCom:
                 ASCIIColors.warning(content)
             else:
                 ASCIIColors.red(content)
+
+
+    def notify_model_install(self, 
+                            installation_path,
+                            model_name,
+                            binding_folder,
+                            model_url,
+                            start_time,
+                            total_size,
+                            downloaded_size,
+                            progress,
+                            speed,
+                            client_id,
+                            status=True,
+                            error="",
+                             ):
+        pass

@@ -12,6 +12,8 @@ from lollms.paths import LollmsPaths
 from lollms.personality import AIPersonality
 from pathlib import Path
 from socketio import AsyncServer
+from functools import partial
+from lollms.utilities import trace_exception, run_async
 
 class LOLLMSElfServer(LollmsApplication):
     __instance = None
@@ -27,7 +29,7 @@ class LOLLMSElfServer(LollmsApplication):
         try_select_binding=False,
         try_select_model=False,
         callback=None,
-        socketio:AsyncServer = None
+        sio:AsyncServer = None
     ):
         if LOLLMSElfServer.__instance is None:
             LOLLMSElfServer(
@@ -40,7 +42,7 @@ class LOLLMSElfServer(LollmsApplication):
                 try_select_binding=try_select_binding,
                 try_select_model=try_select_model,
                 callback=callback,
-                socketio=socketio
+                sio=sio
             )
         return LOLLMSElfServer.__instance
     @staticmethod
@@ -58,7 +60,7 @@ class LOLLMSElfServer(LollmsApplication):
         try_select_binding=False,
         try_select_model=False,
         callback=None,
-        socketio:AsyncServer=None
+        sio:AsyncServer=None
     ) -> None:
         super().__init__(
             "LOLLMSElfServer",
@@ -71,7 +73,7 @@ class LOLLMSElfServer(LollmsApplication):
             try_select_binding=try_select_binding,
             try_select_model=try_select_model,
             callback=callback,
-            socketio=socketio
+            sio=sio
         )
         if LOLLMSElfServer.__instance is not None:
             raise Exception("This class is a singleton!")
@@ -85,3 +87,33 @@ class LOLLMSElfServer(LollmsApplication):
             if full_path.exists():
                 return full_path
         return None
+
+
+    def notify_model_install(self, 
+                            installation_path,
+                            model_name,
+                            binding_folder,
+                            model_url,
+                            start_time,
+                            total_size,
+                            downloaded_size,
+                            progress,
+                            speed,
+                            client_id,
+                            status=True,
+                            error="",
+                             ):
+        run_async( partial(self.sio.emit,'install_progress',{
+                                            'status': status,
+                                            'error': error,
+                                            'model_name' : model_name,
+                                            'binding_folder' : binding_folder,
+                                            'model_url' : model_url,
+                                            'start_time': start_time,
+                                            'total_size': total_size,
+                                            'downloaded_size': downloaded_size,
+                                            'progress': progress,
+                                            'speed': speed,
+                                        }, room=client_id
+                    )
+        )

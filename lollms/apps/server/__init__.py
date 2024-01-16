@@ -255,21 +255,21 @@ class LoLLMsServer(LollmsApplication):
         )
 
 
-        self.socketio = SocketIO(self.app, cors_allowed_origins='*', ping_timeout=1200, ping_interval=4000)
+        self.sio = SocketIO(self.app, cors_allowed_origins='*', ping_timeout=1200, ping_interval=4000)
 
         # Set log level to warning
         self.app.logger.setLevel(logging.WARNING)
         # Configure a custom logger for Flask-SocketIO
-        self.socketio_log = logging.getLogger('socketio')
-        self.socketio_log.setLevel(logging.WARNING)
-        self.socketio_log.addHandler(logging.StreamHandler())
+        self.sio_log = logging.getLogger('socketio')
+        self.sio_log.setLevel(logging.WARNING)
+        self.sio_log.addHandler(logging.StreamHandler())
 
         self.initialize_routes()
         self.run(self.config.host, self.config.port)
 
 
     def initialize_routes(self):
-        @self.socketio.on('connect')
+        @self.sio.on('connect')
         def handle_connect():
             client_id = request.sid
             self.clients[client_id] = {
@@ -280,7 +280,7 @@ class LoLLMsServer(LollmsApplication):
                 }
             ASCIIColors.success(f'Client connected with session ID: {client_id}')
 
-        @self.socketio.on('disconnect')
+        @self.sio.on('disconnect')
         def handle_disconnect():
             client_id = request.sid
             if client_id in self.clients:
@@ -289,7 +289,7 @@ class LoLLMsServer(LollmsApplication):
 
 
 
-        @self.socketio.on('list_available_bindings')
+        @self.sio.on('list_available_bindings')
         def handle_list_bindings():
             binding_infs = []
             for p in self.bindings_path.iterdir():
@@ -307,7 +307,7 @@ class LoLLMsServer(LollmsApplication):
 
             emit('bindings_list', {'success':True, 'bindings': binding_infs}, room=request.sid)
 
-        @self.socketio.on('list_available_personalities')
+        @self.sio.on('list_available_personalities')
         def handle_list_available_personalities():
             personalities_folder = self.personalities_path
             personalities = {}
@@ -359,7 +359,7 @@ class LoLLMsServer(LollmsApplication):
                                         print(f"Couldn't load personality from {personality_folder} [{ex}]")
             emit('personalities_list', {'personalities': personalities}, room=request.sid)
 
-        @self.socketio.on('list_available_models')
+        @self.sio.on('list_available_models')
         def handle_list_available_models():
             """List the available models
 
@@ -408,7 +408,7 @@ class LoLLMsServer(LollmsApplication):
             emit('available_models_list', {'success':True, 'available_models': models}, room=request.sid)
 
 
-        @self.socketio.on('list_available_personalities_categories')
+        @self.sio.on('list_available_personalities_categories')
         def handle_list_available_personalities_categories(data):
             try:
                 categories = [l for l in (self.personalities_path).iterdir()]
@@ -416,7 +416,7 @@ class LoLLMsServer(LollmsApplication):
             except Exception as ex:
                 emit('available_personalities_categories_list', {'success': False, 'error':str(ex)})
 
-        @self.socketio.on('list_available_personalities_names')
+        @self.sio.on('list_available_personalities_names')
         def handle_list_available_personalities_names(data):
             try:
                 category = data["category"]
@@ -425,7 +425,7 @@ class LoLLMsServer(LollmsApplication):
             except Exception as ex:
                 emit('list_available_personalities_names_list', {'success': False, 'error':str(ex)})
 
-        @self.socketio.on('select_binding')
+        @self.sio.on('select_binding')
         def handle_select_binding(data):
             self.cp_config = copy.deepcopy(self.config)
             self.cp_config["binding_name"] = data['binding_name']
@@ -446,7 +446,7 @@ class LoLLMsServer(LollmsApplication):
                 print(ex)
                 emit('select_binding', {'success':False, 'binding_name': self.cp_config["binding_name"], 'error':f"Couldn't load binding:\n{ex}"}, room=request.sid)
 
-        @self.socketio.on('select_model')
+        @self.sio.on('select_model')
         def handle_select_model(data):
             model_name = data['model_name']
             if self.binding is None:
@@ -468,7 +468,7 @@ class LoLLMsServer(LollmsApplication):
                 print(ex)
                 emit('select_model', {'success':False, 'model_name':  model_name, 'error':f"Please select a binding first"}, room=request.sid)
 
-        @self.socketio.on('add_personality')
+        @self.sio.on('add_personality')
         def handle_add_personality(data):
             personality_path = data['path']
             try:
@@ -489,7 +489,7 @@ class LoLLMsServer(LollmsApplication):
 
 
         
-        @self.socketio.on('vectorize_text')
+        @self.sio.on('vectorize_text')
         def vectorize_text(parameters:dict):
             """Vectorizes text
 
@@ -535,7 +535,7 @@ class LoLLMsServer(LollmsApplication):
                     json.dump(json_db, file, indent=4)
                 
             
-        @self.socketio.on('query_database')
+        @self.sio.on('query_database')
         def query_database(parameters:dict):
             """queries a database
 
@@ -578,12 +578,12 @@ class LoLLMsServer(LollmsApplication):
             }) 
             
             
-        @self.socketio.on('list_active_personalities')
+        @self.sio.on('list_active_personalities')
         def handle_list_active_personalities():
             personality_names = [p.name for p in self.personalities]
             emit('active_personalities_list', {'success':True, 'personalities': personality_names}, room=request.sid)
 
-        @self.socketio.on('activate_personality')
+        @self.sio.on('activate_personality')
         def handle_activate_personality(data):
             personality_id = data['id']
             if personality_id<len(self.personalities):
@@ -594,45 +594,45 @@ class LoLLMsServer(LollmsApplication):
             else:
                 emit('personality_add_failed', {'success':False, 'error': "Personality ID not valid"}, room=request.sid)
 
-        @self.socketio.on('tokenize')
+        @self.sio.on('tokenize')
         def tokenize(data):
             client_id = request.sid
             prompt = data['prompt']
             tk = self.model.tokenize(prompt)
             emit("tokenized", {"tokens":tk}, room=client_id)
 
-        @self.socketio.on('detokenize')
+        @self.sio.on('detokenize')
         def detokenize(data):
             client_id = request.sid
             prompt = data['prompt']
             txt = self.model.detokenize(prompt)
             emit("detokenized", {"text":txt}, room=client_id)
 
-        @self.socketio.on('embed')
+        @self.sio.on('embed')
         def detokenize(data):
             client_id = request.sid
             prompt = data['prompt']
             txt = self.model.embed(prompt)
-            self.socketio.emit("embeded", {"text":txt}, room=client_id)
+            self.sio.emit("embeded", {"text":txt}, room=client_id)
 
-        @self.socketio.on('cancel_text_generation')
+        @self.sio.on('cancel_text_generation')
         def cancel_text_generation(data):
             client_id = request.sid
             self.clients[client_id]["requested_stop"]=True
             print(f"Client {client_id} requested canceling generation")
-            self.socketio.emit("generation_canceled", {"message":"Generation is canceled."}, room=client_id)
-            self.socketio.sleep(0)
+            self.sio.emit("generation_canceled", {"message":"Generation is canceled."}, room=client_id)
+            self.sio.sleep(0)
             self.busy = False
 
 
         # A copy of the original lollms-server generation code needed for playground
-        @self.socketio.on('generate_text')
+        @self.sio.on('generate_text')
         def handle_generate_text(data):
             client_id = request.sid
             ASCIIColors.info(f"Text generation requested by client: {client_id}")
             if self.busy:
-                self.socketio.emit("busy", {"message":"I am busy. Come back later."}, room=client_id)
-                self.socketio.sleep(0)
+                self.sio.emit("busy", {"message":"I am busy. Come back later."}, room=client_id)
+                self.sio.sleep(0)
                 ASCIIColors.warning(f"OOps request {client_id}  refused!! Server busy")
                 return
             def generate_text():
@@ -666,8 +666,8 @@ class LoLLMsServer(LollmsApplication):
                             if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
                                 ASCIIColors.success(f"generated:{len(self.answer['full_text'].split())} words", end='\r')
                                 self.answer["full_text"] = self.answer["full_text"] + text
-                                self.socketio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
-                                self.socketio.sleep(0)
+                                self.sio.emit('text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, room=client_id)
+                                self.sio.sleep(0)
                             if client_id in self.clients:# Client disconnected                      
                                 if self.clients[client_id]["requested_stop"]:
                                     return False
@@ -696,10 +696,10 @@ class LoLLMsServer(LollmsApplication):
                             if client_id in self.clients:
                                 if not self.clients[client_id]["requested_stop"]:
                                     # Emit the generated text to the client
-                                    self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)                
-                                    self.socketio.sleep(0)
+                                    self.sio.emit('text_generated', {'text': generated_text}, room=client_id)                
+                                    self.sio.sleep(0)
                         except Exception as ex:
-                            self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                            self.sio.emit('generation_error', {'error': str(ex)}, room=client_id)
                             ASCIIColors.error(f"\ndone")
                         self.busy = False
                     else:
@@ -738,8 +738,8 @@ class LoLLMsServer(LollmsApplication):
                             def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                                 if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
                                     self.answer["full_text"] = self.answer["full_text"] + text
-                                    self.socketio.emit('text_chunk', {'chunk': text}, room=client_id)
-                                    self.socketio.sleep(0)
+                                    self.sio.emit('text_chunk', {'chunk': text}, room=client_id)
+                                    self.sio.sleep(0)
                                 try:
                                     if self.clients[client_id]["requested_stop"]:
                                         return False
@@ -769,19 +769,19 @@ class LoLLMsServer(LollmsApplication):
                             ASCIIColors.success("\ndone")
 
                             # Emit the generated text to the client
-                            self.socketio.emit('text_generated', {'text': generated_text}, room=client_id)
-                            self.socketio.sleep(0)
+                            self.sio.emit('text_generated', {'text': generated_text}, room=client_id)
+                            self.sio.sleep(0)
                         except Exception as ex:
-                            self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                            self.sio.emit('generation_error', {'error': str(ex)}, room=client_id)
                             ASCIIColors.error(f"\ndone")
                         self.busy = False
                 except Exception as ex:
                         trace_exception(ex)
-                        self.socketio.emit('generation_error', {'error': str(ex)}, room=client_id)
+                        self.sio.emit('generation_error', {'error': str(ex)}, room=client_id)
                         self.busy = False
 
             # Start the text generation task in a separate thread
-            task = self.socketio.start_background_task(target=generate_text)
+            task = self.sio.start_background_task(target=generate_text)
             
     def build_binding(self, bindings_path: Path, cfg: LOLLMSConfig)->LLMBinding:
         binding_path = Path(bindings_path) / cfg["binding_name"]
@@ -813,7 +813,7 @@ class LoLLMsServer(LollmsApplication):
         print(f"{ASCIIColors.color_red}Current personality : {ASCIIColors.color_reset}{self.config.personalities[self.config.active_personality_id]}")
         ASCIIColors.info(f"Serving on address: http://{host}:{port}")
 
-        self.socketio.run(self.app, host=host, port=port)
+        self.sio.run(self.app, host=host, port=port)
 
 def main():
     LoLLMsServer()

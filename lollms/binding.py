@@ -24,8 +24,9 @@ from lollms.main_config import LOLLMSConfig
 from lollms.com import NotificationType, NotificationDisplayType, LoLLMsCom
 import urllib
 import inspect
+from datetime import datetime
 from enum import Enum
-
+from lollms.utilities import trace_exception
 __author__ = "parisneo"
 __github__ = "https://github.com/ParisNeo/lollms_bindings_zoo"
 __copyright__ = "Copyright 2023, "
@@ -70,6 +71,8 @@ class LLMBinding:
 
         self.lollmsCom = lollmsCom
 
+        self.download_infos={}
+
         self.add_default_configurations(binding_config)
 
         self.interrogatorStorer = None
@@ -100,7 +103,192 @@ class LLMBinding:
         self.configuration_file_path.parent.mkdir(parents=True, exist_ok=True)
         binding_config.config.file_path = self.configuration_file_path
 
+    def install_model(self, model_type:str, model_path:str, variant_name:str, client_id:int=None):
+        print("Install model triggered")
+        model_path = model_path.replace("\\","/")
 
+        if model_type.lower() in model_path.lower():
+            model_type:str=model_type
+        else:
+            mtt = None
+            for mt in self.models_dir_names:
+                if mt.lower() in  model_path.lower():
+                    mtt = mt
+                    break
+            if mtt:
+                model_type = mtt
+            else:
+                model_type:str=self.models_dir_names[0]
+
+        progress = 0
+        installation_dir = self.searchModelParentFolder(model_path.split('/')[-1], model_type)
+        if model_type=="gptq" or  model_type=="awq" or model_type=="transformers":
+            parts = model_path.split("/")
+            if len(parts)==2:
+                filename = parts[1]
+            else:
+                filename = parts[4]
+            installation_path = installation_dir / filename
+        elif model_type=="gpt4all":
+            filename = variant_name
+            model_path = "http://gpt4all.io/models/gguf/"+filename
+            installation_path = installation_dir / filename
+        else:
+            filename = Path(model_path).name
+            installation_path = installation_dir / filename
+        print("Model install requested")
+        print(f"Model path : {model_path}")
+
+        model_name = filename
+        binding_folder = self.config["binding_name"]
+        model_url = model_path
+        signature = f"{model_name}_{binding_folder}_{model_url}"
+        try:
+            self.download_infos[signature]={
+                "start_time":datetime.now(),
+                "total_size":self.get_file_size(model_path),
+                "downloaded_size":0,
+                "progress":0,
+                "speed":0,
+                "cancel":False
+            }
+            
+            if installation_path.exists():
+                print("Error: Model already exists. please remove it first")
+   
+                self.lollmsCom.notify_model_install(
+                            installation_path,
+                            model_name,
+                            binding_folder,
+                            model_url,
+                            self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
+                            self.download_infos[signature]['total_size'],
+                            self.download_infos[signature]['downloaded_size'],
+                            self.download_infos[signature]['progress'],
+                            self.download_infos[signature]['speed'],
+                            client_id,
+                            status=True,
+                            error="",
+                             )
+
+                return
+
+            
+            def callback(downloaded_size, total_size):
+                progress = (downloaded_size / total_size) * 100
+                now = datetime.now()
+                dt = (now - self.download_infos[signature]['start_time']).total_seconds()
+                speed = downloaded_size/dt
+                self.download_infos[signature]['downloaded_size'] = downloaded_size
+                self.download_infos[signature]['speed'] = speed
+
+                if progress - self.download_infos[signature]['progress']>2:
+                    self.download_infos[signature]['progress'] = progress
+                    self.lollmsCom.notify_model_install(
+                                installation_path,
+                                model_name,
+                                binding_folder,
+                                model_url,
+                                self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
+                                self.download_infos[signature]['total_size'],
+                                self.download_infos[signature]['downloaded_size'],
+                                self.download_infos[signature]['progress'],
+                                self.download_infos[signature]['speed'],
+                                client_id,
+                                status=True,
+                                error="",
+                                )                    
+                
+                if self.download_infos[signature]["cancel"]:
+                    raise Exception("canceled")
+                    
+                
+            if hasattr(self, "download_model"):
+                try:
+                    self.download_model(model_path, installation_path, callback)
+                except Exception as ex:
+                    ASCIIColors.warning(str(ex))
+                    trace_exception(ex)
+                    self.lollmsCom.notify_model_install(
+                                installation_path,
+                                model_name,
+                                binding_folder,
+                                model_url,
+                                self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
+                                self.download_infos[signature]['total_size'],
+                                self.download_infos[signature]['downloaded_size'],
+                                self.download_infos[signature]['progress'],
+                                self.download_infos[signature]['speed'],
+                                client_id,
+                                status=False,
+                                error="Canceled",
+                                )
+
+                    del self.download_infos[signature]
+                    try:
+                        if installation_path.is_dir():
+                            shutil.rmtree(installation_path)
+                        else:
+                            installation_path.unlink()
+                    except Exception as ex:
+                        trace_exception(ex)
+                        ASCIIColors.error(f"Couldn't delete file. Please try to remove it manually.\n{installation_path}")
+                    return
+
+            else:
+                try:
+                    self.download_file(model_path, installation_path, callback)
+                except Exception as ex:
+                    ASCIIColors.warning(str(ex))
+                    trace_exception(ex)
+                    self.lollmsCom.notify_model_install(
+                                installation_path,
+                                model_name,
+                                binding_folder,
+                                model_url,
+                                self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
+                                self.download_infos[signature]['total_size'],
+                                self.download_infos[signature]['downloaded_size'],
+                                self.download_infos[signature]['progress'],
+                                self.download_infos[signature]['speed'],
+                                client_id,
+                                status=False,
+                                error="Canceled",
+                                )
+                    del self.download_infos[signature]
+                    installation_path.unlink()
+                    return    
+            self.lollmsCom.notify_model_install(
+                        installation_path,
+                        model_name,
+                        binding_folder,
+                        model_url,
+                        self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
+                        self.download_infos[signature]['total_size'],
+                        self.download_infos[signature]['downloaded_size'],
+                        self.download_infos[signature]['progress'],
+                        self.download_infos[signature]['speed'],
+                        client_id,
+                        status=True,
+                        error="",
+                        )
+            del self.download_infos[signature]
+        except Exception as ex:
+            trace_exception(ex)
+            self.lollmsCom.notify_model_install(
+                        installation_path,
+                        model_name,
+                        binding_folder,
+                        model_url,
+                        '',
+                        0,
+                        0,
+                        0,
+                        0,
+                        client_id,
+                        status=False,
+                        error=str(ex),
+                        )
 
     def add_default_configurations(self, binding_config:TypedConfig):
         binding_config.addConfigs([

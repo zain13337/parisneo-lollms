@@ -13,7 +13,7 @@ from typing import Callable
 from pathlib import Path
 from datetime import datetime
 from functools import partial
-from flask_socketio import SocketIO
+from socketio import AsyncServer
 import subprocess
 import importlib
 import sys, os
@@ -33,13 +33,13 @@ class LollmsApplication(LoLLMsCom):
                     try_select_binding=False, 
                     try_select_model=False,
                     callback=None,
-                    socketio:SocketIO=None,
+                    sio:AsyncServer=None,
                     free_mode=False
                 ) -> None:
         """
         Creates a LOLLMS Application
         """
-        super().__init__(socketio)
+        super().__init__(sio)
         self.app_name                   = app_name
         self.config                     = config
         self.lollms_paths               = lollms_paths

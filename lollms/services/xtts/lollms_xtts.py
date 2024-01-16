@@ -7,7 +7,6 @@
 # All rights are reserved
 
 from pathlib import Path
-import os
 import sys
 from lollms.app import LollmsApplication
 from lollms.paths import LollmsPaths

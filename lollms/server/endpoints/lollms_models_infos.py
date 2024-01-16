@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import List
 import psutil
 
-
+from lollms.utilities import trace_exception
 class ModelReferenceParams(BaseModel):
     path: str
 
@@ -60,6 +60,7 @@ async def get_available_models():
     try:
         model_list = lollmsElfServer.binding.get_available_models(lollmsElfServer)
     except Exception as ex:
+        trace_exception(ex)
         lollmsElfServer.error("Coudln't list models. Please reinstall the binding or notify ParisNeo on the discord server")
         return []
 

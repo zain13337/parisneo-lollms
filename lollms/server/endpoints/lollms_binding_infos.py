@@ -17,7 +17,7 @@ from lollms.utilities import load_config, trace_exception, gc
 from pathlib import Path
 from typing import List
 import json
-
+import os
 # ----------------------------------- Personal files -----------------------------------------
 class ReloadBindingParams(BaseModel):
     binding_name: str

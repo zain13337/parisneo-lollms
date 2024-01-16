@@ -36,7 +36,7 @@ def add_events(sio:socketio):
         if lollmsElfServer.config.data_vectorization_activate and lollmsElfServer.config.use_discussions_history:
             try:
                 run_async(partial(sio.emit,'show_progress'))
-                lollmsElfServer.socketio.sleep(0)
+                lollmsElfServer.sio.sleep(0)
                 ASCIIColors.yellow("0- Detected discussion vectorization request")
                 folder = lollmsElfServer.lollms_paths.personal_databases_path/"vectorized_dbs"
                 folder.mkdir(parents=True, exist_ok=True)
@@ -49,7 +49,7 @@ def add_events(sio:socketio):
                 nb_discussions = len(discussions)
                 for (title,discussion) in tqdm(discussions):
                     run_async(partial(sio.emit,'update_progress',{'value':int(100*(index/nb_discussions))}))
-                    lollmsElfServer.socketio.sleep(0)
+                    lollmsElfServer.sio.sleep(0)
                     index += 1
                     if discussion!='':
                         skill = lollmsElfServer.learn_from_discussion(title, discussion)
@@ -65,4 +65,4 @@ def add_events(sio:socketio):
             except Exception as ex:
                 ASCIIColors.error(f"Couldn't vectorize database:{ex}")
         run_async(partial(sio.emit,'hide_progress'))     
-        lollmsElfServer.socketio.sleep(0)
+        lollmsElfServer.sio.sleep(0)

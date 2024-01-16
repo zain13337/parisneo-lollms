@@ -152,7 +152,7 @@ class WebcamImageSender:
         Args:
             socketio (socketio.Client): The SocketIO client object.
         """
-        self.socketio = sio
+        self.sio = sio
         self.last_image = None
         self.last_change_time = None
         self.capture_thread = None
@@ -191,7 +191,7 @@ class WebcamImageSender:
 
                 _, buffer = cv2.imencode('.jpg', frame)
                 image_base64 = base64.b64encode(buffer)
-                run_async(partial(self.socketio.emit,"video_stream_image", image_base64.decode('utf-8')))
+                run_async(partial(self.sio.emit,"video_stream_image", image_base64.decode('utf-8')))
 
             cap.release()
         except Exception as ex:
