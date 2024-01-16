@@ -91,8 +91,6 @@ class Service:
         else:
             subprocess.Popen(['bash', f'{Path.home()}/run_ollama.sh'])
 
-                        
-
         # Wait until the service is available at http://127.0.0.1:7860/
         self.wait_for_service(max_retries=wait_max_retries)
 
