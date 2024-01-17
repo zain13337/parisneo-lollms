@@ -67,4 +67,3 @@ install_success() {
     status 'Install complete. Run "ollama" from the command line.'
 }
 trap install_success EXIT
-
