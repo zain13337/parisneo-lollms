@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/
+cd ~/ollama
 
 # Set the OLLAMA_HOST address
 OLLAMA_HOST="0.0.0.0:11434"
