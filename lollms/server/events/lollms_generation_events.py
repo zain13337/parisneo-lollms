@@ -241,8 +241,6 @@ def add_events(sio:socketio):
             ASCIIColors.green("Starting message generation by "+lollmsElfServer.personality.name)
             lollmsElfServer.connections[client_id]['generation_thread'] = threading.Thread(target=lollmsElfServer.start_message_generation, args=(message, message.id, client_id))
             lollmsElfServer.connections[client_id]['generation_thread'].start()
-            
-            lollmsElfServer.sio.sleep(0.01)
             ASCIIColors.info("Started generation task")
             lollmsElfServer.busy=True
             #tpe = threading.Thread(target=lollmsElfServer.start_message_generation, args=(message, message_id, client_id))
