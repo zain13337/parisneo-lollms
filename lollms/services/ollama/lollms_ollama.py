@@ -112,7 +112,7 @@ class Service:
             retries += 1
             time.sleep(1)
         if show_warning:
-            print("Service did not become available within the given time.")
+            print("Service did not become available within the given time.\nThis may be a normal behavior as it depends on your system performance. Maybe you should wait a little more before using the ollama client as it is not ready yet\n")
             if self.app is not None:
                 self.app.error("Ollama Service did not become available within the given time.")
         return False
