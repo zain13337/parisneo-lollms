@@ -43,7 +43,7 @@ def add_events(sio:socketio):
         installation_dir = lollmsElfServer.binding.searchModelParentFolder(model_path)
         
         binding_folder = lollmsElfServer.config["binding_name"]
-        if model_type=="gptq" or  model_type=="awq":
+        if model_type=="gptq" or  model_type=="awq" or  model_type=="exl2":
             filename = model_path.split("/")[4]
             installation_path = installation_dir / filename
         else:
