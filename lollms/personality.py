@@ -28,7 +28,7 @@ from ascii_colors import ASCIIColors
 import time
 from lollms.types import MSG_TYPE
 import json
-from typing import Any, List, Optional, Type, Callable, Dict, Any
+from typing import Any, List, Optional, Type, Callable, Dict, Any, Union
 import json
 from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
 from functools import partial
@@ -36,6 +36,7 @@ import sys
 from lollms.com import LoLLMsCom
 from lollms.helpers import trace_exception
 from lollms.utilities import PackageManager
+
 def is_package_installed(package_name):
     try:
         dist = pkg_resources.get_distribution(package_name)
@@ -1858,6 +1859,63 @@ class APScript(StateMachine):
         if text.endswith("```"):
             text= text[:-3]
         return text
+    
+    def search_duckduckgo(self, query: str, max_results: int = 10, instant_answers: bool = True, regular_search_queries: bool = True, get_webpage_content: bool = False) -> List[Dict[str, Union[str, None]]]:
+        """
+        Perform a search using the DuckDuckGo search engine and return the results as a list of dictionaries.
+
+        Args:
+            query (str): The search query to use in the search. This argument is required.
+            max_results (int, optional): The maximum number of search results to return. Defaults to 10.
+            instant_answers (bool, optional): Whether to include instant answers in the search results. Defaults to True.
+            regular_search_queries (bool, optional): Whether to include regular search queries in the search results. Defaults to True.
+            get_webpage_content (bool, optional): Whether to retrieve and include the website content for each result. Defaults to False.
+
+        Returns:
+            list[dict]: A list of dictionaries containing the search results. Each dictionary will contain 'title', 'body', and 'href' keys.
+
+        Raises:
+            ValueError: If neither instant_answers nor regular_search_queries is set to True.
+        """
+        if not PackageManager.check_package_installed("duckduckgo_search"):
+            PackageManager.install_package("duckduckgo_search")
+        from duckduckgo_search import DDGS
+        if not (instant_answers or regular_search_queries):
+            raise ValueError("One of ('instant_answers', 'regular_search_queries') must be True")
+        
+        query = query.strip("\"'")
+        
+        with DDGS() as ddgs:
+            if instant_answers:
+                answer_list = list(ddgs.answers(query))
+                if answer_list:
+                    answer_dict = answer_list[0]
+                    answer_dict["title"] = query
+                    answer_dict["body"] = next((item['Text'] for item in answer_dict['AbstractText']), None)
+                    answer_dict["href"] = answer_dict.get('FirstURL', '')
+            else:
+                answer_list = []
+                
+            if regular_search_queries:
+                results = ddgs.text(query, safe=False, result_type='link')
+                for result in results[:max_results]:
+                    title = result['Text'] or query
+                    body = None
+                    href = result['FirstURL'] or ''
+                    answer_dict = {'title': title, 'body': body, 'href': href}
+                    answer_list.append(answer_dict)
+        
+            if get_webpage_content:
+                for i, result in enumerate(answer_list):
+                    try:
+                        response = requests.get(result['href'])
+                        if response.status_code == 200:
+                            content = response.text
+                            answer_list[i]['body'] = content
+                    except Exception as e:
+                        print(f"Error retrieving webpage content for {result['href']}: {str(e)}")
+        
+            return answer_list    
         
     def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start="", max_generation_size=3000):
         summeries = []
