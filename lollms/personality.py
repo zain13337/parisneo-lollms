@@ -1863,8 +1863,17 @@ class APScript(StateMachine):
         summeries = []
         for i, chunk in enumerate(chunks):
             self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
-            summery = self.remove_backticks(f"```markdown\n{answer_start}"+ self.fast_gen(f"!@>instruction: {summary_instruction}\n{chunk_name}:\n{chunk}\n!@>summary:\n```markdown\n{answer_start}",max_generation_size=max_generation_size))
-            summeries.append(summery)
+            summary = self.remove_backticks(
+                                f"```markdown\n{answer_start}"+ self.fast_gen(
+                                    "\n".join([
+                                        f"!@>Document_chunk: {chunk_name}:",
+                                        f"{chunk}",
+                                        f"!@>instruction: {summary_instruction}",
+                                        f"!@>summary:",
+                                        f"```markdown\n{answer_start}"
+                                        ]),
+                                        max_generation_size=max_generation_size))
+            summeries.append(summary)
             self.step_end(f"Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
