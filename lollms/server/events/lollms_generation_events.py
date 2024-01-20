@@ -40,7 +40,7 @@ def add_events(sio:socketio):
     
     
     @sio.on('cancel_text_generation')
-    def cancel_text_generation(sid):
+    def cancel_text_generation(sid, data):
         client_id = sid
         lollmsElfServer.connections[client_id]["requested_stop"]=True
         print(f"Client {client_id} requested canceling generation")
@@ -80,126 +80,133 @@ def add_events(sio:socketio):
                 "repeat_last_n":lollmsElfServer.config["repeat_last_n"],
                 "seed":lollmsElfServer.config["seed"]
             })
-
-            if personality_id==-1:
-                # Raw text generation
-                lollmsElfServer.answer = {"full_text":""}
-                def callback(text, message_type: MSG_TYPE, metadata:dict={}):
-                    if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
-                        ASCIIColors.success(f"generated:{len(lollmsElfServer.answer['full_text'].split())} words", end='\r')
-                        if text is not None:
-                            lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
-                            run_async(partial(lollmsElfServer.sio.emit,'text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, to=client_id))
-                    if client_id in lollmsElfServer.connections:# Client disconnected                      
-                        if lollmsElfServer.connections[client_id]["requested_stop"]:
-                            return False
-                        else:
-                            return True
-                    else:
-                        return False                            
-
-                tk = model.tokenize(prompt)
-                n_tokens = len(tk)
-                fd = model.detokenize(tk[-min(lollmsElfServer.config.ctx_size-n_predicts,n_tokens):])
-
-                try:
-                    ASCIIColors.print("warming up", ASCIIColors.color_bright_cyan)
-                    
-                    generated_text = model.generate(fd, 
-                                                    n_predict=n_predicts, 
-                                                    callback=callback,
-                                                    temperature = parameters["temperature"],
-                                                    top_k = parameters["top_k"],
-                                                    top_p = parameters["top_p"],
-                                                    repeat_penalty = parameters["repeat_penalty"],
-                                                    repeat_last_n = parameters["repeat_last_n"],
-                                                    seed = parameters["seed"],                                           
-                                                    )
-                    ASCIIColors.success(f"\ndone")
-
-                    if client_id in lollmsElfServer.connections:
-                        if not lollmsElfServer.connections[client_id]["requested_stop"]:
-                            # Emit the generated text to the client
-                            run_async(partial(lollmsElfServer.sio.emit,'text_generated', {'text': generated_text}, to=client_id))   
-                except Exception as ex:
-                    run_async(partial(lollmsElfServer.sio.emit,'generation_error', {'error': str(ex)}, to=client_id))
-                    ASCIIColors.error(f"\ndone")
-                lollmsElfServer.busy = False
-            else:
-                try:
-                    personality: AIPersonality = lollmsElfServer.personalities[personality_id]
-                    ump = lollmsElfServer.config.discussion_prompt_separator +lollmsElfServer.config.user_name.strip() if lollmsElfServer.config.use_user_name_in_discussions else lollmsElfServer.personality.user_message_prefix
-                    personality.model = model
-                    cond_tk = personality.model.tokenize(personality.personality_conditioning)
-                    n_cond_tk = len(cond_tk)
-                    # Placeholder code for text generation
-                    # Replace this with your actual text generation logic
-                    print(f"Text generation requested by client: {client_id}")
-
-                    lollmsElfServer.answer["full_text"] = ''
-                    full_discussion_blocks = lollmsElfServer.connections[client_id]["full_discussion_blocks"]
-
-                    if prompt != '':
-                        if personality.processor is not None and personality.processor_cfg["process_model_input"]:
-                            preprocessed_prompt = personality.processor.process_model_input(prompt)
-                        else:
-                            preprocessed_prompt = prompt
-                        
-                        if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                            full_discussion_blocks.append(ump)
-                            full_discussion_blocks.append(preprocessed_prompt)
-                    
-                        else:
-
-                            full_discussion_blocks.append(ump)
-                            full_discussion_blocks.append(preprocessed_prompt)
-                            full_discussion_blocks.append(personality.link_text)
-                            full_discussion_blocks.append(personality.ai_message_prefix)
-
-                    full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
-
+            def do_generation():
+                if personality_id==-1:
+                    # Raw text generation
+                    lollmsElfServer.answer = {"full_text":""}
                     def callback(text, message_type: MSG_TYPE, metadata:dict={}):
                         if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
-                            lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
-                            run_async(partial(lollmsElfServer.sio.emit,'text_chunk', {'chunk': text}, to=client_id))
-                        try:
+                            ASCIIColors.success(f"generated: {len(lollmsElfServer.answer['full_text'].split())} words", end='\r')
+                            if text is not None:
+                                lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
+                                run_async(partial(lollmsElfServer.sio.emit,'text_chunk', {'chunk': text, 'type':MSG_TYPE.MSG_TYPE_CHUNK.value}, to=client_id))
+                        if client_id in lollmsElfServer.connections:# Client disconnected                      
                             if lollmsElfServer.connections[client_id]["requested_stop"]:
                                 return False
                             else:
                                 return True
-                        except: # If the client is disconnected then we stop talking to it
-                            return False
+                        else:
+                            return False                            
 
-                    tk = personality.model.tokenize(full_discussion)
+                    tk = model.tokenize(prompt)
                     n_tokens = len(tk)
-                    fd = personality.model.detokenize(tk[-min(lollmsElfServer.config.ctx_size-n_cond_tk-personality.model_n_predicts,n_tokens):])
-                    
-                    if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
-                        ASCIIColors.info("processing...")
-                        generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
-                    else:
-                        ASCIIColors.info("generating...")
-                        generated_text = personality.model.generate(
-                                                                    personality.personality_conditioning+fd, 
-                                                                    n_predict=personality.model_n_predicts, 
-                                                                    callback=callback)
+                    fd = model.detokenize(tk[-min(lollmsElfServer.config.ctx_size-n_predicts,n_tokens):])
 
-                    if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
-                        generated_text = personality.processor.process_model_output(generated_text)
+                    try:
+                        ASCIIColors.print("warming up", ASCIIColors.color_bright_cyan)
+                        
+                        generated_text = model.generate(fd, 
+                                                        n_predict=n_predicts, 
+                                                        callback=callback,
+                                                        temperature = parameters["temperature"],
+                                                        top_k = parameters["top_k"],
+                                                        top_p = parameters["top_p"],
+                                                        repeat_penalty = parameters["repeat_penalty"],
+                                                        repeat_last_n = parameters["repeat_last_n"],
+                                                        seed = parameters["seed"],                                           
+                                                        )
+                        ASCIIColors.success(f"\ndone")
 
-                    full_discussion_blocks.append(generated_text.strip())
-                    ASCIIColors.success("\ndone")
+                        if client_id in lollmsElfServer.connections:
+                            if not lollmsElfServer.connections[client_id]["requested_stop"]:
+                                # Emit the generated text to the client
+                                run_async(partial(lollmsElfServer.sio.emit,'text_generated', {'text': generated_text}, to=client_id))   
+                    except Exception as ex:
+                        run_async(partial(lollmsElfServer.sio.emit,'generation_error', {'error': str(ex)}, to=client_id))
+                        ASCIIColors.error(f"\ndone")
+                    lollmsElfServer.busy = False
+                else:
+                    try:
+                        personality: AIPersonality = lollmsElfServer.personalities[personality_id]
+                        ump = lollmsElfServer.config.discussion_prompt_separator +lollmsElfServer.config.user_name.strip() if lollmsElfServer.config.use_user_name_in_discussions else lollmsElfServer.personality.user_message_prefix
+                        personality.model = model
+                        cond_tk = personality.model.tokenize(personality.personality_conditioning)
+                        n_cond_tk = len(cond_tk)
+                        # Placeholder code for text generation
+                        # Replace this with your actual text generation logic
+                        print(f"Text generation requested by client: {client_id}")
 
-                    # Emit the generated text to the client
-                    run_async(partial(lollmsElfServer.sio.emit,'text_generated', {'text': generated_text}, to=client_id))
-                except Exception as ex:
-                    run_async(partial(lollmsElfServer.sio.emit,'generation_error', {'error': str(ex)}, to=client_id))
-                    ASCIIColors.error(f"\ndone")
-                lollmsElfServer.busy = False
+                        lollmsElfServer.answer["full_text"] = ''
+                        full_discussion_blocks = lollmsElfServer.connections[client_id]["full_discussion_blocks"]
+
+                        if prompt != '':
+                            if personality.processor is not None and personality.processor_cfg["process_model_input"]:
+                                preprocessed_prompt = personality.processor.process_model_input(prompt)
+                            else:
+                                preprocessed_prompt = prompt
+                            
+                            if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
+                                full_discussion_blocks.append(ump)
+                                full_discussion_blocks.append(preprocessed_prompt)
+                        
+                            else:
+
+                                full_discussion_blocks.append(ump)
+                                full_discussion_blocks.append(preprocessed_prompt)
+                                full_discussion_blocks.append(personality.link_text)
+                                full_discussion_blocks.append(personality.ai_message_prefix)
+
+                        full_discussion = personality.personality_conditioning + ''.join(full_discussion_blocks)
+
+                        def callback(text, message_type: MSG_TYPE, metadata:dict={}):
+                            if message_type == MSG_TYPE.MSG_TYPE_CHUNK:
+                                lollmsElfServer.answer["full_text"] = lollmsElfServer.answer["full_text"] + text
+                                run_async(partial(lollmsElfServer.sio.emit,'text_chunk', {'chunk': text}, to=client_id))
+                            try:
+                                if lollmsElfServer.connections[client_id]["requested_stop"]:
+                                    return False
+                                else:
+                                    return True
+                            except: # If the client is disconnected then we stop talking to it
+                                return False
+
+                        tk = personality.model.tokenize(full_discussion)
+                        n_tokens = len(tk)
+                        fd = personality.model.detokenize(tk[-min(lollmsElfServer.config.ctx_size-n_cond_tk-personality.model_n_predicts,n_tokens):])
+                        
+                        if personality.processor is not None and personality.processor_cfg["custom_workflow"]:
+                            ASCIIColors.info("processing...")
+                            generated_text = personality.processor.run_workflow(prompt, previous_discussion_text=personality.personality_conditioning+fd, callback=callback)
+                        else:
+                            ASCIIColors.info("generating...")
+                            generated_text = personality.model.generate(
+                                                                        personality.personality_conditioning+fd, 
+                                                                        n_predict=personality.model_n_predicts, 
+                                                                        callback=callback)
+
+                        if personality.processor is not None and personality.processor_cfg["process_model_output"]: 
+                            generated_text = personality.processor.process_model_output(generated_text)
+
+                        full_discussion_blocks.append(generated_text.strip())
+                        ASCIIColors.success("\ndone")
+
+                        # Emit the generated text to the client
+                        run_async(partial(lollmsElfServer.sio.emit,'text_generated', {'text': generated_text}, to=client_id))
+                    except Exception as ex:
+                        run_async(partial(lollmsElfServer.sio.emit,'generation_error', {'error': str(ex)}, to=client_id))
+                        ASCIIColors.error(f"\ndone")
+                    lollmsElfServer.busy = False
+
+            lollmsElfServer.connections[client_id]['generation_thread'] = threading.Thread(target=do_generation)
+            lollmsElfServer.connections[client_id]['generation_thread'].start()
+            ASCIIColors.info("Started generation task")
+            lollmsElfServer.busy=True
+
         except Exception as ex:
-                trace_exception(ex)
-                run_async(partial(lollmsElfServer.sio.emit,'generation_error', {'error': str(ex)}, to=client_id))
-                lollmsElfServer.busy = False
+            lollmsElfServer.busy=False
+            trace_exception(ex)
+            run_async(partial(lollmsElfServer.sio.emit,'generation_error', {'error': str(ex)}, to=client_id))
+            lollmsElfServer.busy = False
 
 
 

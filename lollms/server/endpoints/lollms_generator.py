@@ -112,7 +112,7 @@ async def lollms_generate(request: LollmsGenerateRequest):
     Attributes:
     - text: str : representing the input text prompt for text generation.
     - model_name: Optional[str] = None : The name of the model to be used (it should be one of the current models)
-    - personality_id: Optional[int] = None : The name of the mounted personality to be used (if a personality is None, the endpoint will just return a completion text). To get the list of mounted personalities, just use /list_mounted_personalities
+    - personality : Optional[int] = None : The name of the mounted personality to be used (if a personality is None, the endpoint will just return a completion text). To get the list of mounted personalities, just use /list_mounted_personalities
     - n_predict: int representing the number of predictions to generate.
     - stream: bool indicating whether to stream the generated text or not.
     - temperature: float representing the temperature parameter for text generation.
