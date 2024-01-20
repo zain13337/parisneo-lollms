@@ -2407,38 +2407,31 @@ The AI should respond in this format using data from actions_list:
         Returns:
             int: Index of the selected option within the possible_ansers list. Or -1 if there was not match found among any of them.
         """
+        choices = "\n".join([f"{i}. {possible_answer}" for i, possible_answer in enumerate(possible_answers)])
         if context!="":
-            template = """!@>instructions:
-Answer this multi choices question.
-Answer with an id from the possible answers.
-Do not answer with an id outside this possible answers.
-!@>question: {{question}}
-!@>possible answers:
-{{choices}}
-!@>Context:
-{{context}}
-!@>answer:"""
+            prompt = self.build_prompt([
+                "!@>instructions:",
+                "Answer this multi choices question.",
+                "Answer with an id from the possible answers.",
+                "Do not answer with an id outside this possible answers.",
+                f"!@>question: {question}",
+                "!@>possible answers:",
+                f"{choices}",
+                "!@>Context:",
+                f"{context}",
+                "!@>answer:"
+            ])
         else:
-            template = """!@>instructions:
-Answer this multi choices question.
-Answer with an id from the possible answers.
-Do not answer with an id outside this possible answers.
-!@>question: {{question}}
-!@>choices:
-{{choices}}
-!@>answer:"""
-
-        pr  = PromptReshaper(template)
-        prompt = pr.build({
-                "context":context,
-                "question":question,
-                "choices":"\n".join([f"{i}. {possible_answer}" for i, possible_answer in enumerate(possible_answers)])
-                }, 
-                self.personality.model.tokenize, 
-                self.personality.model.detokenize, 
-                self.personality.model.config.ctx_size,
-                ["previous_discussion"]
-                )
+            prompt = self.build_prompt([
+                "!@>instructions:",
+                "Answer this multi choices question.",
+                "Answer with an id from the possible answers.",
+                "Do not answer with an id outside this possible answers.",
+                f"!@>question: {question}",
+                "!@>possible answers:",
+                f"{choices}",
+                "!@>answer:"
+            ])
         gen = self.generate(prompt, max_answer_length, temperature=0.1, top_k=50, top_p=0.9, repeat_penalty=1.0, repeat_last_n=50).strip().replace("</s>","").replace("<s>","")
         selection = gen.strip().split()[0].replace(",","").replace(".","")
         self.print_prompt("Multi choice selection",prompt+gen)
@@ -2461,32 +2454,26 @@ Do not answer with an id outside this possible answers.
             int: Index of the selected option within the possible_ansers list. Or -1 if there was not match found among any of them.
         """
         if context!="":
-            template = """!@>instruction:
-Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are returned as a python list. Do not add comments.
-!@>Context:                               
-{{context}}
-!@>question: {{question}}
-!@>choices:
-{{choices}} 
-!@>prompt analyzer: After analyzing the user prompt, here is my ranking of the choices from best to worst :["""
+            prompt = self.build_prompt([
+                "!@>instruction:",
+                "Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are returned as a python list. Do not add comments.",
+                "!@>Context:",
+                f"{context}",
+                "!@>question: {{question}}",
+                "!@>choices:",
+                "{{choices}}",
+                "!@>prompt analyzer: After analyzing the user prompt, here is my ranking of the choices from best to worst : ranks=["
+            ])
         else:
-            template = """!@>Instructions:
-Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are returned as a python list. Do not add comments.
-!@>instruction: {{question}}
-!@>choices: {{choices}} 
-!@>prompt analyzer: After analyzing the user prompt, here is my ranking of the choices from best to worst :\nranks=["""
+            prompt = self.build_prompt([
+                "!@>instruction:",
+                "Act as prompt ranker, a tool capable of ranking the user prompt. The ranks are returned as a python list. Do not add comments.",
+                "!@>question: {{question}}",
+                "!@>choices:",
+                "{{choices}}",
+                "!@>prompt analyzer: After analyzing the user prompt, here is my ranking of the choices from best to worst : ranks=["
+            ])
 
-        pr  = PromptReshaper(template)
-        prompt = pr.build({
-                "context":context,
-                "question":question,
-                "choices":"\n".join([f"{i} - {possible_answer}" for i,possible_answer in enumerate(possible_answers)])
-                }, 
-                self.personality.model.tokenize, 
-                self.personality.model.detokenize, 
-                self.personality.model.config.ctx_size,
-                ["previous_discussion"]
-                )
         gen = "["+self.generate(prompt, max_answer_length).strip().replace("</s>","").replace("<s>","")
         self.print_prompt("Multi choice selection",prompt+gen)
         if gen.index("]")>=0:

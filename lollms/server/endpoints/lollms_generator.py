@@ -95,13 +95,13 @@ class LollmsGenerateRequest(BaseModel):
     personality: Optional[int] = None
     n_predict: Optional[int] = 1024
     stream: bool = False
-    temperature: float = None
-    top_k: Optional[int] = None
-    top_p: Optional[float] = None
-    repeat_penalty: Optional[float] = None
-    repeat_last_n: Optional[int] = None
+    temperature: float = 0.1
+    top_k: Optional[int] = 50
+    top_p: Optional[float] = 0.95
+    repeat_penalty: Optional[float] = 0.8
+    repeat_last_n: Optional[int] = 40
     seed: Optional[int] = None
-    n_threads: Optional[int] = None
+    n_threads: Optional[int] = 8
 
 @router.post("/lollms_generate")
 async def lollms_generate(request: LollmsGenerateRequest):
