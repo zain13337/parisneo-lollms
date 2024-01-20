@@ -92,7 +92,7 @@ def get_generation_status():
 class LollmsGenerateRequest(BaseModel):
     text: str
     model_name: Optional[str] = None
-    personality: Optional[int] = None
+    personality: Optional[int] = -1
     n_predict: Optional[int] = 1024
     stream: bool = False
     temperature: float = 0.1
