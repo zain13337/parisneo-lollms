@@ -529,26 +529,12 @@ class LLMBinding:
     def searchModelPath(self, model_name:str):
         model_path=None
         for mn in self.models_folders:
-            if mn.name in model_name.lower():
-                if mn.name == "ggml":
-                    try:
-                        idx = model_name.index("-GGML")
-                        models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
-                        model_path = mn/models[0].name
-                    except:
-                        model_path = mn/model_name
-                elif mn.name == "gguf":
-                    try:
-                        idx = model_name.index("-GGUF")
-                        models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
-                        model_path = mn/models[0].name
-                    except:
-                        model_path = mn/model_name
-                else:
-                    model_path = mn/model_name
-                break
-        if model_path is None:
-            model_path = self.models_folders[0]/model_name
+            for f in mn.iterdir():
+                if model_name.lower().replace("-gguf","").replace("-ggml","") in str(f).lower():
+                    return f
+
+
+        model_path = self.models_folders[0]/model_name
         return model_path
     
     def get_model_path(self):
