@@ -2381,6 +2381,28 @@ The AI should respond in this format using data from actions_list:
         gen = fix_json(gen)
         return generate_actions(actions_list, gen)
 
+    def extract_code_blocks(self, text: str) -> List[dict]:
+        # Regular expression pattern to match code blocks
+        pattern = r'(```)?([\w-]+)?( `[^\n]*`)?\n(.*?)\n(```)?'
+
+        # Find all matches of the pattern in the text
+        matches = re.findall(pattern, text, re.DOTALL)
+
+        # Process the matches and return a list of dictionaries
+        code_blocks = []
+        for match in matches:
+            index = text.index(match[0])
+            content = match[3].strip()
+            language = match[1] or ''
+            type_ = 'code' if not match[1] else 'markup' if match[2] else 'language-specific'
+
+            code_blocks.append({
+                'index': index,
+                'content': content,
+                'type': type_
+            })
+
+        return code_blocks
 
     def yes_no(self, question: str, context:str="", max_answer_length: int = 50) -> bool:
         """
