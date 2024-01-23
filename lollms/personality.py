@@ -2382,24 +2382,52 @@ The AI should respond in this format using data from actions_list:
         return generate_actions(actions_list, gen)
 
     def extract_code_blocks(self, text: str) -> List[dict]:
-        # Regular expression pattern to match code blocks
-        pattern = r'(```)?([\w-]+)?( `[^\n]*`)?\n(.*?)\n(```)?'
-        
-        # Find all matches of the pattern in the text
-        matches = re.findall(pattern, text, re.DOTALL)
-        
-        # Process the matches and return a list of dictionaries
+        remaining = text
+        first_index=0
+        indices = []
+        while len(remaining)>0:
+            try:
+                index = remaining.index("```")
+                indices.append(index+first_index)
+                remaining = remaining.index("```")[index+3:]
+                first_index += index+3
+            except:
+                index=len(remaining)
+                indices.append(index)
+                remaining = ""
+                
         code_blocks = []
-        for match in matches:
-            index = text.index(match[0])
-            content = match[3].strip() or text[index:]
-            language = match[1] or ''
-            type_ = 'code' if not match[1] else 'markup' if match[2] else 'language-specific'
-            code_blocks.append({
-                'index': index,
-                'content': content,
-                'type': type_
-            })
+        is_start = True
+        for index, code_delimiter_position in enumerate(indices):
+            block_infos = {
+                'index':index,
+                'content': "",
+                'type':""
+            }
+            if is_start:
+                sub_text = text[code_delimiter_position+3:]
+                try:
+                    find_space = sub_text.index(" ")
+                except:
+                    find_space = 1e10
+                try:
+                    find_return = sub_text.index("\n")
+                except:
+                    find_return = 1e10
+                next_index = min(find_return, find_space)
+                start_pos = next_index
+                if text[code_delimiter_position+3] in ["\n"," ","\t"]:
+                    # No
+                    block_infos["type"]='language-specific'
+                else:
+                    block_infos["type"]=sub_text[:next_index]
+                    
+                next_pos = indices[index+1]-code_delimiter_position+3                
+                block_infos["content"]=sub_text[start_pos:next_pos]
+                is_start = False
+            else:
+                is_start = True
+                continue
 
         return code_blocks
 
