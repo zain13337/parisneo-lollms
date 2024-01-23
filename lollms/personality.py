@@ -2384,18 +2384,17 @@ The AI should respond in this format using data from actions_list:
     def extract_code_blocks(self, text: str) -> List[dict]:
         # Regular expression pattern to match code blocks
         pattern = r'(```)?([\w-]+)?( `[^\n]*`)?\n(.*?)\n(```)?'
-
+        
         # Find all matches of the pattern in the text
         matches = re.findall(pattern, text, re.DOTALL)
-
+        
         # Process the matches and return a list of dictionaries
         code_blocks = []
         for match in matches:
             index = text.index(match[0])
-            content = match[3].strip()
+            content = match[3].strip() or text[index:]
             language = match[1] or ''
             type_ = 'code' if not match[1] else 'markup' if match[2] else 'language-specific'
-
             code_blocks.append({
                 'index': index,
                 'content': content,
