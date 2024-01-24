@@ -2423,7 +2423,8 @@ The AI should respond in this format using data from actions_list:
                     block_infos["type"]=sub_text[:next_index]
                     
                 next_pos = indices[index+1]-code_delimiter_position+3                
-                block_infos["content"]=sub_text[start_pos:next_pos]
+                block_infos["content"]=sub_text[start_pos:next_pos].strip()
+                code_blocks.append(block_infos)
                 is_start = False
             else:
                 is_start = True
