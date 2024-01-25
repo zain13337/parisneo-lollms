@@ -8,7 +8,7 @@ else
     echo Installing conda
     curl -LOk https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
     ./Miniconda3-latest-Linux-x86_64.sh -b
-    $HOME/miniconda3/bin/conda init
+    $HOME/miniconda3/bin/conda init --all
     rm ./Miniconda3-latest-Linux-x86_64.sh
     echo Done
 fi
