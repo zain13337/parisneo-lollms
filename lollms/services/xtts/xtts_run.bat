@@ -4,6 +4,13 @@ cd
 :: Check if portable Conda is installed
 IF EXIST ".\installer_files\miniconda3\Scripts\activate.bat" (
     echo "Using portable Conda installation."
+    set MINICONDA_DIR=%cd%\installer_files\miniconda3
+    set INSTALL_ENV_DIR=%cd%\installer_files\xtts
+    @rem activate miniconda
+    call "%MINICONDA_DIR%\Scripts\activate.bat" || ( echo Miniconda hook not found. && goto end )
+    @rem activate installer env
+    call conda activate "%INSTALL_ENV_DIR%" || ( echo. && echo Conda environment activation failed. && goto end )
+
     call .\installer_files\miniconda3\Scripts\activate.bat xtts
     call .\installer_files\miniconda3\python.exe -m xtts_api_server -o %1 -sf %2
     exit /b

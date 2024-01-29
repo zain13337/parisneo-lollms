@@ -1,20 +1,23 @@
 @echo off
-setlocal
+set MINICONDA_DIR=%cd%\installer_files\miniconda3
+set INSTALL_ENV_DIR=%cd%\installer_files\xtts
 
 :: Check if portable Conda is installed
 IF EXIST ".\installer_files\miniconda3\Scripts\activate.bat" (
     echo "Using portable Conda installation."
-    set CONDA_BASE=installer_files\miniconda3
-    call .\installer_files\miniconda3\Scripts\activate.bat
-    call .\installer_files\miniconda3\condabin\conda.bat deactivate
-    call .\installer_files\miniconda3\condabin\conda.bat info --envs | findstr /B /C:"xtts" >nul 2>&1
-    if %errorlevel% == 0 (
-        echo "Conda environment 'xtts' already exists. Deleting it."
-        call .\installer_files\miniconda3\condabin\conda.bat env remove --name xtts --yes
+    echo %MINICONDA_DIR%
+    @rem create the installer env
+
+    if exist "%INSTALL_ENV_DIR%" (
+        rmdir "%INSTALL_ENV_DIR%" /s /q
     )
-    call .\installer_files\miniconda3\condabin\conda.bat create --name xtts --yes
-    call .\installer_files\miniconda3\Scripts\activate.bat xtts
-    call .\installer_files\miniconda3\Scripts\pip.exe install xtts-api-server --user
+    echo Packages to install: %PACKAGES_TO_INSTALL%
+    call conda create --no-shortcuts -y -k -p "%INSTALL_ENV_DIR%" || ( echo. && echo Conda environment creation failed. && goto end )
+
+    @rem activate miniconda
+    call "%MINICONDA_DIR%\Scripts\activate.bat" || ( echo Miniconda hook not found. && goto end )
+    call "%MINICONDA_DIR%\Scripts\pip.exe" install xtts-api-server
+
 ) else (
     echo "No portable Conda found. Checking for system-wide Conda installation."
     where conda >nul 2>&1
