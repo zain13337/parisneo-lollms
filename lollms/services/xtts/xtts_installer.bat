@@ -32,10 +32,12 @@ IF EXIST "%MINICONDA_DIR%\Scripts\activate.bat" (
         )
         call conda create --name xtts --yes
         call conda activate xtts
-        call pip install xtts-api-server --user
+        call pip install xtts-api-server
+        
     ) else (
         echo "No Conda installation found. Please install Conda."
         exit /b 1
     )
 )
+echo "Done"
 exit /b
