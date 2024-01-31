@@ -798,27 +798,27 @@ Date: {{date}}
             if callback is not None:
                 callback("Image file added successfully", MSG_TYPE.MSG_TYPE_INFO)
         else:
-            self.text_files.append(path)
-            ASCIIColors.info("Received text compatible file")
-            if self.vectorizer is None:
-                self.vectorizer = TextVectorizer(
-                            self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
-                            model=self.model, #needed in case of using model_embedding
-                            database_path=db_path,
-                            save_db=self.config.data_vectorization_save_db,
-                            data_visualization_method=VisualizationMethod.PCA,
-                            database_dict=None)
             try:
-                self.ShowBlockingMessage("Addine file to vector store.\nPlease stand by")
-                data = GenericDataLoader.read_file(path)
-                self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size)
-                self.vectorizer.index()
-                self.HideBlockingMessage("Addine file to vector store.\nPlease stand by")
-                if callback is not None:
-                    callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-                return True
-            except ValueError as ve:
-                self.HideBlockingMessage("Addine file to vector store.\nPlease stand by")
+                # self.ShowBlockingMessage("Adding file to vector store.\nPlease stand by")
+                self.text_files.append(path)
+                ASCIIColors.info("Received text compatible file")
+                if self.vectorizer is None:
+                    self.vectorizer = TextVectorizer(
+                                self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
+                                model=self.model, #needed in case of using model_embedding
+                                database_path=db_path,
+                                save_db=self.config.data_vectorization_save_db,
+                                data_visualization_method=VisualizationMethod.PCA,
+                                database_dict=None)
+                    data = GenericDataLoader.read_file(path)
+                    self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size)
+                    self.vectorizer.index()
+                    if callback is not None:
+                        callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                    self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
+                    return True
+            except Exception as e:
+                self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
                 self.InfoMessage(f"Unsupported file format or empty file.\nSupported formats are {GenericDataLoader.get_supported_file_types()}")
                 return False
     def save_personality(self, package_path=None):
