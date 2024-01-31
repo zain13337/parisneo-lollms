@@ -229,12 +229,12 @@ Date: {{date}}
         ASCIIColors.white(content)
 
     def ShowBlockingMessage(self, content, client_id=None, verbose:bool=True):
-        if self.lollmsCom:
+        if self.app:
             return self.app.ShowBlockingMessage(content=content, client_id=client_id, verbose=verbose)
         ASCIIColors.white(content)
         
     def HideBlockingMessage(self, client_id=None, verbose:bool=True):
-        if self.lollmsCom:
+        if self.app:
             return self.app.HideBlockingMessage(client_id=client_id, verbose=verbose)
 
 
