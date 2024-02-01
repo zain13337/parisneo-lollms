@@ -766,6 +766,9 @@ Date: {{date}}
         db_path.parent.mkdir(parents=True, exist_ok=True)
         path = Path(path)
         if path.suffix in [".wav",".mp3"]:
+            self.new_message("")
+            self.info(f"Transcribing ... ")
+            self.step_start("Transcribing ... ")
             if self.whisper is None:
                 if not PackageManager.check_package_installed("whisper"):
                     PackageManager.install_package("openai-whisper")
@@ -779,9 +782,7 @@ Date: {{date}}
                 self.whisper = whisper.load_model("base")
 
 
-            self.info(f"Transcribing ... ")
-            self.step_start("Transcribing ... ")
-            result = self.whisper.transcribe(str(self.filename))
+            result = self.whisper.transcribe(str(path))
             transcription_fn = str(path)+".txt"
             with open(transcription_fn, "w", encoding="utf-8") as f:
                 f.write(result["text"])
@@ -1690,7 +1691,8 @@ class APScript(StateMachine):
             self.personality_config.config.save_config()
         else:
             self.load_personality_config()
-
+    def sink(self, s,i,d):
+        pass
     def settings_updated(self):
         """
         To be implemented by the processor when the settings have changed
