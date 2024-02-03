@@ -132,6 +132,8 @@ class AudioRecorder:
         with open(transcription_fn, "w", encoding="utf-8") as f:
             f.write(result["text"])
         self.lollmsCom.info(f"File saved to {transcription_fn}")
+        run_async(partial(self.sio.emit,'transcript', result["text"]))
+        return result["text"]
 
     def update_spectrogram(self):
         f, t, Sxx = spectrogram(self.buffer[-30*self.sample_rate:], self.sample_rate)
