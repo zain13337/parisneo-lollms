@@ -2605,6 +2605,25 @@ The AI should respond in this format using data from actions_list:
             ASCIIColors.red("Model failed to rank inputs")
             return None
 
+    def build_html5_integration(self, html, ifram_name="unnamed"):
+        """
+        This function creates an HTML5 iframe with the given HTML content and iframe name.
+
+        Args:
+        html (str): The HTML content to be displayed in the iframe.
+        ifram_name (str, optional): The name of the iframe. Defaults to "unnamed".
+
+        Returns:
+        str: The HTML string for the iframe.
+        """
+        return "\n".join(
+            '<div style="width: 80%; margin: 0 auto;">',
+            f'<iframe id="{ifram_name}" srcdoc="',
+            html,
+            '" style="width: 100%; height: 600px; border: none;"></iframe>',
+            '</div>'
+        )
+
 
 
     def info(self, info_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
