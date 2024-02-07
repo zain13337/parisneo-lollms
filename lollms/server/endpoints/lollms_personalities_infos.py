@@ -433,7 +433,7 @@ def unmount_personality(data:PersonalityMountingInfos):
         else:
             ASCIIColors.error(f"nok : Personality not found @ {category}/{name}")
             
-        ASCIIColors.yellow(f"Available personalities: {[p.name for p in lollmsElfServer.mounted_personalities]}")
+        ASCIIColors.yellow(f"Available personalities: {[p.name for p in lollmsElfServer.mounted_personalities if p is not None]}")
         return {"status": False, "error":"Couldn't unmount personality"}
     
 
