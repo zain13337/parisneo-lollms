@@ -85,19 +85,16 @@ def get_all_personalities():
                         scripts_path = personality_folder / 'scripts'
                         personality_info['has_scripts'] = scripts_path.exists()
                         with open(config_path) as config_file:
-                            try:
-                                config_data = yaml.load(config_file, Loader=yaml.FullLoader)
-                                personality_info['name'] = config_data.get('name',"No Name")
-                                personality_info['description'] = config_data.get('personality_description',"")
-                                personality_info['disclaimer'] = config_data.get('disclaimer',"")
-                                
-                                personality_info['author'] = config_data.get('author', 'ParisNeo')
-                                personality_info['version'] = config_data.get('version', '1.0.0')
-                                personality_info['installed'] = (lollmsElfServer.lollms_paths.personal_configuration_path/f"personality_{personality_folder.stem}.yaml").exists() or personality_info['has_scripts']
-                                personality_info['help'] = config_data.get('help', '')
-                                personality_info['commands'] = config_data.get('commands', '')
-                            except Exception as ex:
-                                trace_exception(ex)
+                            config_data = yaml.load(config_file, Loader=yaml.FullLoader)
+                            personality_info['name'] = config_data.get('name',"No Name")
+                            personality_info['description'] = config_data.get('personality_description',"")
+                            personality_info['disclaimer'] = config_data.get('disclaimer',"")
+                            
+                            personality_info['author'] = config_data.get('author', 'ParisNeo')
+                            personality_info['version'] = config_data.get('version', '1.0.0')
+                            personality_info['installed'] = (lollmsElfServer.lollms_paths.personal_configuration_path/f"personality_{personality_folder.stem}.yaml").exists() or personality_info['has_scripts']
+                            personality_info['help'] = config_data.get('help', '')
+                            personality_info['commands'] = config_data.get('commands', '')
                         languages_path = personality_folder/ 'languages'
 
                         real_assets_path = personality_folder/ 'assets'
