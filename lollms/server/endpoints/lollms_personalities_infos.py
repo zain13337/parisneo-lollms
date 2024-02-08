@@ -84,7 +84,7 @@ def get_all_personalities():
                     try:
                         scripts_path = personality_folder / 'scripts'
                         personality_info['has_scripts'] = scripts_path.exists()
-                        with open(config_path) as config_file:
+                        with open(config_path, "r", encoding="utf8") as config_file:
                             config_data = yaml.load(config_file, Loader=yaml.FullLoader)
                             personality_info['name'] = config_data.get('name',"No Name")
                             personality_info['description'] = config_data.get('personality_description',"")
