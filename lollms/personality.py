@@ -59,7 +59,7 @@ def craft_a_tag_to_specific_text(url, text, caption):
     anchor_url = f"{url}#{encoded_text}"
 
     # Return the anchor tag
-    return f'<a href="{anchor_url}" target="blanc">{caption}</a>'
+    return anchor_url
 
 def is_package_installed(package_name):
     try:
