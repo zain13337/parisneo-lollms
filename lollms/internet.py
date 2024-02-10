@@ -1,17 +1,19 @@
-
+from ascii_colors import ASCIIColors, trace_exception
 def get_favicon_url(url):
     import requests
     from bs4 import BeautifulSoup
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    favicon_link = soup.find('link', rel='icon') or soup.find('link', rel='shortcut icon')
-    
-    if favicon_link:
-        favicon_url = favicon_link['href']
-        if not favicon_url.startswith('http'):
-            favicon_url = url + favicon_url
-        return favicon_url
-    
+    try:
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        favicon_link = soup.find('link', rel='icon') or soup.find('link', rel='shortcut icon')
+        
+        if favicon_link:
+            favicon_url = favicon_link['href']
+            if not favicon_url.startswith('http'):
+                favicon_url = url + favicon_url
+            return favicon_url
+    except:
+        ASCIIColors.warning(f"Couldn't get fav icon from {url}")
     return None
 
 
