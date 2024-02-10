@@ -37,28 +37,30 @@ def get_relevant_text_block(
                                 title=None,
                                 brief=None
                             ):
-    from bs4 import BeautifulSoup    
-    # Load the webpage
-    driver.get(url)
+    try:
+        from bs4 import BeautifulSoup    
+        # Load the webpage
+        driver.get(url)
 
-    # Wait for JavaScript to execute and get the final page source
-    html_content = driver.page_source
+        # Wait for JavaScript to execute and get the final page source
+        html_content = driver.page_source
 
-    # Parse the HTML content
-    soup = BeautifulSoup(html_content, "html.parser")
-    # Example: Remove all <script> and <style> tags
-    for script in soup(["script", "style"]):
-        script.extract()
+        # Parse the HTML content
+        soup = BeautifulSoup(html_content, "html.parser")
+        # Example: Remove all <script> and <style> tags
+        for script in soup(["script", "style"]):
+            script.extract()
 
-    all_text = soup.get_text()
-    # Example: Remove leading/trailing whitespace and multiple consecutive line breaks
-    document_id = {
-        'url':url
-    }
-    document_id["title"] = title
-    document_id["brief"] = brief
-    vectorizer.add_document(document_id,all_text, config.internet_vectorization_chunk_size, config.internet_vectorization_overlap_size)
-
+        all_text = soup.get_text()
+        # Example: Remove leading/trailing whitespace and multiple consecutive line breaks
+        document_id = {
+            'url':url
+        }
+        document_id["title"] = title
+        document_id["brief"] = brief
+        vectorizer.add_document(document_id,all_text, config.internet_vectorization_chunk_size, config.internet_vectorization_overlap_size)
+    except:
+        ASCIIColors.warning(f"Couldn't scrape: {url}")
 
 def extract_results(url, max_num, driver=None):
     from bs4 import BeautifulSoup    
@@ -153,8 +155,6 @@ def internet_search(query, chromedriver_path, config, model = None, quick_search
                                 config.internet_nb_search_pages,
                                 driver
                             )
-    # Close the browser
-    driver.quit()
     
     for i, result in enumerate(results):
         title = result["title"]
@@ -168,6 +168,8 @@ def internet_search(query, chromedriver_path, config, model = None, quick_search
         if nb_non_empty>=config.internet_nb_search_pages:
             break
     vectorizer.index()
+    # Close the browser
+    driver.quit()
 
     docs, sorted_similarities, document_ids = vectorizer.recover_text(query, config.internet_vectorization_nb_chunks)
     return docs, sorted_similarities, document_ids
