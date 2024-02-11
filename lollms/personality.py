@@ -2703,7 +2703,18 @@ The AI should respond in this format using data from actions_list:
 
 
     def build_and_execute_python_code(self,context, instructions, execution_function_signature):
-        code = "```python\n"+self.fast_gen("!@>context!:\n"+context+f"\n!@>instructions: {instructions}.\nHere is the signature of the function:\n{execution_function_signature}\n!@>Code: Here is the query function that you are asking for:\n```python\n", callback=self.sink)
+        code = "```python\n"+self.fast_gen(
+            self.build_prompt([
+            "!@>context!:",
+            context,
+            f"!@>instructions:"
+            f"{instructions}",
+            "Do not provide usage example.",
+            "Do not ask the user to update the code. This code should be self sufficient.",
+            f"Here is the signature of the function:\n{execution_function_signature}",
+            f"!@>Code: Here is the query function that you are asking for:",
+            "```python\n"
+            ],1), callback=self.sink)
         code=self.extract_code_blocks(code)
 
         if len(code)>0:
