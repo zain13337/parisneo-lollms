@@ -2702,7 +2702,7 @@ The AI should respond in this format using data from actions_list:
         return code_blocks
 
 
-    def build_and_execute_python_code(self,context, instructions, execution_function_signature, inputs):
+    def build_and_execute_python_code(self,context, instructions, execution_function_signature):
         code = "```python\n"+self.fast_gen("!@>context!:\n"+context+f"\n!@>instructions: {instructions}.\nHere is the signature of the function:\n{execution_function_signature}\n!@>Code: Here is the query function that you are asking for:\n```python\n", callback=self.sink)
         code=self.extract_code_blocks(code)
 
@@ -2714,7 +2714,7 @@ The AI should respond in this format using data from actions_list:
             spec = importlib.util.spec_from_loader(module_name, loader=None)
             module = importlib.util.module_from_spec(spec)
             exec(code, module.__dict__)
-            return module.query(*inputs)
+            return module
 
 
     def yes_no(self, question: str, context:str="", max_answer_length: int = 50, conditionning="") -> bool:
