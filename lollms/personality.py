@@ -2691,8 +2691,11 @@ The AI should respond in this format using data from actions_list:
                 else:
                     block_infos["type"]=sub_text[:next_index]
                     
-                next_pos = indices[index+1]-code_delimiter_position           
-                block_infos["content"]=sub_text[start_pos:next_pos-3].strip()
+                next_pos = indices[index+1]-code_delimiter_position
+                if sub_text[next_pos-3]=="`":
+                    block_infos["content"]=sub_text[start_pos:next_pos-3].strip()
+                else:
+                    block_infos["content"]=sub_text[start_pos:next_pos].strip()
                 code_blocks.append(block_infos)
                 is_start = False
             else:
@@ -2712,9 +2715,10 @@ The AI should respond in this format using data from actions_list:
             "Do not provide usage example.",
             "Do not ask the user to update the code. This code should be self sufficient.",
             f"Here is the signature of the function:\n{execution_function_signature}",
-            f"!@>Code: Here is the query function that you are asking for:",
+            "Don't call the function, just write it",
+            f"!@>coder: Here is the function that you are asking for:",
             "```python\n"
-            ],1), callback=self.sink)
+            ],2), callback=self.sink)
         code=self.extract_code_blocks(code)
 
         if len(code)>0:
@@ -2725,7 +2729,7 @@ The AI should respond in this format using data from actions_list:
             spec = importlib.util.spec_from_loader(module_name, loader=None)
             module = importlib.util.module_from_spec(spec)
             exec(code, module.__dict__)
-            return module
+            return module, code
 
 
     def yes_no(self, question: str, context:str="", max_answer_length: int = 50, conditionning="") -> bool:
