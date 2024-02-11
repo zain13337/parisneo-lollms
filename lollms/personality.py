@@ -2652,17 +2652,20 @@ The AI should respond in this format using data from actions_list:
 
     def extract_code_blocks(self, text: str) -> List[dict]:
         remaining = text
+        bloc_index = 0
         first_index=0
         indices = []
         while len(remaining)>0:
             try:
                 index = remaining.index("```")
                 indices.append(index+first_index)
-                remaining = remaining.index("```")[index+3:]
+                remaining = remaining[index+3:]
                 first_index += index+3
-            except:
-                index=len(remaining)
-                indices.append(index)
+                bloc_index +=1
+            except Exception as ex:
+                if bloc_index%2==1:
+                    index=len(remaining)
+                    indices.append(index)
                 remaining = ""
                 
         code_blocks = []
@@ -2691,8 +2694,8 @@ The AI should respond in this format using data from actions_list:
                 else:
                     block_infos["type"]=sub_text[:next_index]
                     
-                next_pos = indices[index+1]-code_delimiter_position+3                
-                block_infos["content"]=sub_text[start_pos:next_pos].strip()
+                next_pos = indices[index+1]-code_delimiter_position           
+                block_infos["content"]=sub_text[start_pos:next_pos-3].strip()
                 code_blocks.append(block_infos)
                 is_start = False
             else:
@@ -2700,6 +2703,22 @@ The AI should respond in this format using data from actions_list:
                 continue
 
         return code_blocks
+
+
+    def build_and_execute_python_code(self,context, instructions, execution_function_signature, inputs):
+        code = "```python\n"+self.fast_gen("!@>context!:\n"+context+f"\n!@>instructions: {instructions}.\nHere is the signature of the function:\n{execution_function_signature}\n!@>Code: Here is the query function that you are asking for:\n```python\n", callback=self.sink)
+        code=self.extract_code_blocks(code)
+
+        if len(code)>0:
+            # Perform the search query
+            code = code[0]["content"]
+            ASCIIColors.magenta(code)
+            module_name = 'custom_module'
+            spec = importlib.util.spec_from_loader(module_name, loader=None)
+            module = importlib.util.module_from_spec(spec)
+            exec(code, module.__dict__)
+            return module.query(*inputs)
+
 
     def yes_no(self, question: str, context:str="", max_answer_length: int = 50, conditionning="") -> bool:
         """
