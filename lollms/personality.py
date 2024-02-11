@@ -2720,7 +2720,7 @@ The AI should respond in this format using data from actions_list:
             f"!@>coder: Here is the function that you are asking for:",
             "```python\n"
             ],2), callback=self.sink)
-        code = code.replace("```python\n```python\n", "```python\n")
+        code = code.replace("```python\n```python\n", "```python\n").replace("```\n```","```")
         code=self.extract_code_blocks(code)
 
         if len(code)>0:
