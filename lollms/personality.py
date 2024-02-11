@@ -2705,6 +2705,7 @@ The AI should respond in this format using data from actions_list:
         return code_blocks
 
 
+
     def build_and_execute_python_code(self,context, instructions, execution_function_signature):
         code = "```python\n"+self.fast_gen(
             self.build_prompt([
@@ -2719,6 +2720,7 @@ The AI should respond in this format using data from actions_list:
             f"!@>coder: Here is the function that you are asking for:",
             "```python\n"
             ],2), callback=self.sink)
+        code = code.replace("```python\n```python\n", "```python\n")
         code=self.extract_code_blocks(code)
 
         if len(code)>0:
