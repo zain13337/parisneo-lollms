@@ -2717,7 +2717,7 @@ The AI should respond in this format using data from actions_list:
             "Do not ask the user to update the code. This code should be self sufficient.",
             f"Here is the signature of the function:\n{execution_function_signature}",
             "Don't call the function, just write it",
-            f"!@>coder: Here is the function that you are asking for:",
+            f"!@>coder: Here is the function code that performs exactly what you have asked me to do:",
             "```python\n"
             ],2), callback=self.sink)
         code = code.replace("```python\n```python\n", "```python\n").replace("```\n```","```")
