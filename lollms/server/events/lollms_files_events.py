@@ -34,27 +34,4 @@ lollmsElfServer = LOLLMSWebUI.get_instance()
 
 
 # ----------------------------------- events -----------------------------------------
-def add_events(sio:socketio):
-    @sio.on('upload_file')
-    def upload_file(sid, data):
-        ASCIIColors.yellow("Uploading file")
-        file = data['file']
-        filename = file.filename
-        save_path = lollmsElfServer.lollms_paths.personal_uploads_path/filename  # Specify the desired folder path
 
-        try:
-            if not lollmsElfServer.personality.processor is None:
-                file.save(save_path)
-                lollmsElfServer.personality.processor.add_file(save_path, partial(lollmsElfServer.process_chunk, client_id = sid))
-                # File saved successfully
-                run_async(partial(sio.emit,'progress', {'status':True, 'progress': 100}))
-
-            else:
-                file.save(save_path)
-                lollmsElfServer.personality.add_file(save_path, partial(lollmsElfServer.process_chunk, client_id = sid))
-                # File saved successfully
-                run_async(partial(sio.emit,'progress', {'status':True, 'progress': 100}))
-        except Exception as e:
-            # Error occurred while saving the file
-            run_async(partial(sio.emit,'progress', {'status':False, 'error': str(e)}))
-            
