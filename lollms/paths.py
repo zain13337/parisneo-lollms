@@ -169,6 +169,7 @@ class LollmsPaths:
         self.personal_data_path.mkdir(parents=True, exist_ok=True)
         self.personal_databases_path.mkdir(parents=True, exist_ok=True)
         self.personal_log_path.mkdir(parents=True, exist_ok=True)
+        self.personal_certificates.mkdir(parents=True, exist_ok=True)
         self.personal_outputs_path.mkdir(parents=True, exist_ok=True)
         self.personal_uploads_path.mkdir(parents=True, exist_ok=True)
         self.personal_user_infos_path.mkdir(parents=True, exist_ok=True)
