@@ -7,7 +7,7 @@ description:
     application. These routes are specific to bindings
 
 """
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel, Field
 import pkg_resources
 from lollms.server.elf_server import LOLLMSElfServer
@@ -125,6 +125,11 @@ def install_binding(data:BindingInstallParams):
     Returns:
         dict: Status of operation.
     """
+    
+    if ".." in data.name:
+        ASCIIColors.error("A potential path traversal attack detected. The name of the binding sent to the server has .. in it!")
+        raise HTTPException(status_code=400, detail="Invalid path!")
+    
     ASCIIColors.info(f"- Reinstalling binding {data.name}...")
     try:
         lollmsElfServer.info("Unmounting binding and model")
