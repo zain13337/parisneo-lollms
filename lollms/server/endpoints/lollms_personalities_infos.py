@@ -234,6 +234,9 @@ class RemoveFileData(BaseModel):
     
 @router.post("/remove_file")
 def remove_file(data:RemoveFileData):
+    """
+    Removes a file form the personality files
+    """
     if lollmsElfServer.personality is None:
         return {"state":False, "error":"No personality selected"}
     lollmsElfServer.personality.remove_file(data.name)
