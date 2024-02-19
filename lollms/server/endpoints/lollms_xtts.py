@@ -132,10 +132,10 @@ async def text2Audio(request: LollmsText2AudioRequest):
 def install_xtts():
     try:
         if lollmsElfServer.config.headless_server_mode:
-            return {"status":False,"error":"Code execution is blocked when in headless mode for obvious security reasons!"}
+            return {"status":False,"error":"Service installation is blocked when in headless mode for obvious security reasons!"}
 
         if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
-            return {"status":False,"error":"Code execution is blocked when the server is exposed outside for very obvious reasons!"}
+            return {"status":False,"error":"Service installation is blocked when the server is exposed outside for very obvious reasons!"}
         
         from lollms.services.xtts.lollms_xtts import install_xtts
         lollmsElfServer.ShowBlockingMessage("Installing xTTS api server\nPlease stand by")

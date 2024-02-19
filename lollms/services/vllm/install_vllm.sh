@@ -6,7 +6,7 @@ if [ -e "$HOME/miniconda3/bin/conda" ]; then
 else
     echo "Conda is not installed. Please install it first."
     echo Installing conda
-    curl -LOk https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
     ./Miniconda3-latest-Linux-x86_64.sh -b
     rm ./Miniconda3-latest-Linux-x86_64.sh
     echo Done
