@@ -11,11 +11,13 @@ else
     rm ./Miniconda3-latest-Linux-x86_64.sh
     echo Done
 fi
+PATH="$HOME/miniconda3/bin:$PATH"
+export PATH
 echo "Initializing conda"
-$HOME/miniconda3/bin/conda init --all
+conda init --all
 export PATH
 echo "Installing vllm"
-$HOME/miniconda3/bin/conda create -n vllm python=3.9 -y
+conda create -n vllm python=3.9 -y
 echo "Activating vllm environment"
 source activate vllm 
 pip install vllm
