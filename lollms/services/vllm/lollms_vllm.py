@@ -81,7 +81,7 @@ class Service:
     def __init__(
                     self, 
                     app:LollmsApplication,
-                    base_url="http://127.0.0.1:11434",
+                    base_url="http://localhost:8000",
                     wait_max_retries = 5
                 ):
         self.base_url = base_url
@@ -106,7 +106,7 @@ class Service:
         # run vllm
         if platform.system() == 'Windows':
             #subprocess.Popen(['wsl', 'ls', '$HOME'])
-            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh'])
+            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh', self.app.config.vllm_model_path])
         else:
             subprocess.Popen(['bash', f'{Path.home()}/run_vllm.sh', self.app.config.vllm_model_path])
 
