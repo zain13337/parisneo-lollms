@@ -35,6 +35,14 @@ import os
 import sys
 
 
+def get_conda_path():
+    # Get the path to the Python executable that's running the script
+    python_executable_path = sys.executable
+    # Construct the path to the 'conda' executable based on the Python executable path
+    # Assuming that 'conda' is in the same directory as the Python executable
+    conda_executable_path = os.path.join(os.path.dirname(python_executable_path), 'conda')
+    return conda_executable_path
+
 def yes_or_no_input(prompt):
     while True:
         user_input = input(prompt + " (yes/no): ").lower()

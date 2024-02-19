@@ -72,6 +72,7 @@ def get_vllm(lollms_app:LollmsApplication):
         ASCIIColors.success("Loading source file...",end="")
         # use importlib to load the module from the file path
         ASCIIColors.success("ok")
+        
         return Service
     else:
         return None

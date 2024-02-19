@@ -125,10 +125,7 @@ class LollmsApplication(LoLLMsCom):
     def get_uploads_path(self, client_id):
         return self.lollms_paths.personal_uploads_path
 
-    def start_servers(  self,
-                        load_voice_service=True,
-                        load_sd_service=True,
-        ):
+    def start_servers(  self ):
         if self.config.enable_ollama_service:
             try:
                 from lollms.services.ollama.lollms_ollama import Service
@@ -137,15 +134,23 @@ class LollmsApplication(LoLLMsCom):
                 trace_exception(ex)
                 self.warning(f"Couldn't load Ollama")
 
+        if self.config.vllm_service:
+            try:
+                from lollms.services.vllm.lollms_vllm import Service
+                self.vllm = Service(self, base_url=self.config.vllm_url)
+            except Exception as ex:
+                trace_exception(ex)
+                self.warning(f"Couldn't load Ollama")
 
-        if self.config.enable_voice_service and load_voice_service:
+
+        if self.config.enable_voice_service:
             try:
                 from lollms.services.xtts.lollms_xtts import LollmsXTTS
-                self.tts = LollmsXTTS(self, voice_samples_path=lollms_paths.custom_voices_path, xtts_base_url=self.config.xtts_base_url, wait_for_service=False)
+                self.tts = LollmsXTTS(self, voice_samples_path=self.lollms_paths.custom_voices_path, xtts_base_url=self.config.xtts_base_url, wait_for_service=False)
             except:
                 self.warning(f"Couldn't load XTTS")
 
-        if self.config.enable_sd_service and load_sd_service:
+        if self.config.enable_sd_service:
             try:
                 from lollms.services.sd.lollms_sd import LollmsSD
                 self.sd = LollmsSD(self, auto_sd_base_url=self.config.sd_base_url)

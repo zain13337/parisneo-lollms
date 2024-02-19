@@ -44,10 +44,16 @@ def install_vllm():
 @router.get("/start_vllm")
 def start_vllm():
     try:
-        if not hasattr(lollmsElfServer,"vllm") or lollmsElfServer.vllm is none:
+        if hasattr(lollmsElfServer,"vllm") and lollmsElfServer.vllm is not None:
+            return {"status":False, 'error':"Service is already on"}
+
+        if not hasattr(lollmsElfServer,"vllm") or lollmsElfServer.vllm is None:
             lollmsElfServer.ShowBlockingMessage("Loading vllm server\nPlease stand by")
             from lollms.services.vllm.lollms_vllm import get_vllm
-            if get_vllm(lollmsElfServer):
+            server = get_vllm(lollmsElfServer)
+
+            if server:
+                lollmsElfServer.vllm = server(lollmsElfServer, lollmsElfServer.config.vllm_url)
                 lollmsElfServer.HideBlockingMessage()
                 return {"status":True}
             else:
