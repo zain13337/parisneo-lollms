@@ -105,7 +105,7 @@ class Service:
 
         # run vllm
         if platform.system() == 'Windows':
-            subprocess.Popen(['wsl', 'bash', '~/run_vllm.sh '])
+            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh '])
         else:
             subprocess.Popen(['bash', f'{Path.home()}/run_vllm.sh'])
 

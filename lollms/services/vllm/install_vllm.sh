@@ -17,6 +17,6 @@ export PATH
 echo "Installing vllm"
 $HOME/miniconda3/bin/conda create -n vllm python=3.9 -y
 echo "Activating vllm environment"
-$HOME/miniconda3/bin/conda activate vllm 
+source activate vllm 
 pip install vllm
 echo "Done"
