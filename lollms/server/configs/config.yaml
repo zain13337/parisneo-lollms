@@ -1,5 +1,5 @@
 # =================== Lord Of Large Language Multimodal Systems Configuration file =========================== 
-version: 70
+version: 71
 binding_name: null
 model_name: null
 
@@ -107,6 +107,7 @@ vllm_url: http://localhost:8000
 vllm_model_path: TinyLlama/TinyLlama-1.1B-Chat-v1.0
 vllm_gpu_memory_utilization: 0.9
 vllm_max_model_len: 4096
+vllm_max_num_seqs: 256
 
 
 # Audio

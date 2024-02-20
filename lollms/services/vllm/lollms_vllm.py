@@ -108,9 +108,9 @@ class Service:
         # run vllm
         if platform.system() == 'Windows':
             #subprocess.Popen(['wsl', 'ls', '$HOME'])
-            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh', self.app.config.vllm_model_path, host, str(port), str(self.app.config.vllm_max_model_len), str(self.app.config.vllm_gpu_memory_utilization)])
+            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh', self.app.config.vllm_model_path, host, str(port), str(self.app.config.vllm_max_model_len), str(self.app.config.vllm_gpu_memory_utilization), str(self.app.config.vllm_max_num_seqs)])
         else:
-            subprocess.Popen(['bash', f'{Path.home()}/run_vllm.sh', self.app.config.vllm_model_path, host, str(port), str(self.app.config.vllm_max_model_len), str(self.app.config.vllm_gpu_memory_utilization)])
+            subprocess.Popen(['bash', f'{Path.home()}/run_vllm.sh', self.app.config.vllm_model_path, host, str(port), str(self.app.config.vllm_max_model_len), str(self.app.config.vllm_gpu_memory_utilization), str(self.app.config.vllm_max_num_seqs)])
 
         # Wait until the service is available at http://127.0.0.1:7860/
         self.wait_for_service(max_retries=wait_max_retries)
