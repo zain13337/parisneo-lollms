@@ -114,7 +114,7 @@ class Service:
         self.wait_for_service(max_retries=wait_max_retries)
 
     def wait_for_service(self, max_retries = 150, show_warning=True):
-        url = f"{self.base_url}"
+        url = f"{self.base_url}" if "0.0.0.0" not in self.base_url else self.base_url.replace("0.0.0.0","http://localhost")
         # Adjust this value as needed
         retries = 0
 
