@@ -11,6 +11,7 @@ import sys
 from lollms.app import LollmsApplication
 from lollms.paths import LollmsPaths
 from lollms.config import TypedConfig, ConfigTemplate, BaseConfig
+from lollms.utilities import url2host_port
 import time
 import io
 import sys
@@ -103,12 +104,13 @@ class Service:
         if not self.wait_for_service(1,False) and base_url is None:
             ASCIIColors.info("Loading vllm service")
 
+        host, port = url2host_port(base_url)
         # run vllm
         if platform.system() == 'Windows':
             #subprocess.Popen(['wsl', 'ls', '$HOME'])
-            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh', self.app.config.vllm_model_path])
+            subprocess.Popen(['wsl', 'bash', '$HOME/run_vllm.sh', self.app.config.vllm_model_path, host, str(port), str(self.app.config.vllm_max_model_len), str(self.app.config.vllm_gpu_memory_utilization)])
         else:
-            subprocess.Popen(['bash', f'{Path.home()}/run_vllm.sh', self.app.config.vllm_model_path])
+            subprocess.Popen(['bash', f'{Path.home()}/run_vllm.sh', self.app.config.vllm_model_path, host, str(port), str(self.app.config.vllm_max_model_len), str(self.app.config.vllm_gpu_memory_utilization)])
 
         # Wait until the service is available at http://127.0.0.1:7860/
         self.wait_for_service(max_retries=wait_max_retries)
