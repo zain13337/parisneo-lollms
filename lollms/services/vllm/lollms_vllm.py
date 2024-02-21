@@ -104,7 +104,7 @@ class Service:
         if not self.wait_for_service(1,False) and base_url is None:
             ASCIIColors.info("Loading vllm service")
 
-        host, port = url2host_port(base_url)
+        _, host, port = url2host_port(base_url)
         # run vllm
         if platform.system() == 'Windows':
             #subprocess.Popen(['wsl', 'ls', '$HOME'])
