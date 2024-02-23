@@ -13,6 +13,7 @@ from typing import Callable
 from lollms.paths import LollmsPaths
 from ascii_colors import ASCIIColors
 
+
 import tempfile
 import requests
 import shutil
@@ -23,6 +24,8 @@ import subprocess
 from lollms.config import TypedConfig, InstallOption
 from lollms.main_config import LOLLMSConfig
 from lollms.com import NotificationType, NotificationDisplayType, LoLLMsCom
+from lollms.security import sanitize_path
+
 import urllib
 import inspect
 from datetime import datetime
@@ -146,8 +149,7 @@ class LLMBinding:
 
     def install_model(self, model_type:str, model_path:str, variant_name:str, client_id:int=None):
         print("Install model triggered")
-        if(".." in model_path):
-            raise "Detected an attempt of path traversal. Are you kidding me?"
+        sanitize_path(model_path)
         model_path = model_path.replace("\\","/")
 
         if model_type.lower() in model_path.lower():
