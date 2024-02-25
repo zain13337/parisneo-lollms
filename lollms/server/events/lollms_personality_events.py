@@ -47,8 +47,8 @@ def add_events(sio:socketio):
     import mimetypes
 
     ALLOWED_EXTENSIONS = {
-        'txt', 'py', 'html', 'js', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'ico', 'svg', 'mp4', 'mp3', 'avi', 'mov',
-        'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf'
+        'txt', 'csv', 'py', 'html', 'js', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'ico', 'svg', 'mp4', 'mp3', 'avi', 'mov',
+        'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'js'
     }
 
     def allowed_file(filename):
@@ -85,7 +85,7 @@ def add_events(sio:socketio):
             return
 
         if is_last_chunk:
-            ASCIIColors.success('File received and saved successfully')
+            lollmsElfServer.success('File received and saved successfully')
             if lollmsElfServer.personality.processor:
                 result = lollmsElfServer.personality.processor.add_file(file_path, partial(lollmsElfServer.process_chunk, client_id=client_id))
             else:
