@@ -15,7 +15,7 @@ from lollms.paths import LollmsPaths
 from lollms.binding import LLMBinding, BindingType
 from lollms.utilities import PromptReshaper, PackageManager, discussion_path_to_url
 from lollms.com import NotificationType, NotificationDisplayType
-
+from lollms.client_session import Session, Client
 import pkg_resources
 from pathlib import Path
 from PIL import Image
@@ -928,11 +928,11 @@ class AIPersonality:
         self.vectorizer = None
         return True     
     
-    def add_file(self, path, callback=None):
+    def add_file(self, path, client:Client, callback=None):
+
         if not self.callback:
             self.callback = callback
-        discussion_db_name = self.lollms_paths.personal_discussions_path / "personalities" / self.name / "db.json"
-        discussion_db_name.parent.mkdir(parents=True, exist_ok=True)
+            
         path = Path(path)
         if path.suffix in [".wav",".mp3"]:
             self.new_message("")
@@ -955,10 +955,11 @@ class AIPersonality:
             transcription_fn = str(path)+".txt"
             with open(transcription_fn, "w", encoding="utf-8") as f:
                 f.write(result["text"])
+
             self.info(f"File saved to {transcription_fn}")
             self.full(result["text"])
             self.step_end("Transcribing ... ")
-        elif path.suffix in [".png",".jpg",".gif",".bmp",".webp"]:
+        elif path.suffix in [".png",".jpg",".jpeg",".gif",".bmp",".svg",".webp"]:
             if self.callback:
                 try:
                     pth = str(path).replace("\\","/").split('/')
@@ -1001,7 +1002,7 @@ class AIPersonality:
                     self.vectorizer = TextVectorizer(
                                 self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
                                 model=self.model, #needed in case of using model_embedding
-                                database_path=discussion_db_name,
+                                database_path=client.discussion.discussion_rag_folder/"db.json",
                                 save_db=self.config.data_vectorization_save_db,
                                 data_visualization_method=VisualizationMethod.PCA,
                                 database_dict=None)
@@ -1013,6 +1014,7 @@ class AIPersonality:
                     self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
                     return True
             except Exception as e:
+                trace_exception(e)
                 self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
                 self.InfoMessage(f"Unsupported file format or empty file.\nSupported formats are {GenericDataLoader.get_supported_file_types()}")
                 return False
