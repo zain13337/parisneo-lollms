@@ -166,7 +166,7 @@ class LollmsMotionCtrl:
         self.default_sampler = sampler
         self.default_steps = steps
 
-        self.session = requests.Session(lollms_paths)
+        self.session = requests.Session()
 
         if username and password:
             self.set_auth(username, password)
