@@ -571,7 +571,7 @@ class LollmsApplication(LoLLMsCom):
                 except:
                     self.warning("Couldn't add long term memory information to the context. Please verify the vector database")        # Add information about the user
         user_description=""
-        if self.config.use_user_name_in_discussions:
+        if self.config.use_user_informations_in_discussion:
             user_description="!@>User description:\n"+self.config.user_description+"\n"
 
 
