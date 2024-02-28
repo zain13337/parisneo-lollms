@@ -581,8 +581,8 @@ async def copy_to_custom_personas(data: PersonalityInfos):
         return {"status":False}
     else:
         personality_folder = lollmsElfServer.lollms_paths.personalities_zoo_path/f"{category}"/f"{name}"
-        destination_folder = lollmsElfServer.lollms_paths.personal_personalities_path
-        shutil.copy(personality_folder, destination_folder)
+        destination_folder = lollmsElfServer.lollms_paths.custom_personalities_path
+        shutil.copytree(personality_folder, destination_folder)
         return {"status":True}
 
 # ------------------------------------------- Interaction with personas ------------------------------------------------
