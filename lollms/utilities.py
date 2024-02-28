@@ -34,6 +34,9 @@ import urllib
 import os
 import sys
 
+def discussion_path_2_url(path:str|Path):
+    path = str(path)
+    return path[path.index('discussion_databases'):].replace('discussion_databases','discussions')
 
 def get_conda_path():
     # Get the path to the Python executable that's running the script
