@@ -148,11 +148,14 @@ class LLMBinding:
             folder_path.mkdir(parents=True, exist_ok=True)
             progress_bar = tqdm(total=100, unit="%", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
             # Define callback function for urlretrieve
+            downloaded_size = [0]
             def report_progress(block_num, block_size, total_size):
                 progress_bar.update(block_size/total_size)
+                downloaded_size[0] += block_size
+                callback(downloaded_size[0], total_size)
             # Download file from URL to folder
             try:
-                request.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress if callback is None else callback)
+                request.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress)
                 print("File downloaded successfully!")
             except Exception as e:
                 print("Error downloading file:", e)
