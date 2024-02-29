@@ -131,24 +131,23 @@ class LLMBinding:
         if not mp:
             return None
         # model_path/str(model_name).split("/")[-1]
-        if "ggml" in str(mp).lower() or "gguf" in str(mp).lower():
-            if mp.is_dir():
-                for f in mp.iterdir():
-                    if not "mmproj" in f.stem and not f.is_dir():
-                        return f
-            else:
-                show_message_dialog("Warning","I detected that your model was installed with previous format.\nI'll just migrate it to thre new format.\nThe new format allows you to have multiple model variants and also have the possibility to use multimodal models.")
-                model_root:Path = model_path.parent/model_path.stem
-                model_root.mkdir(exist_ok=True, parents=True)
-                shutil.move(model_path, model_root)
-                model_path = model_root/model_path.name
-                self.config.model_name = model_root.name
-                root_path = model_root
-                self.config.save_config()
-                return model_path
-
+        if mp.is_dir():
+            for f in mp.iterdir():
+                if not "mmproj" in f.stem and not f.is_dir():
+                    if f.suffix==".reference":
+                        with open(f,"r") as f:
+                            return Path(f.read())
+                    return f
         else:
-            return mp
+            show_message_dialog("Warning","I detected that your model was installed with previous format.\nI'll just migrate it to thre new format.\nThe new format allows you to have multiple model variants and also have the possibility to use multimodal models.")
+            model_root:Path = model_path.parent/model_path.stem
+            model_root.mkdir(exist_ok=True, parents=True)
+            shutil.move(model_path, model_root)
+            model_path = model_root/model_path.name
+            self.config.model_name = model_root.name
+            root_path = model_root
+            self.config.save_config()
+            return model_path
 
     
     def download_model(self, url, model_name, callback = None):
@@ -180,9 +179,9 @@ class LLMBinding:
                 sys.exit(1)
 
     def reference_model(self, path):
-        path = str(path).replace("\\","/")
-        model_name  = path.split("/")[-1]+".reference"
-        folder_path = Path(str(self.searchModelPath(model_name)).replace(".reference",""))
+        path = Path(str(path).replace("\\","/"))
+        model_name  = path.stem+".reference"
+        folder_path = self.searchModelFolder(model_name)/path.stem
         model_full_path = (folder_path / model_name)
 
         # Check if file already exists in folder
@@ -193,8 +192,8 @@ class LLMBinding:
             # Create folder if it doesn't exist
             folder_path.mkdir(parents=True, exist_ok=True)
             with open(model_full_path,"w") as f:
-                f.write(path)
-            ASCIIColors.warning("Reference created, please make sure you don't delete or move the referenced file. This can cause the link to be broken")
+                f.write(str(path))
+            self.InfoMessage("Reference created, please make sure you don't delete or move the referenced file.\nThis can cause the link to be broken.\nNow I'm reloading the zoo.")
             return True
 
 
