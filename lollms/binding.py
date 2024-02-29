@@ -164,7 +164,7 @@ class LLMBinding:
     def reference_model(self, path):
         path = str(path).replace("\\","/")
         model_name  = path.split("/")[-1]+".reference"
-        folder_path = self.searchModelPath(model_name).replace(".reference","")
+        folder_path = Path(str(self.searchModelPath(model_name)).replace(".reference",""))
         model_full_path = (folder_path / model_name)
 
         # Check if file already exists in folder
@@ -617,7 +617,7 @@ class LLMBinding:
             model_path = self.models_folders[0]
         return model_path
 
-
+    """
     def searchModelPath(self, model_name:str):
         model_path=None
         for mn in self.models_folders:
@@ -628,7 +628,7 @@ class LLMBinding:
 
         model_path = self.models_folders[0]/model_name
         return model_path
-    
+    """
     def get_model_path(self):
         """
         Retrieves the path of the model based on the configuration.
