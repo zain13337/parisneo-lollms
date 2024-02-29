@@ -124,8 +124,19 @@ class LLMBinding:
         if "ggml" in str(mp).lower() or "gguf" in str(mp).lower():
             if mp.is_dir():
                 for f in mp.iterdir():
-                    if not "mmproj" in f.stem:
+                    if not "mmproj" in f.stem and not f.is_dir():
                         return f
+            else:
+                show_message_dialog("Warning","I detected that your model was installed with previous format.\nI'll just migrate it to thre new format.\nThe new format allows you to have multiple model variants and also have the possibility to use multimodal models.")
+                model_root:Path = model_path.parent/model_path.stem
+                model_root.mkdir(exist_ok=True, parents=True)
+                shutil.move(model_path, model_root)
+                model_path = model_root/model_path.name
+                self.config.model_name = model_root.name
+                root_path = model_root
+                self.config.save_config()
+                return model_path
+
         else:
             return mp
 
@@ -619,7 +630,7 @@ class LLMBinding:
                 ASCIIColors.yellow(model_path)
             else:
                 return None
-        else:
+        else:            
             model_path = self.searchModelPath(self.config.model_name)
 
         return model_path
