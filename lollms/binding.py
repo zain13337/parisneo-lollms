@@ -120,7 +120,17 @@ class LLMBinding:
     
     def searchModelPath(self, model_name:str):
         model_path=self.searchModelFolder(model_name)
-        mp:Path = model_path/str(model_name).split("/")[-1]
+        mp:Path = None
+        for f in model_path.iterdir():
+            print(f)
+            a =  model_name.lower()
+            b = f.name.lower()
+            if a in b :
+                mp = f
+                break
+        if not mp:
+            return None
+        # model_path/str(model_name).split("/")[-1]
         if "ggml" in str(mp).lower() or "gguf" in str(mp).lower():
             if mp.is_dir():
                 for f in mp.iterdir():
