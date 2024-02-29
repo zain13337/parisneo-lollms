@@ -148,7 +148,7 @@ class LLMBinding:
                 callback(downloaded_size[0], total_size)
             # Download file from URL to folder
             try:
-                request.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress)
+                request.urlretrieve(url, model_full_path, reporthook=report_progress)
                 print("File downloaded successfully!")
             except Exception as e:
                 print("Error downloading file:", e)
