@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 from lollms.paths import LollmsPaths
 from ascii_colors import ASCIIColors
-
+from urllib import request
 
 import tempfile
 import requests
@@ -136,30 +136,27 @@ class LLMBinding:
             model_path = self.models_folders[0]/model_name
         return model_path
     
-    def download_model(self, url, binding, callback = None):
+    def download_model(self, url, model_full_path, callback = None):
         model_name  = url.split("/")[-1]
-        folder_path = binding.searchModelPath(model_name)
+        folder_path = self.searchModelPath(model_name)
         model_full_path = folder_path
-        if binding is not None and hasattr(binding,'download_model'):
-            binding.download_model(url, model_full_path, callback)
+        # Check if file already exists in folder
+        if model_full_path.exists():
+            print("File already exists in folder")
         else:
-            # Check if file already exists in folder
-            if model_full_path.exists():
-                print("File already exists in folder")
-            else:
-                # Create folder if it doesn't exist
-                folder_path.mkdir(parents=True, exist_ok=True)
-                progress_bar = tqdm(total=100, unit="%", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
-                # Define callback function for urlretrieve
-                def report_progress(block_num, block_size, total_size):
-                    progress_bar.update(block_size/total_size)
-                # Download file from URL to folder
-                try:
-                    rq.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress if callback is None else callback)
-                    print("File downloaded successfully!")
-                except Exception as e:
-                    print("Error downloading file:", e)
-                    sys.exit(1)
+            # Create folder if it doesn't exist
+            folder_path.mkdir(parents=True, exist_ok=True)
+            progress_bar = tqdm(total=100, unit="%", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
+            # Define callback function for urlretrieve
+            def report_progress(block_num, block_size, total_size):
+                progress_bar.update(block_size/total_size)
+            # Download file from URL to folder
+            try:
+                request.urlretrieve(url, folder_path / url.split("/")[-1], reporthook=report_progress if callback is None else callback)
+                print("File downloaded successfully!")
+            except Exception as e:
+                print("Error downloading file:", e)
+                sys.exit(1)
 
     def reference_model(self, path):
         path = str(path).replace("\\","/")
