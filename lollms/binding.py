@@ -130,25 +130,28 @@ class LLMBinding:
                 break
         if not mp:
             return None
-        # model_path/str(model_name).split("/")[-1]
-        if mp.is_dir():
-            for f in mp.iterdir():
-                if not "mmproj" in f.stem and not f.is_dir():
-                    if f.suffix==".reference":
-                        with open(f,"r") as f:
-                            return Path(f.read())
-                    return f
+        
+        if model_path.name in ["ggml","gguf"]:
+            # model_path/str(model_name).split("/")[-1]
+            if mp.is_dir():
+                for f in mp.iterdir():
+                    if not "mmproj" in f.stem and not f.is_dir():
+                        if f.suffix==".reference":
+                            with open(f,"r") as f:
+                                return Path(f.read())
+                        return f
+            else:
+                show_message_dialog("Warning","I detected that your model was installed with previous format.\nI'll just migrate it to thre new format.\nThe new format allows you to have multiple model variants and also have the possibility to use multimodal models.")
+                model_root:Path = model_path.parent/model_path.stem
+                model_root.mkdir(exist_ok=True, parents=True)
+                shutil.move(model_path, model_root)
+                model_path = model_root/model_path.name
+                self.config.model_name = model_root.name
+                root_path = model_root
+                self.config.save_config()
+                return model_path
         else:
-            show_message_dialog("Warning","I detected that your model was installed with previous format.\nI'll just migrate it to thre new format.\nThe new format allows you to have multiple model variants and also have the possibility to use multimodal models.")
-            model_root:Path = model_path.parent/model_path.stem
-            model_root.mkdir(exist_ok=True, parents=True)
-            shutil.move(model_path, model_root)
-            model_path = model_root/model_path.name
-            self.config.model_name = model_root.name
-            root_path = model_root
-            self.config.save_config()
-            return model_path
-
+            return mp
     
     def download_model(self, url, model_name, callback = None):
         folder_path = self.searchModelFolder(model_name)
@@ -634,17 +637,8 @@ class LLMBinding:
         if self.config.model_name is None:
             return None
         
-        if self.config.model_name.endswith(".reference"):
-            ASCIIColors.yellow("Loading a reference model:")
-            ref_path = self.searchModelPath(self.config.model_name)
-            if ref_path.exists():
-                with open(str(ref_path), 'r') as f:
-                    model_path = Path(f.read())
-                ASCIIColors.yellow(model_path)
-            else:
-                return None
-        else:            
-            model_path = self.searchModelPath(self.config.model_name)
+ 
+        model_path = self.searchModelPath(self.config.model_name)
 
         return model_path
 
