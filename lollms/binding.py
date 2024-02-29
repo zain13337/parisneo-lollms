@@ -155,14 +155,15 @@ class LLMBinding:
             downloaded_size = [0]
             def report_progress(block_num, block_size, total_size):
                 progress_bar.update(block_size/total_size)
-                downloaded_size[0] += block_size
+                downloaded_size[0] += block_size*100
                 callback(downloaded_size[0], total_size)
             # Download file from URL to folder
             try:
+                Path(model_full_path).parent.mkdir(parents=True, exist_ok=True)
                 request.urlretrieve(url, model_full_path, reporthook=report_progress)
                 print("File downloaded successfully!")
             except Exception as e:
-                print("Error downloading file:", e)
+                ASCIIColors.error("Error downloading file:", e)
                 sys.exit(1)
 
     def reference_model(self, path):
