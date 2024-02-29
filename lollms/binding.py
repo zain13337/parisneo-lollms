@@ -160,13 +160,16 @@ class LLMBinding:
         else:
             # Create folder if it doesn't exist
             folder_path.mkdir(parents=True, exist_ok=True)
-            progress_bar = tqdm(total=100, unit="%", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
+            if not callback:
+                progress_bar = tqdm(total=100, unit="%", unit_scale=True, desc=f"Downloading {url.split('/')[-1]}")
             # Define callback function for urlretrieve
             downloaded_size = [0]
             def report_progress(block_num, block_size, total_size):
-                progress_bar.update(block_size/total_size)
-                downloaded_size[0] += block_size*100
-                callback(downloaded_size[0], total_size)
+                if callback:
+                    downloaded_size[0] += block_size
+                    callback(downloaded_size[0], total_size)
+                else:
+                    progress_bar.update(block_size/total_size)
             # Download file from URL to folder
             try:
                 Path(model_full_path).parent.mkdir(parents=True, exist_ok=True)
