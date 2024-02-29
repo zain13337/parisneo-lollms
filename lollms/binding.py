@@ -111,35 +111,28 @@ class LLMBinding:
 
 
 
-    def searchModelPath(self, model_name:str):
-        model_path=None
+    def searchModelFolder(self, model_name:str):
         for mn in self.models_folders:
             if mn.name in model_name.lower():
-                if mn.name == "ggml":
-                    try:
-                        idx = model_name.index("-GGML")
-                        models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
-                        model_path = mn/models[0].name
-                    except:
-                        model_path = mn/model_name
-                elif mn.name == "gguf":
-                    try:
-                        idx = model_name.index("-GGUF")
-                        models=[m for m in mn.iterdir() if model_name[:idx].lower() in m.name.lower()]
-                        model_path = mn/models[0].name
-                    except:
-                        model_path = mn/model_name
-                else:
-                    model_path = mn/model_name
-                break
-        if model_path is None:
-            model_path = self.models_folders[0]/model_name
-        return model_path
+                return mn
+        return self.models_folders[0]
     
-    def download_model(self, url, model_full_path, callback = None):
-        model_name  = url.split("/")[-1]
-        folder_path = self.searchModelPath(model_name)
-        model_full_path = folder_path
+    
+    def searchModelPath(self, model_name:str):
+        model_path=self.searchModelFolder(model_name)
+        mp:Path = model_path/str(model_name).split("/")[-1]
+        if "ggml" in str(mp).lower() or "gguf" in str(mp).lower():
+            if mp.is_dir():
+                for f in mp.iterdir():
+                    if not "mmproj" in f.stem:
+                        return f
+        else:
+            return mp
+
+    
+    def download_model(self, url, model_name, callback = None):
+        folder_path = self.searchModelFolder(model_name)
+        model_full_path = (folder_path/model_name)/str(url).split("/")[-1]
         # Check if file already exists in folder
         if model_full_path.exists():
             print("File already exists in folder")
@@ -269,7 +262,6 @@ class LLMBinding:
         print(f"Model path : {model_path}")
         print(f"Installation Path : {installation_path}")
 
-        model_name = filename
         binding_folder = self.config["binding_name"]
         model_url = model_path
         signature = f"{model_name}_{binding_folder}_{model_url}"
@@ -333,61 +325,37 @@ class LLMBinding:
                     raise Exception("canceled")
                     
                 
-            if hasattr(self, "download_model"):
-                try:
-                    self.download_model(model_path, installation_path, callback)
-                except Exception as ex:
-                    ASCIIColors.warning(str(ex))
-                    trace_exception(ex)
-                    self.lollmsCom.notify_model_install(
-                                installation_path,
-                                model_name,
-                                binding_folder,
-                                model_url,
-                                self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
-                                self.download_infos[signature]['total_size'],
-                                self.download_infos[signature]['downloaded_size'],
-                                self.download_infos[signature]['progress'],
-                                self.download_infos[signature]['speed'],
-                                client_id,
-                                status=False,
-                                error="Canceled",
-                                )
+            try:
+                self.download_model(model_path, model_name, callback)
+            except Exception as ex:
+                ASCIIColors.warning(str(ex))
+                trace_exception(ex)
+                self.lollmsCom.notify_model_install(
+                            installation_path,
+                            model_name,
+                            binding_folder,
+                            model_url,
+                            self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
+                            self.download_infos[signature]['total_size'],
+                            self.download_infos[signature]['downloaded_size'],
+                            self.download_infos[signature]['progress'],
+                            self.download_infos[signature]['speed'],
+                            client_id,
+                            status=False,
+                            error="Canceled",
+                            )
 
-                    del self.download_infos[signature]
-                    try:
-                        if installation_path.is_dir():
-                            shutil.rmtree(installation_path)
-                        else:
-                            installation_path.unlink()
-                    except Exception as ex:
-                        trace_exception(ex)
-                        ASCIIColors.error(f"Couldn't delete file. Please try to remove it manually.\n{installation_path}")
-                    return
-
-            else:
+                del self.download_infos[signature]
                 try:
-                    self.download_file(model_path, installation_path, callback)
+                    if installation_path.is_dir():
+                        shutil.rmtree(installation_path)
+                    else:
+                        installation_path.unlink()
                 except Exception as ex:
-                    ASCIIColors.warning(str(ex))
                     trace_exception(ex)
-                    self.lollmsCom.notify_model_install(
-                                installation_path,
-                                model_name,
-                                binding_folder,
-                                model_url,
-                                self.download_infos[signature]['start_time'].strftime("%Y-%m-%d %H:%M:%S"),
-                                self.download_infos[signature]['total_size'],
-                                self.download_infos[signature]['downloaded_size'],
-                                self.download_infos[signature]['progress'],
-                                self.download_infos[signature]['speed'],
-                                client_id,
-                                status=False,
-                                error="Canceled",
-                                )
-                    del self.download_infos[signature]
-                    installation_path.unlink()
-                    return    
+                    ASCIIColors.error(f"Couldn't delete file. Please try to remove it manually.\n{installation_path}")
+                return
+   
             self.lollmsCom.notify_model_install(
                         installation_path,
                         model_name,
