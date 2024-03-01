@@ -471,6 +471,8 @@ def select_personality(data:PersonalitySelectionInfos):
     if id<len(lollmsElfServer.mounted_personalities):
         lollmsElfServer.config["active_personality_id"]=id
         lollmsElfServer.personality:AIPersonality = lollmsElfServer.mounted_personalities[lollmsElfServer.config["active_personality_id"]]
+        if lollmsElfServer.personality is None:
+            return {"status": False, "error":"Something is wrong with the personality"}
         if lollmsElfServer.personality.processor:
             lollmsElfServer.personality.processor.selected()
         ASCIIColors.success("ok")

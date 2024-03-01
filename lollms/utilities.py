@@ -441,12 +441,12 @@ def reinstall_pytorch_with_cuda():
         ASCIIColors.error(ex)
     try:
         ASCIIColors.info("Installing pytorch 2.1.1")
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu121"])
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu121"])
     except Exception as ex:
         ASCIIColors.error(ex)
     if result.returncode != 0:
         ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
         if result.returncode != 0:
             ASCIIColors.error("Couldn't install pytorch !!")
         else:
@@ -454,10 +454,10 @@ def reinstall_pytorch_with_cuda():
 
 
 def reinstall_pytorch_with_rocm():
-    result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/rocm5.6"])
+    result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/rocm5.6"])
     if result.returncode != 0:
         ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
         if result.returncode != 0:
             ASCIIColors.error("Couldn't install pytorch !!")
         else:
@@ -466,10 +466,10 @@ def reinstall_pytorch_with_rocm():
             
 
 def reinstall_pytorch_with_cpu():
-    result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+    result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
     if result.returncode != 0:
         ASCIIColors.warning("Couldn't find Cuda build tools on your PC. Reverting to CPU.")
-        result = subprocess.run(["pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir"])
         if result.returncode != 0:
             ASCIIColors.error("Couldn't install pytorch !!")
         else:
