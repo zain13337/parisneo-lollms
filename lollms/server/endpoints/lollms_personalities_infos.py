@@ -274,7 +274,9 @@ class PersonalityConfig(BaseModel):
     category:str
     name:str
     config:dict
-    
+
+
+
 @router.post("/set_personality_config")
 def set_personality_config(data:PersonalityConfig):
     print("- Recovering personality config")
@@ -292,6 +294,9 @@ def set_personality_config(data:PersonalityConfig):
     if config_file.exists():
         with open(config_file,"w") as f:
             yaml.safe_dump(config, f)
+
+        lollmsElfServer.mounted_personalities = lollmsElfServer.rebuild_personalities(reload_all=True)
+        lollmsElfServer.InfoMessage("Personality updated")
         return {"status":True}
     else:
         return {"status":False, "error":"Not found"}
