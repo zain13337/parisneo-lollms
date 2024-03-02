@@ -34,6 +34,7 @@ from enum import Enum
 from lollms.utilities import trace_exception
 
 from tqdm import tqdm
+from lollms.databases.models_database import ModelsDB
 import sys
 
 __author__ = "parisneo"
@@ -785,13 +786,19 @@ class LLMBinding:
         # Create the file path relative to the child class's directory
         full_data = []
         for models_dir_name in self.models_dir_names:
-            file_path = self.lollms_paths.models_zoo_path/f"{models_dir_name}.yaml"
-            with open(file_path, 'r') as file:
-                yaml_data = yaml.safe_load(file)
-                full_data+=yaml_data
+            self.models_db = ModelsDB(self.lollms_paths.models_zoo_path/f"{models_dir_name}.db")
+            full_data+=self.models_db.query()
         
         return full_data
-           
+
+    def search_models(self, app:LoLLMsCom=None):
+        # Create the file path relative to the child class's directory
+        full_data = []
+        for models_dir_name in self.models_dir_names:
+            self.models_db = ModelsDB(self.lollms_paths.models_zoo_path/f"{models_dir_name}.db")
+            full_data+=self.models_db.query()
+        
+        return full_data           
 
     @staticmethod
     def vram_usage():
