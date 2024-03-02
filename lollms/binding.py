@@ -122,7 +122,6 @@ class LLMBinding:
         model_path=self.searchModelFolder(model_name)
         mp:Path = None
         for f in model_path.iterdir():
-            print(f)
             a =  model_name.lower()
             b = f.name.lower()
             if a in b :

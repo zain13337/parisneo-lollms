@@ -16,6 +16,7 @@ import json
 import re
 import subprocess
 import gc
+import shutil
 
 from typing import List
 
@@ -33,6 +34,7 @@ import io
 import urllib
 import os
 import sys
+import git
 
 def discussion_path_2_url(path:str|Path):
     path = str(path)
@@ -519,8 +521,25 @@ class NumpyEncoderDecoder(json.JSONEncoder):
         if '__numpy_array__' in dct:
             return np.array(dct['data'])
         return dct
+    
 
+def clone_repository(repository_url, local_folder:Path|str, exist_ok=False):
+    if Path(local_folder).exists():
+        if exist_ok:
+            shutil.rmtree(str(local_folder))
+        else:
+            ASCIIColors.success("Repository already exists!")
+            return False
 
+    try:
+        # Create a new repository object
+        repo = git.Repo.clone_from(repository_url, str(local_folder))
+        ASCIIColors.success("Repository was cloned successfully")
+        return True
+    except:
+        ASCIIColors.error("Repository cloning failed")
+        return False
+    
 def git_pull(folder_path):
     try:
         # Change the current working directory to the desired folder
