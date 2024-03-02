@@ -427,18 +427,18 @@ def check_torch_version(min_version, min_cuda_versio=12):
 def reinstall_pytorch_with_cuda():
     try:
         import conda.cli
-        ASCIIColors.info("Installing cuda 12.1.1") # -c nvidia/label/cuda-12.1.1 -c nvidia -c conda-forge
-        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.1.1", "-c", "nvidia", "-c", "conda-forge", "cuda-toolkit","-y")
+        ASCIIColors.info("Installing cuda 12.3.2") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "cuda-toolkit","-y","--force-reinstall")
     except Exception as ex:
         ASCIIColors.error(ex)
     try:
-        ASCIIColors.info("Installing ninja") # -c nvidia/label/cuda-12.1.1 -c nvidia -c conda-forge
-        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.1.1", "-c", "nvidia", "-c", "conda-forge", "ninja", "-y")
+        ASCIIColors.info("Installing ninja") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "ninja", "-y","--force-reinstall")
     except Exception as ex:
         ASCIIColors.error(ex)
     try:
-        ASCIIColors.info("Installing cuda compiler") # -c nvidia/label/cuda-12.1.1 -c nvidia -c conda-forge
-        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.1.1", "-c", "nvidia", "-c", "conda-forge", "cuda-compiler", "-y")
+        ASCIIColors.info("Installing cuda compiler") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "cuda-compiler", "-y","--force-reinstall")
     except Exception as ex:
         ASCIIColors.error(ex)
     try:
