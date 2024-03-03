@@ -422,7 +422,23 @@ def check_torch_version(min_version, min_cuda_versio=12):
     current_version_float = float('.'.join(torch.__version__.split(".")[:2]))
     # Check if the current version meets or exceeds the minimum required version
     return current_version_float >= min_version
-
+def install_cuda():
+    try:
+        import conda.cli
+        ASCIIColors.info("Installing cuda 12.3.2") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "cuda-toolkit","-y","--force-reinstall")
+    except Exception as ex:
+        ASCIIColors.error(ex)
+    try:
+        ASCIIColors.info("Installing ninja") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "ninja", "-y","--force-reinstall")
+    except Exception as ex:
+        ASCIIColors.error(ex)
+    try:
+        ASCIIColors.info("Installing cuda compiler") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "cuda-compiler", "-y","--force-reinstall")
+    except Exception as ex:
+        ASCIIColors.error(ex)
 
 def reinstall_pytorch_with_cuda():
     try:
