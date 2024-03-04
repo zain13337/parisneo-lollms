@@ -253,8 +253,8 @@ class PersonalityDataRequest(BaseModel):
 @router.post("/get_personality_config")
 def get_personality_config(data:PersonalityDataRequest):
     print("- Recovering personality config")
-    category = data.category
-    name = data.name
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.name)
 
     package_path = f"{category}/{name}"
     if category=="custom_personalities":
@@ -280,8 +280,8 @@ class PersonalityConfig(BaseModel):
 @router.post("/set_personality_config")
 def set_personality_config(data:PersonalityConfig):
     print("- Recovering personality config")
-    category = data.category
-    name = data.name
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.name)
     config = data.config
 
     package_path = f"{category}/{name}"
@@ -309,8 +309,8 @@ class PersonalityMountingInfos(BaseModel):
 @router.post("/mount_personality")
 def mount_personality(data:PersonalityMountingInfos):
     print("- Mounting personality")
-    category = data.category
-    name = data.folder
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.folder)
     language = data.language #.get('language', None)
 
     package_path = f"{category}/{name}"
@@ -362,8 +362,8 @@ def mount_personality(data:PersonalityMountingInfos):
 
 @router.post("/remount_personality")
 def remount_personality(data:PersonalityMountingInfos):
-    category = data.category
-    name = data.folder
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.folder)
     language = data.language #.get('language', None)
 
 
@@ -415,8 +415,8 @@ def remount_personality(data:PersonalityMountingInfos):
 @router.post("/unmount_personality")
 def unmount_personality(data:PersonalityMountingInfos):
     print("- Unmounting personality ...")
-    category = data.category
-    name = data.folder
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.folder)
     language = data.language #.get('language', None)
 
     try:
@@ -499,8 +499,8 @@ def select_personality(data:PersonalitySelectionInfos):
 @router.post("/get_personality_settings")
 def get_personality_settings(data:PersonalityMountingInfos):
     print("- Retreiving personality settings")
-    category = data.category
-    name = data.folder
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.folder)
 
     if category == "custom_personalities":
         personality_folder = lollmsElfServer.lollms_paths.personal_personalities_path/f"{name}"
@@ -580,8 +580,9 @@ async def copy_to_custom_personas(data: PersonalityInfos):
 
     """
     import shutil
-    category = data.category
-    name = data.name
+    
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.name)
 
     if category=="custom_personalities":
         lollmsElfServer.InfoMessage("This persona is already in custom personalities folder")

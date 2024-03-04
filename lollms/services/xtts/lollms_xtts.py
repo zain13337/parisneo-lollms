@@ -148,16 +148,18 @@ class LollmsXTTS:
     def run_xtts_api_server(self):
         # Get the path to the current Python interpreter
         python_path = sys.executable
+        ASCIIColors.yellow("Loading XTTS ")
 
         # Get the path to the parent directory, which should be the 'bin' directory
         bin_dir = Path(python_path).parent.parent/"miniconda3/envs/xtts"
         if bin_dir.exists():
             python_path = Path(sys.executable).parent.parent/"miniconda3/envs/xtts/python"
-            command = f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path}"
+            command = f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}"
+            ASCIIColors.cyan(command)
             process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
         else:
-            command = f'conda activate xtts && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path}'
+            command = f'conda activate xtts && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}'
             process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
         return process
