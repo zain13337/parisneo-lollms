@@ -30,6 +30,7 @@ from ascii_colors import ASCIIColors, trace_exception
 from lollms.paths import LollmsPaths
 from lollms.utilities import git_pull, show_yes_no_dialog
 import subprocess
+import shutil
 
 
 def verify_sd(lollms_paths:LollmsPaths):
@@ -55,7 +56,7 @@ def install_sd(lollms_app:LollmsApplication):
         if not show_yes_no_dialog("warning!","I have detected that there is a previous installation of stable diffusion.\nShould I remove it and continue installing?"):
             return
         else:
-            sd_folder.unlink(True)
+            shutil.rmtree(sd_folder)
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
