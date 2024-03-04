@@ -446,7 +446,14 @@ def install_cuda():
         result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "cuda-compiler", "-y","--force-reinstall")
     except Exception as ex:
         ASCIIColors.error(ex)
-
+        
+def install_cmake():
+    import conda.cli
+    try:
+        ASCIIColors.info("Installing cmake") # -c nvidia/label/cuda-12.3.2 -c nvidia -c conda-forge
+        result = conda.cli.main("install", "-c", "nvidia/label/cuda-12.3.2", "-c", "nvidia", "-c", "conda-forge", "cmake","-y","--force-reinstall")
+    except Exception as ex:
+        ASCIIColors.error(ex)
 
 def reinstall_pytorch_with_cuda():
     try:
