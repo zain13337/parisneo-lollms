@@ -59,23 +59,26 @@ def yes_or_no_input(prompt):
             print("Please enter 'yes' or 'no'.")
 
 def show_yes_no_dialog(title, text):
-    import tkinter as tk
-    from tkinter import messagebox
-    # Create a new Tkinter root window and hide it
-    root = tk.Tk()
-    root.withdraw()
-
-    # Make the window appear on top
-    root.attributes('-topmost', True)
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+        # Create a new Tkinter root window and hide it
+        root = tk.Tk()
+        root.withdraw()
     
-    # Show the dialog box
-    result = messagebox.askyesno(title, text)
-
-    # Destroy the root window
-    root.destroy()
-
-    return result
-
+        # Make the window appear on top
+        root.attributes('-topmost', True)
+        
+        # Show the dialog box
+        result = messagebox.askyesno(title, text)
+    
+        # Destroy the root window
+        root.destroy()
+    
+        return result
+    except:
+        return yes_or_no_input(text)
+        
 def show_message_dialog(title, text):
     import tkinter as tk
     from tkinter import messagebox
