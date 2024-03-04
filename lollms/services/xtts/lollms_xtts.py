@@ -52,7 +52,10 @@ def install_xtts(lollms_app:LollmsApplication):
     lollms_app.ShowBlockingMessage("Creating xtts environment")
 
     # Get the path to the parent directory, which should be the 'bin' directory
-    bin_dir = Path(sys.executable).parent.parent/"miniconda3/condabin"
+    if platform.system()=="Windows":
+        bin_dir = Path(sys.executable).parent.parent/"miniconda3/condabin"
+    else:
+        bin_dir = Path(sys.executable).parent.parent/"miniconda3/bin"
     if bin_dir.exists():
         conda_dir = str(bin_dir/ "conda")
         # For Windows, the activate script has a '.bat' extension
