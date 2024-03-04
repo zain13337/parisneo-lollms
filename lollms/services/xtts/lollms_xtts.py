@@ -41,6 +41,8 @@ def verify_xtts(lollms_paths:LollmsPaths):
     return xtts_folder.exists()
     
 def install_xtts(lollms_app:LollmsApplication):
+    ASCIIColors.green("XTTS installation started")
+
     root_dir = lollms_app.lollms_paths.personal_path
     shared_folder = root_dir/"shared"
     xtts_folder = shared_folder / "xtts"
