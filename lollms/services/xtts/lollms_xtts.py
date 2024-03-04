@@ -70,7 +70,7 @@ def install_xtts(lollms_app:LollmsApplication):
         result = subprocess.run([python_path, "-m", "pip", "install", "torch==2.1.1+cu118","torchaudio==2.1.1+cu118","--index-url https://download.pytorch.org/whl/cu118"])
     else:
         import conda.cli
-        conda.cli.main("create","--name","xtts","-y")
+        conda.cli.main("create","--name","xtts","-y","python==3.11")
         result = subprocess.run(["conda","activate","xtts", "&&", "python", "-m", "pip", "install", "--upgrade", "xtts-api-server"])
 
 

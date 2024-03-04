@@ -70,6 +70,21 @@ def install_sd(lollms_app:LollmsApplication):
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
         download_file("https://civitai.com/api/download/models/351306", sd_folder/"models/Stable-diffusion","dreamshaperXL_v21TurboDPMSDE.safetensors")
+    # Get the path to the parent directory, which should be the 'bin' directory
+    if platform.system()=="Windows":
+        bin_dir = Path(sys.executable).parent.parent/"miniconda3/condabin"
+    else:
+        bin_dir = Path(sys.executable).parent.parent/"miniconda3/bin"
+    if bin_dir.exists():
+        conda_dir = str(bin_dir/ "conda")
+        # For Windows, the activate script has a '.bat' extension
+        if os.name == 'nt':
+            conda_dir += '.bat'
+            
+        result = subprocess.run([conda_dir, "create","--name","autosd","-y","python==3.10"])
+    else:
+        import conda.cli
+        conda.cli.main("create","--name","autosd","-y","python==3.10")
     ASCIIColors.green("Stable diffusion installed successfully")
 
 
@@ -266,6 +281,17 @@ class LollmsSD:
             if platform.system() == "Windows":
                 ASCIIColors.info("Running on windows")
                 script_path = self.sd_folder / "lollms_sd.bat"
+                # # Get the path to the parent directory, which should be the 'bin' directory
+                # bin_dir = Path(python_path).parent.parent/"miniconda3/envs/autosd"
+                # if bin_dir.exists():
+                #     python_path = Path(sys.executable).parent.parent/"miniconda3/envs/autosd/python"
+                #     command = f"{python_path}"
+                #     ASCIIColors.cyan(command)
+                #     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+                # else:
+                #     command = f'conda activate autosd && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}'
+                #     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
                 if share:
                     subprocess.Popen(str(script_path) +" --share", cwd=self.sd_folder)
                 else:
