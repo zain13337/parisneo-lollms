@@ -31,6 +31,7 @@ from lollms.paths import LollmsPaths
 from lollms.utilities import git_pull, show_yes_no_dialog
 import subprocess
 import shutil
+from tqdm import tqdm
 
 
 def verify_sd(lollms_paths:LollmsPaths):
@@ -41,11 +42,19 @@ def verify_sd(lollms_paths:LollmsPaths):
     return sd_folder.exists()
 
 def download_file(url, folder_path, local_filename):
+    # Make sure 'folder_path' exists
+    folder_path.mkdir(parents=True, exist_ok=True)
+
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
-        with open(folder_path + '/' + local_filename, 'wb') as f:
+        total_size = int(r.headers.get('content-length', 0))
+        progress_bar = tqdm(total=total_size, unit='B', unit_scale=True)
+        with open(folder_path / local_filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=8192): 
                 f.write(chunk)
+                progress_bar.update(len(chunk))
+        progress_bar.close()
+
     return local_filename
 
 def install_sd(lollms_app:LollmsApplication):

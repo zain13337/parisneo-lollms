@@ -44,4 +44,5 @@ def install_sd():
         return {"status":True}
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
+        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_sd manually then try again")
         return {"status":False, 'error':str(ex)}
