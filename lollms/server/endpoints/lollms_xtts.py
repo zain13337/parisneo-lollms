@@ -126,7 +126,8 @@ async def text2Audio(request: LollmsText2AudioRequest):
             lollmsElfServer.tts.tts_to_file(preprocessed_text, f"{voice}.wav", f"{output_fn}", language=language)
             lollmsElfServer.info(f"Voice file ready at {url}")
             return {"url": url}
-        except:
+        except Exception as ex:
+            trace_exception(ex)
             return {"url": None}
     except Exception as ex:
         trace_exception(ex)

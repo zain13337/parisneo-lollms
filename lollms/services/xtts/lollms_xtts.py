@@ -49,20 +49,29 @@ def install_xtts(lollms_app:LollmsApplication):
             lollms_app.error("Service installation canceled")
             return
     
+    lollms_app.ShowBlockingMessage("Creating xtts environment")
 
-    if platform.system() == 'Windows':
-        xtts_installer = f'{Path(__file__).parent}/xtts_installer.bat'
-        cwd = Path(os.path.realpath(sys.argv[0])).parent.parent
-        subprocess.Popen(xtts_installer, cwd=cwd, shell=True)
-    elif platform.system() == 'Linux' or platform.system() == 'Darwin':
-        xtts_installer = f'{Path(__file__).parent}/xtts_installer.sh'
-        cwd = Path(os.path.realpath(sys.argv[0])).parent.parent
-        subprocess.Popen(xtts_installer, cwd=cwd, shell=True)
+    # Get the path to the parent directory, which should be the 'bin' directory
+    bin_dir = Path(sys.executable).parent.parent/"miniconda3/condabin"
+    if bin_dir.exists():
+        conda_dir = str(bin_dir/ "conda")
+        # For Windows, the activate script has a '.bat' extension
+        if os.name == 'nt':
+            conda_dir += '.bat'
+            
+        result = subprocess.run([conda_dir, "create","--name","xtts","-y","python==3.11"])
+        python_path = Path(sys.executable).parent.parent/"miniconda3/envs/xtts/python"
+        result = subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "xtts-api-server"])
+        result = subprocess.run([python_path, "-m", "pip", "install", "torch==2.1.1+cu118","torchaudio==2.1.1+cu118","--index-url https://download.pytorch.org/whl/cu118"])
     else:
-        print("Unsupported operating system.")
+        import conda.cli
+        conda.cli.main("create","--name","xtts","-y")
+        result = subprocess.run(["conda","activate","xtts", "&&", "python", "-m", "pip", "install", "--upgrade", "xtts-api-server"])
+
 
     xtts_folder.mkdir(exist_ok=True,parents=True)
     ASCIIColors.green("XTTS server installed successfully")
+
 
 
 def get_xtts(lollms_paths:LollmsPaths):
@@ -126,18 +135,8 @@ class LollmsXTTS:
             ASCIIColors.info("Loading lollms_xtts")
             os.environ['xtts_WEBUI_RESTARTING'] = '1' # To forbid sd webui from showing on the browser automatically
             # Launch the Flask service using the appropriate script for the platform
-            
-            if platform.system() == 'Windows':
-                xtts_runner = f'{Path(__file__).parent}/xtts_run.bat {self.output_folder} {self.voice_samples_path}'
-                cwd = Path(os.path.realpath(sys.argv[0])).parent.parent
-                ASCIIColors.info("Running on windows")
-                ASCIIColors.info(f"Starting : {xtts_runner} from {cwd}")
-                subprocess.Popen(xtts_runner, cwd=cwd, shell=True)
-            elif platform.system() == 'Linux' or platform.system() == 'Darwin':
-                ASCIIColors.info("Running on Linux/macos")
-                subprocess.Popen(f'{Path(__file__).parent}/xtts_run.sh {self.output_folder} {self.voice_samples_path}', cwd=Path(__file__).parent)
-            else:
-                print("Unsupported operating system.")
+            self.process = self.run_xtts_api_server()
+
 
             # subprocess.Popen(["python", "-m", "xtts_api_server", "-o", f"{self.output_folder}", "-sf", f"{self.voice_samples_path}"])
 
@@ -146,6 +145,22 @@ class LollmsXTTS:
             self.wait_for_service(max_retries=max_retries)
 
 
+    def run_xtts_api_server(self):
+        # Get the path to the current Python interpreter
+        python_path = sys.executable
+
+        # Get the path to the parent directory, which should be the 'bin' directory
+        bin_dir = Path(python_path).parent.parent/"miniconda3/envs/xtts"
+        if bin_dir.exists():
+            python_path = Path(sys.executable).parent.parent/"miniconda3/envs/xtts/python"
+            command = f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path}"
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+        else:
+            command = f'conda activate xtts && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path}'
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+        return process
     def wait_for_service(self, max_retries = 150, show_warning=True):
         url = f"{self.xtts_base_url}/languages"
         # Adjust this value as needed
