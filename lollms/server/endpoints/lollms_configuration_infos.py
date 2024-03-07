@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import List
 import json
 from typing import List, Any
-
+from lollms.security import sanitize_path
 class SettingsInfos(BaseModel):
     setting_name:str
     setting_value:str
@@ -56,7 +56,7 @@ async def update_setting(request: Request):
         if "config" in config_data.keys():
             config_data = config_data["config"]
         setting_name = config_data["setting_name"]
-        setting_value = config_data["setting_value"]
+        setting_value = sanitize_path(config_data["setting_value"])
 
         ASCIIColors.info(f"Requested updating of setting {setting_name} to {setting_value}")
         if setting_name== "binding_name":
