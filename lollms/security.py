@@ -9,10 +9,10 @@ def sanitize_path(path:str, allow_absolute_path:bool=False, error_text="Absolute
         return path
     if(".." in path):
         ASCIIColors.warning(error_text)
-        raise exception_text
+        raise Exception(exception_text)
     if (not allow_absolute_path) and Path(path).is_absolute():
         ASCIIColors.warning(error_text)
-        raise exception_text
+        raise Exception(exception_text)
     return path
     
 def sanitize_path_from_endpoint(path:str, error_text="A suspected LFI attack detected. The path sent to the server has .. in it!", exception_text="Invalid path!"):

@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import List
 import json
 from typing import List, Any
-from lollms.security import sanitize_path
+from lollms.security import sanitize_path, forbid_remote_access
 class SettingsInfos(BaseModel):
     setting_name:str
     setting_value:str
@@ -50,6 +50,8 @@ async def update_setting(request: Request):
     :param request: The HTTP request object.
     :return: A JSON response with the status of the operation.
     """
+    # Prevent all outsiders from sending something to this endpoint
+    forbid_remote_access(lollmsElfServer)
 
     try:
         config_data = (await request.json())
@@ -134,7 +136,8 @@ async def apply_settings(request: Request):
     :param request: The HTTP request object.
     :return: A JSON response with the status of the operation.
     """
-
+    # Prevent all outsiders from sending something to this endpoint
+    forbid_remote_access(lollmsElfServer)
     try:
         config_data = await request.json()
         config = sanitize_path(config_data["config"])
