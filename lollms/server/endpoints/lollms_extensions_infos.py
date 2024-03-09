@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import List
 import psutil
 import yaml
+from lollms.security import sanitize_path
 
 # --------------------- Parameter Classes -------------------------------
 class ExtensionInstallInfos(BaseModel):
@@ -128,6 +129,8 @@ def install_extension(data: ExtensionInstallInfos):
         except Exception as ex:
             lollmsElfServer.error(ex)
             return
+    else:
+        data.name = sanitize_path(data.name)
     try:
         extension_path = lollmsElfServer.lollms_paths.extensions_zoo_path / data.name
         ASCIIColors.info(f"- Reinstalling extension {data.name}...")
@@ -151,6 +154,8 @@ def reinstall_extension(data: ExtensionInstallInfos):
         except Exception as ex:
             lollmsElfServer.error(ex)
             return
+    else:
+        data.name = sanitize_path(data.name)
     try:
         extension_path = lollmsElfServer.lollms_paths.extensions_zoo_path / data.name
         ASCIIColors.info(f"- Reinstalling extension {data.name}...")
@@ -180,8 +185,8 @@ def reinstall_extension(data: ExtensionInstallInfos):
 @router.post("/mount_extension")
 def mount_extension(data:ExtensionMountingInfos):
     print("- Mounting extension")
-    category = data.category
-    name = data.folder
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.folder)
 
     package_path = f"{category}/{name}"
     package_full_path = lollmsElfServer.lollms_paths.extensions_zoo_path/package_path
@@ -206,8 +211,8 @@ def mount_extension(data:ExtensionMountingInfos):
 @router.post("/remount_extension")
 def remount_extension(data:ExtensionMountingInfos):
     print("- Remounting extension")
-    category = data.category
-    name = data.folder
+    category = sanitize_path(data.category)
+    name = sanitize_path(data.folder)
 
     package_path = f"{category}/{name}"
     package_full_path = lollmsElfServer.lollms_paths.extensions_zoo_path/package_path
@@ -246,9 +251,9 @@ def remount_extension(data:ExtensionMountingInfos):
 @router.post("/unmount_extension")
 def unmount_extension(data:ExtensionMountingInfos):
     print("- Unmounting extension ...")
-    category    = data.category
-    name        = data.folder
-    language    = data.get('language',None)
+    category    = sanitize_path(data.category)
+    name        = sanitize_path(data.folder)
+    language    = sanitize_path(data.get('language',None))
     try:
         personality_id = f"{category}/{name}" if language is None else f"{category}/{name}:{language}"
         index = lollmsElfServer.config["personalities"].index(personality_id)

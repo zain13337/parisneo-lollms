@@ -151,3 +151,19 @@ def install_xtts():
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
         return {"status":False, 'error':str(ex)}
+
+@router.get("/start_xtts")
+def start_xtts():
+    try:
+        lollmsElfServer.ShowBlockingMessage("Starting xTTS api server\nPlease stand by")
+        from lollms.services.xtts.lollms_xtts import LollmsXTTS
+        if lollmsElfServer.tts is None:
+            lollmsElfServer.tts = LollmsXTTS(
+                lollmsElfServer, 
+                voice_samples_path=Path(__file__).parent/"voices", 
+                xtts_base_url= lollmsElfServer.config.xtts_base_url
+            )
+        lollmsElfServer.HideBlockingMessage()
+    except Exception as ex:
+        lollmsElfServer.HideBlockingMessage()
+        return {"url": None, "error":f"{ex}"}
