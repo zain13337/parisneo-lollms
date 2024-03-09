@@ -142,6 +142,9 @@ async def lollms_generate(request: LollmsGenerateRequest):
                             return False
                         
                     def chunks_builder():
+                        if request.model_name in elf_server.binding.list_models() and elf_server.binding.model_name!=request.model_name:
+                            elf_server.binding.build_model(request.model_name)    
+
                         elf_server.binding.generate(
                                                 prompt, 
                                                 n_predict, 

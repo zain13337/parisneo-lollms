@@ -565,7 +565,7 @@ class LLMBinding:
         
         return file_size
     
-    def build_model(self):
+    def build_model(self, model_name=None):
         """
         Build the model.
 
@@ -574,7 +574,10 @@ class LLMBinding:
         Returns:
             the model
         """        
-        return None
+        if model_name is not None:
+            self.model_name = model_name
+        else:
+            self.model_name = self.config.model_name
     
     def destroy_model(self):
         """
@@ -892,8 +895,8 @@ class ModelBuilder:
         self.model = None
         self.build_model() 
 
-    def build_model(self):
-        self.model = self.binding.build_model()
+    def build_model(self, model_name=None):
+        self.model = self.binding.build_model(model_name)
 
     def get_model(self):
         return self.model

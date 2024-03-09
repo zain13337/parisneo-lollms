@@ -164,7 +164,7 @@ class LollmsXTTS:
             process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
         else:
-            command = f'conda activate xtts && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}'
+            command = f"conda activate xtts && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}"
             process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
         return process

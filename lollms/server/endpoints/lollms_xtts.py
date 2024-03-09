@@ -101,8 +101,8 @@ async def text2Audio(request: LollmsText2AudioRequest):
                     voice_samples_path=Path(__file__).parent/"voices", 
                     xtts_base_url= lollmsElfServer.config.xtts_base_url
                 )
-        except:
-            return {"url": None}
+        except Exception as ex:
+            return {"url": None, "error":f"{ex}"}
             
         voice=lollmsElfServer.config.current_voice if request.voice is None else request.voice
         index = find_first_available_file_index(lollmsElfServer.tts.output_folder, "voice_sample_",".wav")

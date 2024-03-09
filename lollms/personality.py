@@ -2522,7 +2522,7 @@ class APScript(StateMachine):
         Returns:
             str: The generated title.
         """        
-        global_prompt = f"!@>instruction: Create a title for the following prompt:\n!@>prompt:{prompt}\n!@>title:"
+        global_prompt = f"!@>instructions: Based on the provided prompt, suggest a concise and relevant title that captures the main topic or theme of the conversation. Only return the suggested title, without any additional text or explanation.\n!@>prompt: {prompt}\n!@>title:"
         title = self.fast_gen(global_prompt,max_title_length)
         return title
 
