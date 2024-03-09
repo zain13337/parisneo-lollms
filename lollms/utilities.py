@@ -36,6 +36,27 @@ import os
 import sys
 import git
 
+import mimetypes
+
+def get_media_type(file_path):
+    """
+    Determines the media type of a file based on its file extension.
+
+    Args:
+        file_path (str): The path to the media file.
+
+    Returns:
+        str: The media type of the file in the format "type/subtype".
+             Returns "Unknown" if the media type cannot be determined.
+    """
+    media_type, _ = mimetypes.guess_type(file_path)
+    
+    if media_type is None:
+        return "Unknown"
+    else:
+        return media_type
+
+
 def discussion_path_2_url(path:str|Path):
     path = str(path)
     return path[path.index('discussion_databases'):].replace('discussion_databases','discussions')
