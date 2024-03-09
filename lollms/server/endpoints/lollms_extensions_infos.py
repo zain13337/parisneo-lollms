@@ -150,7 +150,7 @@ def install_extension(data: ExtensionInstallInfos):
 def reinstall_extension(data: ExtensionInstallInfos):
     if not data.name:
         try:
-            data.name=lollmsElfServer.config.extensions[-1]
+            data.name=sanitize_path(lollmsElfServer.config.extensions[-1])
         except Exception as ex:
             lollmsElfServer.error(ex)
             return

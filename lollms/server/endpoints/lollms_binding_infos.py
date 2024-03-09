@@ -14,7 +14,7 @@ from lollms.server.elf_server import LOLLMSElfServer
 from lollms.binding import BindingBuilder, InstallOption
 from ascii_colors import ASCIIColors
 from lollms.utilities import load_config, trace_exception, gc
-from lollms.security import sanitize_path_from_endpoint
+from lollms.security import sanitize_path_from_endpoint, sanitize_path
 from pathlib import Path
 from typing import List, Any
 import json
@@ -91,7 +91,7 @@ async def reload_binding(request: BindingReloadRequest):
 
     try:
         print(f"Reloading binding selected : {request.name}")
-        safe_name = os.path.basename(request.name) # sanitize the file path to prevent path traversal
+        safe_name = sanitize_path(os.path.basename(request.name)) # sanitize the file path to prevent path traversal
         lollmsElfServer.config["binding_name"]=safe_name
         if lollmsElfServer.binding:
             lollmsElfServer.binding.destroy_model()
@@ -133,7 +133,7 @@ def install_binding(data:BindingInstallParams):
         lollmsElfServer.info("Unmounting binding and model")
         lollmsElfServer.info("Reinstalling binding")
         old_bn = lollmsElfServer.config.binding_name
-        lollmsElfServer.config.binding_name = data.name
+        lollmsElfServer.config.binding_name = sanitize_path(data.name)
         lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
         lollmsElfServer.success("Binding installed successfully")
         del lollmsElfServer.binding
@@ -171,7 +171,7 @@ def reinstall_binding(data:BindingInstallParams):
         gc.collect()
         ASCIIColors.info("Reinstalling binding")
         old_bn = lollmsElfServer.config.binding_name
-        lollmsElfServer.config.binding_name = data.name
+        lollmsElfServer.config.binding_name = sanitize_path(data.name)
         lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
         lollmsElfServer.success("Binding reinstalled successfully")
         lollmsElfServer.config.binding_name = old_bn
@@ -207,7 +207,7 @@ def unInstall_binding(data:BindingInstallParams):
             gc.collect()
         ASCIIColors.info("Uninstalling binding")
         old_bn = lollmsElfServer.config.binding_name
-        lollmsElfServer.config.binding_name = data.name
+        lollmsElfServer.config.binding_name = sanitize_path(data.name)
         lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.NEVER_INSTALL, lollmsCom=lollmsElfServer)
         lollmsElfServer.binding.uninstall()
         ASCIIColors.green("Uninstalled successful")
