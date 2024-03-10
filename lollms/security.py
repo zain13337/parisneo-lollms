@@ -25,8 +25,7 @@ def sanitize_path_from_endpoint(path:str, error_text="A suspected LFI attack det
 
 def forbid_remote_access(lollmsElfServer):
     if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
-        return {"status":False,"error":"Code execution is blocked when the server is exposed outside for very obvious reasons!"}
-
+        raise Exception("This functionality is forbidden if the server is exposed")
 
 def validate_path(path, allowed_paths:List[str|Path]):
     # Convert the path to an absolute path

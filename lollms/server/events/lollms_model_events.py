@@ -35,6 +35,9 @@ def add_events(sio:socketio):
     @sio.on('install_model')
     def install_model(sid, data):
         client_id = sid
+        sanitize_path(data["type"])
+        sanitize_path(data["path"])
+        sanitize_path(data["variant_name"])
         tpe = threading.Thread(target=lollmsElfServer.binding.install_model, args=(data["type"], data["path"], data["variant_name"], client_id))
         tpe.start()
 
