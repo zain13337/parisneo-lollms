@@ -1,19 +1,15 @@
 import sqlite3
 
 class SkillsLibrary:
-    def __init__(self, db_path):
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
-        self._create_table()
-
         
     def __init__(self, db_path):
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
+        self.db_path =db_path
         self._initialize_db()
 
     def _initialize_db(self):
-        self.cursor.execute("""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS skills_library (
                 id INTEGER PRIMARY KEY,
                 version INTEGER,
@@ -22,29 +18,39 @@ class SkillsLibrary:
                 content TEXT
             )
         """)
-        self.cursor.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS db_info (
                 version INTEGER
             )
         """)
-        self.cursor.execute("SELECT version FROM db_info")
-        version = self.cursor.fetchone()
+        cursor.execute("SELECT version FROM db_info")
+        version = cursor.fetchone()
         if version is None:
-            self.cursor.execute("INSERT INTO db_info (version) VALUES (1)")
-            self.conn.commit()
+            cursor.execute("INSERT INTO db_info (version) VALUES (1)")
+            conn.commit()
+            cursor.close()
+            conn.close()
         else:
+            cursor.close()
+            conn.close()
             self._migrate_db(version[0])
 
     def _migrate_db(self, version):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
         # Perform migrations based on the current version
         # For example, if the current version is 1 and the latest version is 2:
         if version < 2:
-            self.cursor.execute("ALTER TABLE skills_library ADD COLUMN new_column TEXT")
-            self.cursor.execute("UPDATE db_info SET version = 2")
-            self.conn.commit()
+            cursor.execute("ALTER TABLE skills_library ADD COLUMN new_column TEXT")
+            cursor.execute("UPDATE db_info SET version = 2")
+            conn.commit()
+        cursor.close()
+        conn.close()
 
     def _create_table(self):
-        self.cursor.execute("""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS skills_library (
                 id INTEGER PRIMARY KEY,
                 version INTEGER,
@@ -53,29 +59,49 @@ class SkillsLibrary:
                 content TEXT
             )
         """)
-        self.conn.commit()
+        conn.commit()
+        cursor.close()
+        conn.close()
 
     def add_entry(self, version, category, title, content):
-        self.cursor.execute("""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
+        cursor.execute("""
             INSERT INTO skills_library (version, category, title, content) 
             VALUES (?, ?, ?, ?)
         """, (version, category, title, content))
-        self.conn.commit()
+        conn.commit()
+        cursor.close()
+        conn.close()
 
     def list_entries(self):
-        self.cursor.execute("SELECT * FROM skills_library")
-        return self.cursor.fetchall()
-
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
+        cursor.execute("SELECT * FROM skills_library")
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return res
+    
     def query_entry(self, text):
-        self.cursor.execute("""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
+        cursor.execute("""
             SELECT * FROM skills_library 
             WHERE category LIKE ? OR title LIKE ? OR content LIKE ?
         """, (f'%{text}%', f'%{text}%', f'%{text}%'))
-        return self.cursor.fetchall()
-
+        res= cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return res
+    
     def remove_entry(self, id):
-        self.cursor.execute("DELETE FROM skills_library WHERE id = ?", (id,))
-        self.conn.commit()
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()        
+        cursor.execute("DELETE FROM skills_library WHERE id = ?", (id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
 
     def export_entries(self, file_path):
         with open(file_path, 'w') as f:

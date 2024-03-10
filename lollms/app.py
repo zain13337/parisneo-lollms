@@ -2,6 +2,7 @@ from lollms.main_config import LOLLMSConfig
 from lollms.paths import LollmsPaths
 from lollms.personality import PersonalityBuilder, AIPersonality
 from lollms.binding import LLMBinding, BindingBuilder, ModelBuilder
+from lollms.databases.discussions_database import Message
 from lollms.extension import LOLLMSExtension, ExtensionBuilder
 from lollms.config import InstallOption
 from lollms.helpers import ASCIIColors, trace_exception
@@ -128,8 +129,72 @@ class LollmsApplication(LoLLMsCom):
             self.mount_personalities()
             self.mount_extensions()
 
-    def add_discussion_tto_skills_library(self, client:Client):
-        pass
+    def add_discussion_to_skills_library(self, client: Client):
+        messages = client.discussion.get_messages()
+        db = client.discussion.skills_db
+
+        # Extract relevant information from messages
+        content = self._extract_content(messages)
+
+        # Generate title
+        title_prompt =  f"Generate a concise title for the following content without any additional explanations or context:\n\n{content}\n\nTitle:"
+        title = self._generate_text(title_prompt)
+
+        # Determine category
+        category_prompt = f"Determine the most appropriate category for the following title and content, and provide only the category name:\n\nTitle: {title}\nContent: {content}\n\nCategory:"
+        category = self._generate_text(category_prompt)
+
+        # Add entry to skills library
+        db.add_entry(1, category, title, content)
+        return category, title, content
+
+    def _extract_content(self, messages:List[Message]):
+        ranked_messages = sorted(messages, key=lambda m: m.rank, reverse=True)
+        
+        max_chunk_size = int(self.config.ctx_size * 0.75)
+        
+        chunks = []
+        current_chunk = ""
+        current_chunk_tokens = 0
+        
+        for message in ranked_messages:
+            rank = message.rank
+            sender = message.sender
+            text = message.content
+            message_content = f"Rank {rank} - {sender}: {text}\n"
+            
+            message_tokens = self.model.get_nb_tokens(message_content)
+            
+            if current_chunk_tokens + message_tokens <= max_chunk_size:
+                current_chunk += message_content
+                current_chunk_tokens += message_tokens
+            else:
+                chunks.append(current_chunk)
+                current_chunk = message_content
+                current_chunk_tokens = message_tokens
+        
+        if current_chunk:
+            chunks.append(current_chunk)
+        
+        summarized_chunks = []
+        for chunk in chunks:
+            prompt = f"Summarize the following discussion chunk, keeping only important information that can be used as skills. Use bullet points:\n\n{chunk}"
+            max_tokens = self.config.ctx_size - self.model.get_nb_tokens(prompt)
+            
+            summarized_chunk = self.model.generate(prompt, max_tokens)
+            summarized_chunks.append(summarized_chunk.strip())
+        
+        summarized_content = "\n".join(summarized_chunks)
+        return summarized_content
+
+
+    def _generate_text(self, prompt):
+        max_tokens = self.config.ctx_size - self.model.get_nb_tokens(prompt)
+        generated_text = self.model.generate(prompt, max_tokens)
+        return generated_text.strip()
+
+
+
 
     def get_uploads_path(self, client_id):
         return self.lollms_paths.personal_uploads_path

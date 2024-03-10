@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from lollms.helpers import ASCIIColors
 from lollms.paths import LollmsPaths
+from lollms.databases.skills_database import SkillsLibrary
 import json
 
 __author__ = "parisneo"
@@ -598,8 +599,8 @@ class Discussion:
         self.discussion_skills_folder.mkdir(exist_ok=True)
         self.discussion_rag_folder.mkdir(exist_ok=True)
         self.messages = self.get_messages()
-        self.skills_db = self.discussion_skills_folder/"skills_db.db"
-
+        self.skills_db_path = self.discussion_skills_folder/"skills_db.db"
+        self.skills_db = SkillsLibrary(self.skills_db_path)
         if len(self.messages)>0:
             self.current_message = self.messages[-1]
 

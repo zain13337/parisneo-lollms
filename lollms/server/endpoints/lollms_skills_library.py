@@ -30,5 +30,14 @@ class DiscussionInfos(BaseModel):
 
 @router.post("/add_discussion_to_skills_library")
 def add_discussion_to_skills_library(discussionInfos:DiscussionInfos):
-    client = lollmsElfServer.session.get_client(discussionInfos.client_id)
-    lollmsElfServer.add_discussion_tto_skills_library(client)    
+    lollmsElfServer.ShowBlockingMessage("Learning...")
+    try:
+        client = lollmsElfServer.session.get_client(discussionInfos.client_id)
+        category, title, content = lollmsElfServer.add_discussion_to_skills_library(client)    
+        lollmsElfServer.InfoMessage(f"Discussion skill added to skills library:\ntitle:{title}\ncategory:{category}")
+    except Exception as ex:
+        trace_exception(ex)
+        ASCIIColors.error(ex)
+        lollmsElfServer.InfoMessage(f"Failed to learn from this discussion because of the follwoing error:\n{ex}")
+        return {"status":False,"error":f"{ex}"}
+    return {"status":True}
