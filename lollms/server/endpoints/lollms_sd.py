@@ -46,3 +46,23 @@ def install_sd():
         lollmsElfServer.HideBlockingMessage()
         lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_sd manually then try again")
         return {"status":False, 'error':str(ex)}
+
+@router.get("/start_sd")
+def start_sd():
+    try:
+        if lollmsElfServer.config.headless_server_mode:
+            return {"status":False,"error":"Service installation is blocked when in headless mode for obvious security reasons!"}
+
+        if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
+            return {"status":False,"error":"Service installation is blocked when the server is exposed outside for very obvious reasons!"}
+
+        lollmsElfServer.ShowBlockingMessage("Starting SD api server\nPlease stand by")
+        from lollms.services.sd.lollms_sd import get_sd
+        lollmsElfServer.sd = get_sd(lollmsElfServer.lollms_paths)
+        ASCIIColors.success("Done")
+        lollmsElfServer.HideBlockingMessage()
+        return {"status":True}
+    except Exception as ex:
+        lollmsElfServer.HideBlockingMessage()
+        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_sd manually then try again")
+        return {"status":False, 'error':str(ex)}
