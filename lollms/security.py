@@ -1,9 +1,12 @@
 from fastapi import HTTPException
 from ascii_colors import ASCIIColors
+from urllib.parse import urlparse
+import socket
 from pathlib import Path
 from typing import List
 import os
 import re
+
 
 def sanitize_path(path:str, allow_absolute_path:bool=False, error_text="Absolute database path detected", exception_text="Detected an attempt of path traversal. Are you kidding me?"):
     if path is None:
@@ -57,6 +60,22 @@ def validate_path(path, allowed_paths:List[str|Path]):
 
     # If the path is not within any of the allowed paths, return False
     return False
+
+def is_allowed_url(url):
+    # Check if url is legit
+    parsed_url = urlparse(url)        
+    # Check if scheme is not http or https, return False
+    if parsed_url.scheme not in ['http', 'https']:
+        return False
+    
+    hostname = parsed_url.hostname
+    
+    try:
+        ip_address = socket.gethostbyname(hostname)
+    except socket.gaierror:
+        return False
+    
+    return not ip_address.startswith('127.') or ip_address.startswith('192.168.') or ip_address.startswith('10.') or ip_address.startswith('172.')
 
 
 if __name__=="__main__":
