@@ -38,6 +38,49 @@ import git
 
 import mimetypes
 
+def process_ai_output(output, images, output_folder):
+    if not PackageManager.check_package_installed("cv2"):
+        PackageManager.install_package("opencv-python")
+    import cv2
+    images = [cv2.imread(str(img)) for img in images]
+    # Find all bounding box entries in the output
+    bounding_boxes = re.findall(r'boundingbox\((\d+), ([^,]+), ([^,]+), ([^,]+), ([^,]+), ([^,]+)\)', output)
+
+    # Group bounding boxes by image index
+    image_boxes = {}
+    for box in bounding_boxes:
+        image_index = int(box[0])
+        if image_index not in image_boxes:
+            image_boxes[image_index] = []
+        image_boxes[image_index].append(box[1:])
+
+    # Process each image and its bounding boxes
+    for image_index, boxes in image_boxes.items():
+        # Get the corresponding image
+        image = images[image_index]
+
+        # Draw bounding boxes on the image
+        for box in boxes:
+            label, left, top, width, height = box
+            left, top, width, height = float(left), float(top), float(width), float(height)
+            x, y, w, h = int(left * image.shape[1]), int(top * image.shape[0]), int(width * image.shape[1]), int(height * image.shape[0])
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+        # Save the modified image
+        output_path = Path(output_folder)/f"image_{image_index}.jpg"
+        cv2.imwrite(str(output_path), image)
+
+    # Remove bounding box text from the output
+    output = re.sub(r'boundingbox\([^)]+\)', '', output)
+
+    # Append img tags for the generated images
+    for image_index in image_boxes.keys():
+        url = discussion_path_to_url(Path(output_folder)/f"image_{image_index}.jpg")
+        output += f'\n<img src="{url}">'
+
+    return output
+
 def get_media_type(file_path):
     """
     Determines the media type of a file based on its file extension.
