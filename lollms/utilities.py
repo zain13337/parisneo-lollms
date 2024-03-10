@@ -37,6 +37,30 @@ import sys
 import git
 
 import mimetypes
+import subprocess
+from conda.cli.python_api import  run_command, Commands
+
+def create_conda_env(env_name, python_version):
+    # Create a new Conda environment with the specified Python version
+    run_command(Commands.CREATE, "-n", env_name, f"python={python_version}")
+
+def run_python_script_in_env(env_name, script_path, cwd=None):
+    # Set the current working directory if provided, otherwise use the current directory
+    if cwd is None:
+        cwd = os.getcwd()
+    
+    # Activate the Conda environment
+    run_command(Commands.RUN, "-n", env_name, "python", str(script_path), cwd=cwd)
+
+def run_script_in_env(env_name, script_path, cwd=None):
+    # Set the current working directory if provided, otherwise use the current directory
+    if cwd is None:
+        cwd = os.path.dirname(script_path)
+    
+    # Activate the Conda environment
+    subprocess.Popen(f'conda activate {env_name} && {script_path}', shell=True, cwd=cwd)
+    #run_command(Commands.RUN, "-n", env_name, str(script_path), cwd=cwd)
+
 
 def process_ai_output(output, images, output_folder):
     if not PackageManager.check_package_installed("cv2"):

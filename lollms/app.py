@@ -128,6 +128,9 @@ class LollmsApplication(LoLLMsCom):
             self.mount_personalities()
             self.mount_extensions()
 
+    def add_discussion_tto_skills_library(self, client:Client):
+        pass
+
     def get_uploads_path(self, client_id):
         return self.lollms_paths.personal_uploads_path
 

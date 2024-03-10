@@ -58,7 +58,7 @@ def start_sd():
 
         lollmsElfServer.ShowBlockingMessage("Starting SD api server\nPlease stand by")
         from lollms.services.sd.lollms_sd import get_sd
-        lollmsElfServer.sd = get_sd(lollmsElfServer.lollms_paths)
+        lollmsElfServer.sd = get_sd(lollmsElfServer.lollms_paths)(lollmsElfServer, lollmsElfServer.personality.name if lollmsElfServer.personality is not None else "Artbot")
         ASCIIColors.success("Done")
         lollmsElfServer.HideBlockingMessage()
         return {"status":True}

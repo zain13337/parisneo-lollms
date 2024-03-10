@@ -28,7 +28,7 @@ from typing import List, Dict, Any
 
 from ascii_colors import ASCIIColors, trace_exception
 from lollms.paths import LollmsPaths
-from lollms.utilities import git_pull, show_yes_no_dialog
+from lollms.utilities import git_pull, show_yes_no_dialog, run_script_in_env, create_conda_env
 import subprocess
 import shutil
 from tqdm import tqdm
@@ -62,29 +62,23 @@ def install_sd(lollms_app:LollmsApplication):
     shared_folder = root_dir/"shared"
     sd_folder = shared_folder / "auto_sd"
     if sd_folder.exists():
-        if not show_yes_no_dialog("warning!","I have detected that there is a previous installation of stable diffusion.\nShould I remove it and continue installing?"):
+        if show_yes_no_dialog("warning!","I have detected that there is a previous installation of stable diffusion.\nShould I remove it and continue installing?"):
+            shutil.rmtree(sd_folder)
+        elif show_yes_no_dialog("warning!","Continue installation?"):
+            ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
+            create_conda_env("autosd","3.10")
+            ASCIIColors.cyan("Done")
             return
         else:
-            shutil.rmtree(sd_folder)
+            return
+
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
         download_file("https://civitai.com/api/download/models/351306", sd_folder/"models/Stable-diffusion","dreamshaperXL_v21TurboDPMSDE.safetensors")
-    # Get the path to the parent directory, which should be the 'bin' directory
-    if platform.system()=="Windows":
-        bin_dir = Path(sys.executable).parent.parent/"miniconda3/condabin"
-    else:
-        bin_dir = Path(sys.executable).parent.parent/"miniconda3/bin"
-    if bin_dir.exists():
-        conda_dir = str(bin_dir/ "conda")
-        # For Windows, the activate script has a '.bat' extension
-        if os.name == 'nt':
-            conda_dir += '.bat'
-            
-        result = subprocess.run([conda_dir, "create","--name","autosd","-y","python==3.10"])
-    else:
-        import conda.cli
-        conda.cli.main("create","--name","autosd","-y","python==3.10")
+        create_conda_env("autosd","3.10")
+    
+    lollms_app.sd = LollmsSD(lollms_app)
     ASCIIColors.green("Stable diffusion installed successfully")
 
 
@@ -293,9 +287,11 @@ class LollmsSD:
                 #     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
                 if share:
-                    subprocess.Popen(str(script_path) +" --share", cwd=self.sd_folder)
+                    run_script_in_env("autosd", script_path +" --share", cwd=self.sd_folder)
+                    # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.sd_folder)
                 else:
-                    subprocess.Popen(script_path, cwd=self.sd_folder)
+                    run_script_in_env("autosd", script_path, cwd=self.sd_folder)
+                    # subprocess.Popen(script_path, cwd=self.sd_folder)
             else:
                 ASCIIColors.info("Running on linux/MacOs")
                 script_path = str(self.sd_folder / "lollms_sd.sh")
@@ -303,9 +299,10 @@ class LollmsSD:
                 ASCIIColors.info(f"sd path: {self.sd_folder}")
 
                 if share:
-                    subprocess.Popen(['bash', script_path,"--share"], cwd=self.sd_folder)
+                    run_script_in_env("autosd","bash " + script_path +" --share", cwd=self.sd_folder)
+                    # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.sd_folder)
                 else:
-                    subprocess.Popen(['bash', script_path], cwd=self.sd_folder)
+                    run_script_in_env("autosd","bash " + script_path, cwd=self.sd_folder)
                 ASCIIColors.info("Process done")
                 ASCIIColors.success("Launching Auto1111's SD succeeded")
 

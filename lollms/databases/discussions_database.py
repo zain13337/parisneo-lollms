@@ -598,6 +598,8 @@ class Discussion:
         self.discussion_skills_folder.mkdir(exist_ok=True)
         self.discussion_rag_folder.mkdir(exist_ok=True)
         self.messages = self.get_messages()
+        self.skills_db = self.discussion_skills_folder/"skills_db.db"
+
         if len(self.messages)>0:
             self.current_message = self.messages[-1]
 
