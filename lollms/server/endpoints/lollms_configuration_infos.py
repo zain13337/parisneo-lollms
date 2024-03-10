@@ -140,7 +140,7 @@ async def apply_settings(request: Request):
     forbid_remote_access(lollmsElfServer)
     try:
         config_data = await request.json()
-        config = sanitize_path(config_data["config"])
+        config = config_data["config"]
         try:
             for key in lollmsElfServer.config.config.keys():
                 lollmsElfServer.config.config[key] = config.get(key, lollmsElfServer.config.config[key])

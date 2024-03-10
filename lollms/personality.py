@@ -547,6 +547,48 @@ class AIPersonality:
         ASCIIColors.yellow(prompt)
         ASCIIColors.red(" *-*-*-*-*-*-*-*")  
 
+    def process_ai_output(self, output, images, output_folder):
+        if not is_package_installed("cv2"):
+            install_package("cv2")
+        import cv2
+        images = [cv2.imread(img) for img in images]
+        # Find all bounding box entries in the output
+        bounding_boxes = re.findall(r'boundingbox\((\d+), ([^,]+), ([^,]+), ([^,]+), ([^,]+), ([^,]+)\)', output)
+
+        # Group bounding boxes by image index
+        image_boxes = {}
+        for box in bounding_boxes:
+            image_index = int(box[0])
+            if image_index not in image_boxes:
+                image_boxes[image_index] = []
+            image_boxes[image_index].append(box[1:])
+
+        # Process each image and its bounding boxes
+        for image_index, boxes in image_boxes.items():
+            # Get the corresponding image
+            image = images[image_index]
+
+            # Draw bounding boxes on the image
+            for box in boxes:
+                label, left, top, width, height = box
+                left, top, width, height = float(left), float(top), float(width), float(height)
+                x, y, w, h = int(left * image.shape[1]), int(top * image.shape[0]), int(width * image.shape[1]), int(height * image.shape[0])
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+            # Save the modified image
+            output_path = Path(output_folder)/f"image_{image_index}.jpg"
+            cv2.imwrite(output_path, image)
+
+        # Remove bounding box text from the output
+        output = re.sub(r'boundingbox\([^)]+\)', '', output)
+
+        # Append img tags for the generated images
+        for image_index in image_boxes.keys():
+            url = discussion_path_to_url(Path(output_folder)/f"image_{image_index}.jpg")
+            output += f'\n<img src="{url}">'
+
+        return output
 
     def fast_gen_with_images(self, prompt: str, images:list, max_generation_size: int=None, placeholders: dict = {}, sacrifice: list = ["previous_discussion"], debug: bool  = False, callback=None, show_progress=False) -> str:
         """
@@ -565,6 +607,18 @@ class AIPersonality:
         Returns:
         - str: The generated text after removing special tokens ("<s>" and "</s>") and stripping any leading/trailing whitespace.
         """
+        prompt = "\n".join([
+            "!@>system: I am an AI assistant that can converse and analyze images. When asked to locate something in an image you send, I will reply with:",
+            "boundingbox(image_index, label, left, top, width, height)",
+            "Where:",
+            "image_index: 0-based index of the image",
+            "label: brief description of what is located",
+            "left, top: x,y coordinates of top-left box corner (0-1 scale)",
+            "width, height: box dimensions as fraction of image size",
+            "Coordinates have origin (0,0) at top-left, (1,1) at bottom-right.",
+            "For other queries, I will respond conversationally to the best of my abilities. Let me know if you have any other questions!",
+            prompt
+        ])
         if debug == False:
             debug = self.config.debug
             
@@ -584,6 +638,10 @@ class AIPersonality:
         # TODO : add show progress
 
         gen = self.generate_with_images(prompt, images, max_generation_size, callback=callback, show_progress=show_progress).strip().replace("</s>", "").replace("<s>", "")
+        try:
+            gen = self.process_ai_output(gen, images, "/discussions/")
+        except Exception as ex:
+            pass
         if debug:
             self.print_prompt("prompt", prompt+gen)
            
