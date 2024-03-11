@@ -63,6 +63,7 @@ class LollmsApplication(LoLLMsCom):
         self.session                    = Session(lollms_paths)
         self.skills_library             = SkillsLibrary(self.lollms_paths.personal_skills_path/(self.config.skills_lib_database_name+".db"))
 
+
         if not free_mode:
             try:
                 if config.auto_update:
@@ -131,7 +132,6 @@ class LollmsApplication(LoLLMsCom):
 
     def add_discussion_to_skills_library(self, client: Client):
         messages = client.discussion.get_messages()
-        db = client.discussion.skills_db
 
         # Extract relevant information from messages
         content = self._extract_content(messages)
@@ -145,7 +145,7 @@ class LollmsApplication(LoLLMsCom):
         category = self._generate_text(category_prompt)
 
         # Add entry to skills library
-        db.add_entry(1, category, title, content)
+        self.skills_library.add_entry(1, category, title, content)
         return category, title, content
 
     def _extract_content(self, messages:List[Message]):
