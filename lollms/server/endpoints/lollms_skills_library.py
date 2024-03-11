@@ -34,7 +34,7 @@ def add_discussion_to_skills_library(discussionInfos:DiscussionInfos):
     try:
         client = lollmsElfServer.session.get_client(discussionInfos.client_id)
         category, title, content = lollmsElfServer.add_discussion_to_skills_library(client)    
-        lollmsElfServer.InfoMessage(f"Discussion skill added to skills library:\ntitle:{title}\ncategory:{category}")
+        lollmsElfServer.InfoMessage(f"Discussion skill added to skills library:\nTitle: {title}\nCategory: {category}")
     except Exception as ex:
         trace_exception(ex)
         ASCIIColors.error(ex)
