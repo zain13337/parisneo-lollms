@@ -39,6 +39,8 @@ import git
 import mimetypes
 import subprocess
 
+from functools import partial
+
 def create_conda_env(env_name, python_version):
     from conda.cli.python_api import  run_command, Commands
     # Create a new Conda environment with the specified Python version
@@ -148,6 +150,58 @@ def yes_or_no_input(prompt):
         else:
             print("Please enter 'yes' or 'no'.")
 
+def show_console_custom_dialog(title, text, options):
+    print(title)
+    print(text)
+    for i, option in enumerate(options, 1):
+        print(f"{i}. {option}")
+    while True:
+        try:
+            choice = int(input("Enter the number of your choice: "))
+            if 1 <= choice <= len(options):
+                return options[choice - 1]
+            else:
+                print("Invalid choice. Please try again.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+def show_custom_dialog(title, text, options):
+    try:
+        import tkinter as tk
+        from tkinter import simpledialog        
+        class CustomDialog(simpledialog.Dialog):
+            def __init__(self, parent, title, options, root):
+                self.options = options
+                self.root = root
+                self.buttons = []
+                self.result_value = ""
+                super().__init__(parent, title)
+            def do_ok(self, option):
+                self.result_value = option
+                self.ok(option)
+                self.root.destroy()
+            def body(self, master):
+                for option in self.options:
+                    button = tk.Button(master, text=option, command=partial(self.do_ok, option))
+                    button.pack(side="left", fill="x")
+                    self.buttons.append(button)
+
+            def apply(self):
+                self.result = self.options[0]  # Default value
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        d = CustomDialog(root, title=title, options=options, root=root)
+        try:
+            d.mainloop()
+        except Exception as ex:
+            pass
+        result = d.result_value
+        return result
+    except Exception as ex:
+        ASCIIColors.error(ex)
+        return show_console_custom_dialog(title, text, options)
+    
 def show_yes_no_dialog(title, text):
     try:
         import tkinter as tk

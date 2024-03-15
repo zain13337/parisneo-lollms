@@ -493,7 +493,7 @@ class LollmsApplication(LoLLMsCom):
                 ASCIIColors.info(f"Deleted file: {file_path}")
 
     # -------------------------------------- Prompt preparing
-    def prepare_query(self, client_id: str, message_id: int = -1, is_continue: bool = False, n_tokens: int = 0, generation_type = None) -> Tuple[str, str, List[str]]:
+    def prepare_query(self, client_id: str, message_id: int = -1, is_continue: bool = False, n_tokens: int = 0, generation_type = None, force_using_internet=False) -> Tuple[str, str, List[str]]:
         """
         Prepares the query for the model.
 
@@ -563,19 +563,19 @@ class LollmsApplication(LoLLMsCom):
         discussion = None
         if generation_type != "simple_question":
 
-            if self.config.activate_internet_search:
+            if self.config.activate_internet_search or force_using_internet or generation_type == "full_context_with_internet":
                 if discussion is None:
                     discussion = self.recover_discussion(client_id)
                 if self.config.internet_activate_search_decision:
                     self.personality.step_start(f"Requesting if {self.personality.name} needs to search internet to answer the user")
-                    need = not self.personality.yes_no(f"Do you have enough information to give a satisfactory answer to {self.config.user_name}'s request without internet search? (If you do not know or you can't answer 0 (no)", discussion)
+                    need = not self.personality.yes_no(f"!@>system: Answer the question with yes or no. Don't add any extra explanation.\n!@>user: Do you have enough information to give a satisfactory answer to {self.config.user_name}'s request without internet search? (If you do not know or you can't answer 0 (no)", discussion)
                     self.personality.step_end(f"Requesting if {self.personality.name} needs to search internet to answer the user")
                     self.personality.step("Yes" if need else "No")
                 else:
                     need=True
                 if need:
                     self.personality.step_start("Crafting internet search query")
-                    query = self.personality.fast_gen(f"!@>discussion:\n{discussion[-2048:]}\n!@>system: Read the discussion and craft a web search query suited to recover needed information to reply to last {self.config.user_name} message.\nDo not answer the prompt. Do not add explanations.\n!@>websearch query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
+                    query = self.personality.fast_gen(f"!@>discussion:\n{discussion[-2048:]}\n!@>system: Read the discussion and craft a web search query suited to recover needed information to reply to last {self.config.user_name} message.\nDo not answer the prompt. Do not add explanations.\n!@>current date: {datetime.now()}!@>websearch query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
                     self.personality.step_end("Crafting internet search query")
                     self.personality.step(f"web search query: {query}")
 
@@ -628,16 +628,25 @@ class LollmsApplication(LoLLMsCom):
                 except:
                     self.warning("Couldn't add documentation to the context. Please verify the vector database")
             # Check if there is discussion knowledge to add to the prompt
-            if self.config.activate_skills_lib and self.long_term_memory is not None:
-                if knowledge=="":
-                    knowledge="!@>knowledge:\n"
-
+            if self.config.activate_skills_lib:
                 try:
-                    docs, sorted_similarities, document_ids = self.long_term_memory.recover_text(current_message.content, top_k=self.config.data_vectorization_nb_chunks)
-                    for i,(doc, infos) in enumerate(zip(docs, sorted_similarities)):
-                        knowledge += f"!@>knowledge {i}:\n!@>title:\n{infos[0]}\ncontent:\n{doc}"
-                except:
+                    self.personality.step_start("Building skills library")
+                    if discussion is None:
+                        discussion = self.recover_discussion(client_id)
+                    query = self.personality.fast_gen(f"!@>discussion:\n{discussion[-2048:]}\n!@>system: Read the discussion and craft a short skills database search query suited to recover needed information to reply to last {self.config.user_name} message.\nDo not answer the prompt. Do not add explanations.\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
+                    # skills = self.skills_library.query_entry(query)
+                    skills = self.skills_library.query_entry_fts(query)
+                    
+                    if len(query)>0:
+                        if knowledge=="":
+                            knowledge=f"!@>knowledge:\n!@>instructions: Use the knowledge to answer {self.config.user_name}'s message. If you don't have enough information or you don't know how to answer, just say you do not know.\n"
+                        for i,(category, title, content) in enumerate(skills):
+                            knowledge += f"!@>knowledge {i}:\n!@>category:\n{category}\n!@>title:\n{title}\ncontent:\n{content}"
+                    self.personality.step_end("Building skills library")
+                except Exception as ex:
+                    ASCIIColors.error(ex)
                     self.warning("Couldn't add long term memory information to the context. Please verify the vector database")        # Add information about the user
+                    self.personality.step_end("Building skills library",False)
         user_description=""
         if self.config.use_user_informations_in_discussion:
             user_description="!@>User description:\n"+self.config.user_description+"\n"
@@ -687,7 +696,7 @@ class LollmsApplication(LoLLMsCom):
         total_tokens = n_cond_tk + n_isearch_tk + n_doc_tk + n_history_tk + n_user_description_tk + n_positive_boost + n_negative_boost + n_force_language + n_fun_mode
 
         # Calculate the available space for the messages
-        available_space = self.config.ctx_size - n_tokens - total_tokens
+        available_space = min(self.config.ctx_size - n_tokens - total_tokens, self.config.max_n_predict)
 
         # if self.config.debug:
         #     self.info(f"Tokens summary:\nConditionning:{n_cond_tk}\nn_isearch_tk:{n_isearch_tk}\ndoc:{n_doc_tk}\nhistory:{n_history_tk}\nuser description:{n_user_description_tk}\nAvailable space:{available_space}",10)

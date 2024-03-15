@@ -25,6 +25,7 @@ class SkillsLibrary:
         """)
         cursor.execute("SELECT version FROM db_info")
         version = cursor.fetchone()
+        self._create_fts_table()  # Create FTS table after initializing the database
         if version is None:
             cursor.execute("INSERT INTO db_info (version) VALUES (1)")
             conn.commit()
@@ -34,6 +35,16 @@ class SkillsLibrary:
             cursor.close()
             conn.close()
             self._migrate_db(version[0])
+
+    def _create_fts_table(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS skills_library_fts USING fts5(category, title, content)
+        """)
+        conn.commit()
+        cursor.close()
+        conn.close()
 
     def _migrate_db(self, version):
         conn = sqlite3.connect(self.db_path)
@@ -94,6 +105,19 @@ class SkillsLibrary:
         cursor.close()
         conn.close()
         return res
+    
+    def query_entry_fts(self, text):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT * FROM skills_library_fts WHERE skills_library_fts MATCH ?"
+        cursor.execute(query, (text,))
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return res
+
     
     def remove_entry(self, id):
         conn = sqlite3.connect(self.db_path)
