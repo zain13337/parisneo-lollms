@@ -637,7 +637,7 @@ class LollmsApplication(LoLLMsCom):
                     # skills = self.skills_library.query_entry(query)
                     skills = self.skills_library.query_entry_fts(query)
                     
-                    if len(query)>0:
+                    if len(skills)>0:
                         if knowledge=="":
                             knowledge=f"!@>knowledge:\n!@>instructions: Use the knowledge to answer {self.config.user_name}'s message. If you don't have enough information or you don't know how to answer, just say you do not know.\n"
                         for i,(category, title, content) in enumerate(skills):
