@@ -12,6 +12,7 @@ def sanitize_path(path:str, allow_absolute_path:bool=False, error_text="Absolute
     if path is None:
         return path
     
+    
     # Regular expression to detect patterns like "...." and multiple forward slashes
     suspicious_patterns = re.compile(r'(\.\.+)|(/+/)')
     
@@ -19,11 +20,13 @@ def sanitize_path(path:str, allow_absolute_path:bool=False, error_text="Absolute
         ASCIIColors.error(error_text)
         raise HTTPException(status_code=400, detail=exception_text)
 
+    if not allow_absolute_path:
+        path = path.lstrip('/')
+
     return path
     
 def sanitize_path_from_endpoint(path: str, error_text="A suspected LFI attack detected. The path sent to the server has suspicious elements in it!", exception_text="Invalid path!"):
     # Fix the case of "/" at the beginning on the path
-    path = path.lstrip('/')
     if path is None:
         return path
     
@@ -34,6 +37,7 @@ def sanitize_path_from_endpoint(path: str, error_text="A suspected LFI attack de
         ASCIIColors.error(error_text)
         raise HTTPException(status_code=400, detail=exception_text)
     
+    path = path.lstrip('/')
     return path
 
 
