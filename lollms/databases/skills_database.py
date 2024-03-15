@@ -1,10 +1,12 @@
 import sqlite3
-
+from safe_store.text_vectorizer import TextVectorizer, VectorizationMethod, VisualizationMethod
 class SkillsLibrary:
         
     def __init__(self, db_path):
         self.db_path =db_path
         self._initialize_db()
+        self.vectorizer = TextVectorizer(VectorizationMethod.TFIDF_VECTORIZER)
+       
 
     def _initialize_db(self):
         conn = sqlite3.connect(self.db_path)
@@ -118,7 +120,74 @@ class SkillsLibrary:
         conn.close()
         return res
 
+    def query_vector_db(self, query, top_k=3, max_dist=1000):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT title FROM skills_library"
+        cursor.execute(query)
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        for entry in res:
+            self.vectorizer.add_document(entry[0])
+        self.vectorizer.index()
+        
+        skill_titles, sorted_similarities, document_ids = self.vectorizer.recover_text(query, top_k)
+        skills = []
+        for skill, sim in zip(skill_titles, sorted_similarities):
+            if sim>max_dist:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                # Use direct string concatenation for the MATCH expression.
+                # Ensure text is safely escaped to avoid SQL injection.
+                query = "SELECT content FROM skills_library WHERE title LIKE ?"
+                res = cursor.execute(query, (skill,))
+                skills.append(res[0])
+                cursor.execute(query)
+                res = cursor.fetchall()
+                cursor.close()
+                conn.close()
+        return skill_titles, skills
+
     
+    def dump(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT * FROM skills_library"
+        cursor.execute(query)
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return [[r[0], r[1], r[2], r[3]] for r in res]
+
+    def get_categories(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT category FROM skills_library"
+        cursor.execute(query)
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return [r[0] for r in res]
+    def get_titles(self, category):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT title FROM skills_library WHERE category=?"
+        cursor.execute(query,(category,))
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return [r[0] for r in res]
+
+
     def remove_entry(self, id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()        

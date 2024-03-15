@@ -28,6 +28,33 @@ lollmsElfServer:LOLLMSWebUI = LOLLMSWebUI.get_instance()
 class DiscussionInfos(BaseModel):
     client_id: str
 
+class CategoryData(BaseModel):
+    client_id: str
+    category: str
+
+class CategoryData(BaseModel):
+    client_id: str
+    category: str
+    title: str
+
+
+@router.post("/get_skills_library")
+def get_skills_library_categories(discussionInfos:DiscussionInfos):
+    return {"status":True, "entries":lollmsElfServer.skills_library.dump()}
+
+@router.post("/get_skills_library_categories")
+def get_skills_library_categories(discussionInfos:DiscussionInfos):
+    return {"status":True, "categories":lollmsElfServer.skills_library.get_categories()}
+
+@router.post("/get_skills_library_titles")
+def get_skills_library_categories(categoryData:CategoryData):
+    return {"status":True, "titles":lollmsElfServer.skills_library.get_titles(categoryData.category)}
+
+@router.post("/get_skills_library_content")
+def get_skills_library_categories(categoryData:CategoryData):
+    return {"status":True, "contents":lollmsElfServer.skills_library.get_titles(categoryData.category)}
+
+
 @router.post("/add_discussion_to_skills_library")
 def add_discussion_to_skills_library(discussionInfos:DiscussionInfos):
     lollmsElfServer.ShowBlockingMessage("Learning...")

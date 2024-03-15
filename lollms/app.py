@@ -635,7 +635,7 @@ class LollmsApplication(LoLLMsCom):
                         discussion = self.recover_discussion(client_id)
                     query = self.personality.fast_gen(f"!@>discussion:\n{discussion[-2048:]}\n!@>system: Read the discussion and craft a short skills database search query suited to recover needed information to reply to last {self.config.user_name} message.\nDo not answer the prompt. Do not add explanations.\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
                     # skills = self.skills_library.query_entry(query)
-                    skills = self.skills_library.query_entry_fts(query)
+                    skills, sorted_similarities, document_ids = self.skills_library.query_vector_db(query, top_k=3, max_dist=1000)#query_entry_fts(query)
                     
                     if len(skills)>0:
                         if knowledge=="":

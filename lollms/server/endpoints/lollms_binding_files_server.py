@@ -39,9 +39,11 @@ async def serve_user_infos(path: str):
     Returns:
         FileResponse: The file response containing the requested file.
     """ 
-    sanitize_path_from_endpoint(path)
+    path = sanitize_path_from_endpoint(path)
 
-    file_path = (lollmsElfServer.lollms_paths.personal_user_infos_path / path).resolve()
+    file_path:Path = lollmsElfServer.lollms_paths.personal_user_infos_path / path
+    if not file_path.exists():
+        raise HTTPException(status_code=400, detail="File not found")
     return FileResponse(str(file_path))
 
 # ----------------------------------- Lollms zoos -----------------------------------------
@@ -57,11 +59,11 @@ async def serve_bindings(path: str):
         FileResponse: The file response containing the requested bindings file.
     """
     
-    sanitize_path_from_endpoint(path)    
-    file_path = (lollmsElfServer.lollms_paths.bindings_zoo_path / path).resolve()
+    path = sanitize_path_from_endpoint(path)    
+    file_path = lollmsElfServer.lollms_paths.bindings_zoo_path / path
 
     if not Path(file_path).exists():
-        raise ValueError("File not found")
+        raise HTTPException(status_code=400, detail="File not found")
 
     return FileResponse(str(file_path))
 @router.get("/personalities/{path:path}")
@@ -75,15 +77,15 @@ async def serve_personalities(path: str):
     Returns:
         FileResponse: The file response containing the requested personalities file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
     
     if "custom_personalities" in path:
-        file_path = (lollmsElfServer.lollms_paths.custom_personalities_path / "/".join(str(path).split("/")[1:])).resolve()
+        file_path = lollmsElfServer.lollms_paths.custom_personalities_path / "/".join(str(path).split("/")[1:])
     else:
-        file_path = (lollmsElfServer.lollms_paths.personalities_zoo_path / path).resolve()
+        file_path = lollmsElfServer.lollms_paths.personalities_zoo_path / path
 
     if not Path(file_path).exists():
-        raise ValueError("File not found")
+        raise HTTPException(status_code=400, detail="File not found")
 
     return FileResponse(str(file_path))
 
@@ -99,16 +101,12 @@ async def serve_extensions(path: str):
     Returns:
         FileResponse: The file response containing the requested extensions file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
     
-    file_path = (lollmsElfServer.lollms_paths.extensions_zoo_path / path).resolve()
+    file_path = lollmsElfServer.lollms_paths.extensions_zoo_path / path
 
     if not Path(file_path).exists():
-        raise ValueError("File not found")
-
-
-    if not Path(file_path).exists():
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=400, detail="File not found")
 
     return FileResponse(str(file_path))
 
@@ -125,7 +123,7 @@ async def serve_audio(path: str):
     Returns:
         FileResponse: The file response containing the requested audio file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = Path(lollmsElfServer.lollms_paths.personal_outputs_path).resolve()
     file_path = root_dir/ 'audio_out' / path
@@ -147,10 +145,10 @@ async def serve_images(path: str):
     Returns:
         FileResponse: The file response containing the requested image file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = Path(os.getcwd())/ "images/"
-    file_path = (root_dir / path).resolve()
+    file_path = root_dir / path
 
     if not Path(file_path).exists():
         raise HTTPException(status_code=404, detail="File not found")
@@ -171,7 +169,7 @@ async def serve_outputs(path: str):
     Returns:
         FileResponse: The file response containing the requested output file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = lollmsElfServer.lollms_paths.personal_outputs_path
     root_dir.mkdir(exist_ok=True, parents=True)
@@ -195,7 +193,7 @@ async def serve_data(path: str):
     Returns:
         FileResponse: The file response containing the requested data file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = lollmsElfServer.lollms_paths.personal_path / "data"
     root_dir.mkdir(exist_ok=True, parents=True)
@@ -220,7 +218,7 @@ async def serve_help(path: str):
     Returns:
         FileResponse: The file response containing the requested data file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = Path(os.getcwd())
     file_path = root_dir/'help/' / path
@@ -243,7 +241,7 @@ async def serve_uploads(path: str):
     Returns:
         FileResponse: The file response containing the requested uploads file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = lollmsElfServer.lollms_paths.personal_path / "uploads"
     root_dir.mkdir(exist_ok=True, parents=True)
@@ -267,7 +265,7 @@ async def serve_discussions(path: str):
     Returns:
         FileResponse: The file response containing the requested uploads file.
     """
-    sanitize_path_from_endpoint(path)    
+    path = sanitize_path_from_endpoint(path)    
 
     root_dir = lollmsElfServer.lollms_paths.personal_discussions_path
     root_dir.mkdir(exist_ok=True, parents=True)
