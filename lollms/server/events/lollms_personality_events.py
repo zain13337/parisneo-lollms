@@ -82,16 +82,18 @@ def add_events(sio:socketio):
             path:Path = client.discussion.discussion_text_folder
 
         path.mkdir(parents=True, exist_ok=True)
-        file_path = path / filename
+        file_path:Path = path / filename
 
         try:
             if chunk_index==0:
+                lollmsElfServer.ShowBlockingMessage(f"Importing File {file_path.name}")
                 with open(file_path, 'wb') as file:
                     file.write(chunk)
             else:
                 with open(file_path, 'ab') as file:
                     file.write(chunk)
         except Exception as e:
+            lollmsElfServer.HideBlockingMessage()
             print(f"Error writing to file: {e}")
             return
 
@@ -104,6 +106,7 @@ def add_events(sio:socketio):
 
             ASCIIColors.success('File processed successfully')
             run_async(partial(sio.emit,'file_received', {'status': True, 'filename': filename}))
+            lollmsElfServer.HideBlockingMessage()
         else:
             run_async(partial(sio.emit,'request_next_chunk', {'offset': offset + len(chunk)}))
 
