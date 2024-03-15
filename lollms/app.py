@@ -529,6 +529,7 @@ class LollmsApplication(LoLLMsCom):
         internet_search_infos = []
         documentation = ""
         knowledge = ""
+        knowledge_infos = {"titles":[],"contents":[]}
 
 
         # boosting information
@@ -633,15 +634,17 @@ class LollmsApplication(LoLLMsCom):
                     self.personality.step_start("Building skills library")
                     if discussion is None:
                         discussion = self.recover_discussion(client_id)
-                    query = self.personality.fast_gen(f"!@>discussion:\n{discussion[-2048:]}\n!@>system: Read the discussion and craft a short skills database search query suited to recover needed information to reply to last {self.config.user_name} message.\nDo not answer the prompt. Do not add explanations.\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
+                    query = self.personality.fast_gen(f"!@>system: Read the discussion and reformulate {self.config.user_name}'s request.\nDo not answer the request.\nDo not add explanations.\n!@>discussion:\n{discussion[-2048:]}\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
                     # skills = self.skills_library.query_entry(query)
-                    skills, sorted_similarities, document_ids = self.skills_library.query_vector_db(query, top_k=3, max_dist=1000)#query_entry_fts(query)
-                    
+                    if self.config.debug:
+                        ASCIIColors.info(f"Query : {query}")
+                    skill_titles, skills = self.skills_library.query_vector_db(query, top_k=3, max_dist=1000)#query_entry_fts(query)
+                    knowledge_infos={"titles":skill_titles,"contents":skills}
                     if len(skills)>0:
                         if knowledge=="":
-                            knowledge=f"!@>knowledge:\n!@>instructions: Use the knowledge to answer {self.config.user_name}'s message. If you don't have enough information or you don't know how to answer, just say you do not know.\n"
-                        for i,(category, title, content) in enumerate(skills):
-                            knowledge += f"!@>knowledge {i}:\n!@>category:\n{category}\n!@>title:\n{title}\ncontent:\n{content}"
+                            knowledge=f"!@>knowledge:\n"
+                        for i,(title, content) in enumerate(zip(skill_titles,skills)):
+                            knowledge += f"!@>knowledge {i}:\n!@>title:\n{title}\ncontent:\n{content}"
                     self.personality.step_end("Building skills library")
                 except Exception as ex:
                     ASCIIColors.error(ex)
@@ -803,6 +806,7 @@ class LollmsApplication(LoLLMsCom):
             "internet_search_results":internet_search_results,
             "documentation":documentation,
             "knowledge":knowledge,
+            "knowledge_infos":knowledge_infos,
             "user_description":user_description,
             "discussion_messages":discussion_messages,
             "positive_boost":positive_boost,

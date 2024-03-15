@@ -1,11 +1,11 @@
 import sqlite3
 from safe_store.text_vectorizer import TextVectorizer, VectorizationMethod, VisualizationMethod
+import numpy as np
 class SkillsLibrary:
         
     def __init__(self, db_path):
         self.db_path =db_path
         self._initialize_db()
-        self.vectorizer = TextVectorizer(VectorizationMethod.TFIDF_VECTORIZER)
        
 
     def _initialize_db(self):
@@ -120,33 +120,33 @@ class SkillsLibrary:
         conn.close()
         return res
 
-    def query_vector_db(self, query, top_k=3, max_dist=1000):
+    def query_vector_db(self, query_, top_k=3, max_dist=1000):
+        vectorizer = TextVectorizer(VectorizationMethod.TFIDF_VECTORIZER)
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         # Use direct string concatenation for the MATCH expression.
         # Ensure text is safely escaped to avoid SQL injection.
-        query = "SELECT title FROM skills_library"
+        query = "SELECT id, title FROM skills_library"
         cursor.execute(query)
         res = cursor.fetchall()
         cursor.close()
         conn.close()
         for entry in res:
-            self.vectorizer.add_document(entry[0])
-        self.vectorizer.index()
+            vectorizer.add_document(entry[0],entry[1])
+        vectorizer.index()
         
-        skill_titles, sorted_similarities, document_ids = self.vectorizer.recover_text(query, top_k)
+        skill_titles, sorted_similarities, document_ids = vectorizer.recover_text(query_, top_k)
         skills = []
-        for skill, sim in zip(skill_titles, sorted_similarities):
-            if sim>max_dist:
+        for skill_title, sim, id in zip(skill_titles, sorted_similarities, document_ids):
+            if  np.linalg.norm(sim[1])<max_dist:
                 conn = sqlite3.connect(self.db_path)
                 cursor = conn.cursor()
                 # Use direct string concatenation for the MATCH expression.
                 # Ensure text is safely escaped to avoid SQL injection.
-                query = "SELECT content FROM skills_library WHERE title LIKE ?"
-                res = cursor.execute(query, (skill,))
-                skills.append(res[0])
-                cursor.execute(query)
+                query = "SELECT content FROM skills_library WHERE id = ?"
+                cursor.execute(query, (id,))
                 res = cursor.fetchall()
+                skills.append(res[0])
                 cursor.close()
                 conn.close()
         return skill_titles, skills
