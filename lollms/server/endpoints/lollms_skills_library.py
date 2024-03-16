@@ -28,14 +28,20 @@ lollmsElfServer:LOLLMSWebUI = LOLLMSWebUI.get_instance()
 class DiscussionInfos(BaseModel):
     client_id: str
 
-class CategoryData(BaseModel):
+class SkillInfos(BaseModel):
     client_id: str
+    skill_id: int
+
+class SkillUpdateInfos(BaseModel):
+    client_id: str
+    skill_id: int
     category: str
+    title: str
+    content: str
 
 class CategoryData(BaseModel):
     client_id: str
     category: str
-    title: str
 
 
 @router.post("/get_skills_library")
@@ -44,16 +50,23 @@ def get_skills_library_categories(discussionInfos:DiscussionInfos):
 
 @router.post("/get_skills_library_categories")
 def get_skills_library_categories(discussionInfos:DiscussionInfos):
+    # get_categories returns a list of strings, each entry is a category
     return {"status":True, "categories":lollmsElfServer.skills_library.get_categories()}
 
 @router.post("/get_skills_library_titles")
 def get_skills_library_categories(categoryData:CategoryData):
+    # Get titles returns a list of dict each entry has id and title
     return {"status":True, "titles":lollmsElfServer.skills_library.get_titles(categoryData.category)}
 
 @router.post("/get_skills_library_content")
-def get_skills_library_categories(categoryData:CategoryData):
-    return {"status":True, "contents":lollmsElfServer.skills_library.get_titles(categoryData.category)}
+def get_skills_library_content(skillInfos:SkillInfos):
+    # Get the content of the skill from the id, the output is a list of dicts each entry has id, category, title and content
+    return {"status":True, "contents":lollmsElfServer.skills_library.get_skill(skillInfos.skill_id)}
 
+@router.post("/edit_skill")
+def edit_skill(skillInfos:SkillUpdateInfos):
+    lollmsElfServer.skills_library.update_skill(skillInfos.skill_id, skillInfos.category, skillInfos.title, skillInfos.content)
+    return {"status":True}
 
 @router.post("/add_discussion_to_skills_library")
 def add_discussion_to_skills_library(discussionInfos:DiscussionInfos):

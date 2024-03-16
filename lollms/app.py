@@ -631,11 +631,14 @@ class LollmsApplication(LoLLMsCom):
             # Check if there is discussion knowledge to add to the prompt
             if self.config.activate_skills_lib:
                 try:
-                    self.personality.step_start("Building skills library")
+                    self.personality.step_start("Querying skills library")
                     if discussion is None:
                         discussion = self.recover_discussion(client_id)
+                    self.personality.step_start("Building query")
                     query = self.personality.fast_gen(f"!@>system: Read the discussion and reformulate {self.config.user_name}'s request.\nDo not answer the request.\nDo not add explanations.\n!@>discussion:\n{discussion[-2048:]}\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
+                    self.personality.step_end("Building query")
                     # skills = self.skills_library.query_entry(query)
+                    self.personality.step_start("Adding skills")
                     if self.config.debug:
                         ASCIIColors.info(f"Query : {query}")
                     skill_titles, skills = self.skills_library.query_vector_db(query, top_k=3, max_dist=1000)#query_entry_fts(query)
@@ -645,11 +648,13 @@ class LollmsApplication(LoLLMsCom):
                             knowledge=f"!@>knowledge:\n"
                         for i,(title, content) in enumerate(zip(skill_titles,skills)):
                             knowledge += f"!@>knowledge {i}:\n!@>title:\n{title}\ncontent:\n{content}"
-                    self.personality.step_end("Building skills library")
+                    self.personality.step_end("Adding skills")
+                    self.personality.step_end("Querying skills library")
                 except Exception as ex:
                     ASCIIColors.error(ex)
                     self.warning("Couldn't add long term memory information to the context. Please verify the vector database")        # Add information about the user
-                    self.personality.step_end("Building skills library",False)
+                    self.personality.step_end("Adding skills")
+                    self.personality.step_end("Querying skills library",False)
         user_description=""
         if self.config.use_user_informations_in_discussion:
             user_description="!@>User description:\n"+self.config.user_description+"\n"

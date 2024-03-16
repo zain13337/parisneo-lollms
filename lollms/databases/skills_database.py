@@ -174,18 +174,56 @@ class SkillsLibrary:
         res = cursor.fetchall()
         cursor.close()
         conn.close()
-        return [r[0] for r in res]
+        return list(set([r[0] for r in res]))
+    
+   
     def get_titles(self, category):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         # Use direct string concatenation for the MATCH expression.
         # Ensure text is safely escaped to avoid SQL injection.
-        query = "SELECT title FROM skills_library WHERE category=?"
+        query = "SELECT id, title FROM skills_library WHERE category=?"
         cursor.execute(query,(category,))
         res = cursor.fetchall()
         cursor.close()
         conn.close()
+        return [{"id":r[0], "title":r[1]} for r in res]
+
+    def get_content(self, id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT content FROM skills_library WHERE id = ?"
+        cursor.execute(query, (id,))
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
         return [r[0] for r in res]
+
+    def get_skill(self, id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT id, category, title, content FROM skills_library WHERE id = ?"
+        cursor.execute(query, (id,))
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return [{"id":r[0], "category":r[1], "title":r[2], "content":r[3]} for r in res]
+
+    def update_skill(self, id, category, title, content):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "UPDATE skills_library SET category=?, title=?, content=? WHERE id = ?"
+        cursor.execute(query, (category,title,content))
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return [{"id":r[0], "category":r[1], "title":r[2], "content":r[3]} for r in res]
 
 
     def remove_entry(self, id):
