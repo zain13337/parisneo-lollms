@@ -86,7 +86,7 @@ def add_events(sio:socketio):
 
         try:
             if chunk_index==0:
-                lollmsElfServer.ShowBlockingMessage(f"Importing File {file_path.name}")
+                lollmsElfServer.ShowBlockingMessage(f"Receiving File {file_path.name}")
                 with open(file_path, 'wb') as file:
                     file.write(chunk)
             else:
@@ -99,6 +99,8 @@ def add_events(sio:socketio):
 
         if is_last_chunk:
             lollmsElfServer.success('File received and saved successfully')
+            lollmsElfServer.ShowBlockingMessage(f"File received {file_path.name}.\nProcessing ...")
+            
             if lollmsElfServer.personality.processor:
                 result = lollmsElfServer.personality.processor.add_file(file_path, client, partial(lollmsElfServer.process_chunk, client_id=client_id))
             else:
