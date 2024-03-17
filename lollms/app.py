@@ -142,7 +142,7 @@ class LollmsApplication(LoLLMsCom):
         title = self._generate_text(title_prompt)
 
         # Determine category
-        category_prompt = f"!@>system: Analyze the following title and content, and determine the most appropriate generic category that encompasses the main subject or theme. The category should be broad enough to include multiple related skill entries. Provide only the category name without any additional explanations or context:\n\n!@>Title: {title}\n!@>Content: {content}\n\n!@>Category:"
+        category_prompt = f"!@>system:Analyze the following title and content, and determine the most appropriate generic category that encompasses the main subject or theme. The category should be broad enough to include multiple related skill entries. Provide only the category name without any additional explanations or context:\n\nTitle:\n{title}\nContent:\n{content}\n\n!@>Category:\n"
         category = self._generate_text(category_prompt)
 
         # Add entry to skills library
