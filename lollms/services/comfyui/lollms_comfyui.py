@@ -87,6 +87,7 @@ def install_comfyui(lollms_app:LollmsApplication):
     
     lollms_app.comfyui = LollmsComfyUI(lollms_app)
     ASCIIColors.green("Comfyui installed successfully")
+    lollms_app.HideBlockingMessage()
 
 
 def get_comfyui(lollms_paths:LollmsPaths):
