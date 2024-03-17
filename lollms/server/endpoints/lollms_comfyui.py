@@ -27,8 +27,8 @@ lollmsElfServer:LOLLMSWebUI = LOLLMSWebUI.get_instance()
 
 # ----------------------- voice ------------------------------
 
-@router.get("/install_sd")
-def install_sd():
+@router.get("/install_comfyui")
+def install_comfyui():
     try:
         if lollmsElfServer.config.headless_server_mode:
             return {"status":False,"error":"Service installation is blocked when in headless mode for obvious security reasons!"}
@@ -36,19 +36,19 @@ def install_sd():
         if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
             return {"status":False,"error":"Service installation is blocked when the server is exposed outside for very obvious reasons!"}
 
-        lollmsElfServer.ShowBlockingMessage("Installing SD api server\nPlease stand by")
-        from lollms.services.sd.lollms_sd import install_sd
-        install_sd(lollmsElfServer)
+        lollmsElfServer.ShowBlockingMessage("Installing  comfyui server\nPlease stand by")
+        from lollms.services.comfyui.lollms_comfyui import install_sd
+        install_comfyui(lollmsElfServer)
         ASCIIColors.success("Done")
         lollmsElfServer.HideBlockingMessage()
         return {"status":True}
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
-        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_sd manually then try again")
+        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_comfyui manually then try again")
         return {"status":False, 'error':str(ex)}
 
-@router.get("/start_sd")
-def start_sd():
+@router.get("/start_comfyui")
+def start_comfyui():
     try:
         if lollmsElfServer.config.headless_server_mode:
             return {"status":False,"error":"Service installation is blocked when in headless mode for obvious security reasons!"}
@@ -56,19 +56,19 @@ def start_sd():
         if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
             return {"status":False,"error":"Service installation is blocked when the server is exposed outside for very obvious reasons!"}
 
-        lollmsElfServer.ShowBlockingMessage("Starting SD api server\nPlease stand by")
-        from lollms.services.sd.lollms_sd import get_sd
-        lollmsElfServer.sd = get_sd(lollmsElfServer.lollms_paths)(lollmsElfServer, lollmsElfServer.personality.name if lollmsElfServer.personality is not None else "Artbot")
+        lollmsElfServer.ShowBlockingMessage("Starting Comfyui\nPlease stand by")
+        from lollms.services.comfyui.lollms_comfyui import get_comfyui
+        lollmsElfServer.comfyui = get_comfyui(lollmsElfServer.lollms_paths)(lollmsElfServer, lollmsElfServer.personality.name if lollmsElfServer.personality is not None else "Artbot")
         ASCIIColors.success("Done")
         lollmsElfServer.HideBlockingMessage()
         return {"status":True}
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
-        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_sd manually then try again")
+        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_comfyui manually then try again")
         return {"status":False, 'error':str(ex)}
 
 @router.get("/show_comfyui")
 def show_comfyui():
     import webbrowser
-    webbrowser.open(lollmsElfServer.config.sd_base_url)
+    webbrowser.open(lollmsElfServer.config.comfyui_base_url)
     return {"status":True}
