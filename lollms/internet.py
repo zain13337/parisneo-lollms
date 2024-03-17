@@ -280,7 +280,7 @@ def internet_search(query, internet_nb_search_pages, chromedriver_path=None, qui
 
     return search_results
 
-def internet_search_with_vectorization(query, chromedriver_path, internet_nb_search_pages=5, internet_vectorization_chunk_size=512, internet_vectorization_overlap_size=20, internet_vectorization_nb_chunks=4, model = None, quick_search:bool=False, vectorize=True):
+def internet_search_with_vectorization(query, chromedriver_path=None, internet_nb_search_pages=5, internet_vectorization_chunk_size=512, internet_vectorization_overlap_size=20, internet_vectorization_nb_chunks=4, model = None, quick_search:bool=False, vectorize=True):
     """
     """
 
