@@ -131,24 +131,27 @@ class SkillsLibrary:
         res = cursor.fetchall()
         cursor.close()
         conn.close()
-        for entry in res:
-            vectorizer.add_document(entry[0],entry[1])
-        vectorizer.index()
-        
-        skill_titles, sorted_similarities, document_ids = vectorizer.recover_text(query_, top_k)
         skills = []
-        for skill_title, sim, id in zip(skill_titles, sorted_similarities, document_ids):
-            if  np.linalg.norm(sim[1])<max_dist:
-                conn = sqlite3.connect(self.db_path)
-                cursor = conn.cursor()
-                # Use direct string concatenation for the MATCH expression.
-                # Ensure text is safely escaped to avoid SQL injection.
-                query = "SELECT content FROM skills_library WHERE id = ?"
-                cursor.execute(query, (id,))
-                res = cursor.fetchall()
-                skills.append(res[0])
-                cursor.close()
-                conn.close()
+        if len(res)>0:
+            for entry in res:
+                vectorizer.add_document(entry[0],entry[1])
+            vectorizer.index()
+            
+            skill_titles, sorted_similarities, document_ids = vectorizer.recover_text(query_, top_k)
+            for skill_title, sim, id in zip(skill_titles, sorted_similarities, document_ids):
+                if  np.linalg.norm(sim[1])<max_dist:
+                    conn = sqlite3.connect(self.db_path)
+                    cursor = conn.cursor()
+                    # Use direct string concatenation for the MATCH expression.
+                    # Ensure text is safely escaped to avoid SQL injection.
+                    query = "SELECT content FROM skills_library WHERE id = ?"
+                    cursor.execute(query, (id,))
+                    res = cursor.fetchall()
+                    skills.append(res[0])
+                    cursor.close()
+                    conn.close()
+        else:
+            skill_titles = []
         return skill_titles, skills
 
     
