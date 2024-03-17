@@ -137,11 +137,12 @@ class LollmsApplication(LoLLMsCom):
         content = self._extract_content(messages)
 
         # Generate title
-        title_prompt =  f"Generate a concise title for the following content without any additional explanations or context:\n\n{content}\n\nTitle:"
+        title_prompt =  f"!@>system:Generate a concise and descriptive title for the following content. The title should summarize the main topic or subject of the content. Do not mention the format of the content (e.g., bullet points, discussion, etc.) in the title. Provide only the title without any additional explanations or context:\n\n{content}\n\n!@>Title:"
+
         title = self._generate_text(title_prompt)
 
         # Determine category
-        category_prompt = f"Determine the most appropriate category for the following title and content, and provide only the category name:\n\nTitle: {title}\nContent: {content}\n\nCategory:"
+        category_prompt = f"!@>system: Analyze the following title and content, and determine the most appropriate generic category that encompasses the main subject or theme. The category should be broad enough to include multiple related skill entries. Provide only the category name without any additional explanations or context:\n\n!@>Title: {title}\n!@>Content: {content}\n\n!@>Category:"
         category = self._generate_text(category_prompt)
 
         # Add entry to skills library
@@ -178,9 +179,10 @@ class LollmsApplication(LoLLMsCom):
         
         summarized_chunks = []
         for chunk in chunks:
-            prompt = f"Summarize the following discussion chunk, keeping only important information that can be used as skills. Use bullet points:\n\n{chunk}"
+            prompt = f"!@>system:\nAnalyze the following discussion chunk, focusing on the rank of each message to determine the relevance and quality of the information. Create a concise bullet-point summary of the key skills and important information contained in the high-ranking messages. Ignore low-ranking messages and exclude any irrelevant or garbage content. Return only the bullet-point summary without any additional commentary or explanations:\n\n{chunk}\n!@>summary:\n"
             max_tokens = self.config.ctx_size - self.model.get_nb_tokens(prompt)
-            
+            if self.config.debug:
+                ASCIIColors.yellow(prompt)
             summarized_chunk = self.model.generate(prompt, max_tokens)
             summarized_chunks.append(summarized_chunk.strip())
         
@@ -635,7 +637,7 @@ class LollmsApplication(LoLLMsCom):
                     if discussion is None:
                         discussion = self.recover_discussion(client_id)
                     self.personality.step_start("Building query")
-                    query = self.personality.fast_gen(f"!@>system: Read the discussion and reformulate {self.config.user_name}'s request.\nDo not answer the request.\nDo not add explanations.\n!@>discussion:\n{discussion[-2048:]}\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
+                    query = self.personality.fast_gen(f"!@>Your task is to carefully read the provided discussion and reformulate {self.config.user_name}'s request concisely. Return only the reformulated request without any additional explanations, commentary, or output.\n!@>discussion:\n{discussion[-2048:]}\n!@>search query: ", max_generation_size=256, show_progress=True, callback=self.personality.sink)
                     self.personality.step_end("Building query")
                     # skills = self.skills_library.query_entry(query)
                     self.personality.step_start("Adding skills")
@@ -647,7 +649,7 @@ class LollmsApplication(LoLLMsCom):
                         if knowledge=="":
                             knowledge=f"!@>knowledge:\n"
                         for i,(title, content) in enumerate(zip(skill_titles,skills)):
-                            knowledge += f"!@>knowledge {i}:\n!@>title:\n{title}\ncontent:\n{content}"
+                            knowledge += f"!@>knowledge {i}:\ntitle:\n{title}\ncontent:\n{content}"
                     self.personality.step_end("Adding skills")
                     self.personality.step_end("Querying skills library")
                 except Exception as ex:
