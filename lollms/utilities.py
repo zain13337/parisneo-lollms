@@ -82,9 +82,9 @@ def run_script_in_env(env_name, script_path, cwd=None):
     
     # Activate the Conda environment
     if platform.system()=="Windows":
-        python_path = Path(sys.executable).parent.parent/"miniconda3"/"condabin"/"python"
+        python_path = Path(sys.executable).parent.parent/"miniconda3"/"condabin"/"conda"
     else:
-        python_path = Path(sys.executable).parent.parent/"miniconda3"/"bin"/"python"
+        python_path = Path(sys.executable).parent.parent/"miniconda3"/"bin"/"conda"
     # Activate the Conda environment
     subprocess.Popen(f'{python_path} activate {env_name} && {script_path}', shell=True, cwd=cwd)
     #run_command(Commands.RUN, "-n", env_name, str(script_path), cwd=cwd)
