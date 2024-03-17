@@ -2184,7 +2184,7 @@ class APScript(StateMachine):
                                     ]),
                                     max_generation_size=max_generation_size))
         return translated
-    def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start="", max_generation_size=3000):
+    def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start="", max_generation_size=3000, callback=None):
         summeries = []
         for i, chunk in enumerate(chunks):
             self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
@@ -2196,7 +2196,7 @@ class APScript(StateMachine):
                             f"!@>summary:",
                             f"```markdown\n{answer_start}"
                             ]),
-                            max_generation_size=max_generation_size).replace("```markdown\n```markdown","```markdown")
+                            max_generation_size=max_generation_size, callback=callback).replace("```markdown\n```markdown","```markdown")
             summary = self.extract_code_blocks(summary)
             if len(summary)>0:
                 summeries.append(summary[0]["content"])
