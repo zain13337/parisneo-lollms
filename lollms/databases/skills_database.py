@@ -177,7 +177,19 @@ class SkillsLibrary:
         return list(set([r[0] for r in res]))
     
    
-    def get_titles(self, category):
+    def get_titles(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        # Use direct string concatenation for the MATCH expression.
+        # Ensure text is safely escaped to avoid SQL injection.
+        query = "SELECT id, title FROM skills_library"
+        cursor.execute(query)
+        res = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return [{"id":r[0], "title":r[1]} for r in res]
+
+    def get_titles_by_category(self, category):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         # Use direct string concatenation for the MATCH expression.

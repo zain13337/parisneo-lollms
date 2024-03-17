@@ -247,7 +247,6 @@ class LLMBinding:
 
     def install_model(self, model_type:str, model_path:str, variant_name:str, client_id:int=None):
         print("Install model triggered")
-        sanitize_path(model_path)
         model_path = model_path.replace("\\","/")
         parts = model_path.split("/")
         if parts[2]=="huggingface.co":

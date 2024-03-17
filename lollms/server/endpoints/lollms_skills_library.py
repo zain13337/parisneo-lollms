@@ -25,7 +25,7 @@ from pathlib import Path
 router = APIRouter()
 lollmsElfServer:LOLLMSWebUI = LOLLMSWebUI.get_instance()
 
-class DiscussionInfos(BaseModel):
+class clientInfos(BaseModel):
     client_id: str
 
 class SkillInfos(BaseModel):
@@ -45,18 +45,23 @@ class CategoryData(BaseModel):
 
 
 @router.post("/get_skills_library")
-def get_skills_library_categories(discussionInfos:DiscussionInfos):
+def get_skills_library_categories(discussionInfos:clientInfos):
     return {"status":True, "entries":lollmsElfServer.skills_library.dump()}
 
 @router.post("/get_skills_library_categories")
-def get_skills_library_categories(discussionInfos:DiscussionInfos):
+def get_skills_library_categories(discussionInfos:clientInfos):
     # get_categories returns a list of strings, each entry is a category
     return {"status":True, "categories":lollmsElfServer.skills_library.get_categories()}
 
-@router.post("/get_skills_library_titles")
-def get_skills_library_categories(categoryData:CategoryData):
+@router.post("/get_skills_library_titles_by_category")
+def get_skills_library_titles(categoryData:CategoryData):
     # Get titles returns a list of dict each entry has id and title
-    return {"status":True, "titles":lollmsElfServer.skills_library.get_titles(categoryData.category)}
+    return {"status":True, "titles":lollmsElfServer.skills_library.get_titles_by_category(categoryData.category)}
+
+@router.post("/get_skills_library_titles")
+def get_skills_library_titles(clientInfos:clientInfos):
+    # Get titles returns a list of dict each entry has id and title
+    return {"status":True, "titles":lollmsElfServer.skills_library.get_titles()}
 
 @router.post("/get_skills_library_content")
 def get_skills_library_content(skillInfos:SkillInfos):
