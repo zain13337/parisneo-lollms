@@ -74,7 +74,7 @@ def edit_skill(skillInfos:SkillUpdateInfos):
     return {"status":True}
 
 @router.post("/add_discussion_to_skills_library")
-def add_discussion_to_skills_library(discussionInfos:DiscussionInfos):
+def add_discussion_to_skills_library(discussionInfos:clientInfos):
     lollmsElfServer.ShowBlockingMessage("Learning...")
     try:
         client = lollmsElfServer.session.get_client(discussionInfos.client_id)
