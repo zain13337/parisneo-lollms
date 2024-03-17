@@ -28,7 +28,7 @@ from typing import List, Dict, Any
 
 from ascii_colors import ASCIIColors, trace_exception
 from lollms.paths import LollmsPaths
-from lollms.utilities import git_pull, show_yes_no_dialog, run_script_in_env, create_conda_env
+from lollms.utilities import git_pull, show_yes_no_dialog, run_script_in_env, create_conda_env, run_python_script_in_env
 import subprocess
 import shutil
 from tqdm import tqdm
@@ -76,7 +76,14 @@ def install_comfyui(lollms_app:LollmsApplication):
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI-Manager.git", str(comfyui_folder/"custom_nodes")])
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
         download_file("https://civitai.com/api/download/models/351306", comfyui_folder/"models/checkpoints","dreamshaperXL_v21TurboDPMSDE.safetensors")
-        create_conda_env("comfyui","3.10")
+    create_conda_env("comfyui","3.10")
+    if lollms_app.config.hardware_mode in ["nvidia", "nvidia-tensorcores"]:
+        run_script_in_env("comfyui", "pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121")
+    if lollms_app.config.hardware_mode in ["amd", "amd-noavx"]:
+        run_script_in_env("comfyui", "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7")
+    elif lollms_app.config.hardware_mode in ["cpu", "cpu-noavx"]:
+        run_script_in_env("comfyui", "pip install --pre torch torchvision torchaudio")
+    run_script_in_env("comfyui", f"pip install -r {comfyui_folder}/requirements.txt")
     
     lollms_app.comfyui = LollmsComfyUI(lollms_app)
     ASCIIColors.green("Comfyui installed successfully")
@@ -151,13 +158,13 @@ class LollmsComfyUI:
             ASCIIColors.info("Loading lollms_comfyui")
             if platform.system() == "Windows":
                 ASCIIColors.info("Running on windows")
-                script_path = self.comfyui_folder / "lollms_comfyui.bat"
+                script_path = self.comfyui_folder / "main.py"
 
                 if share:
-                    run_script_in_env("comfyui", str(script_path) +" --share", cwd=self.comfyui_folder)
+                    run_python_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder)
                     # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.comfyui_folder)
                 else:
-                    run_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder)
+                    run_python_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder)
                     # subprocess.Popen(script_path, cwd=self.comfyui_folder)
             else:
                 ASCIIColors.info("Running on linux/MacOs")
@@ -188,3 +195,27 @@ class LollmsComfyUI:
             self.set_auth(username, password)
         else:
             self.check_controlnet()
+
+    def wait_for_service(self, max_retries = 50, show_warning=True):
+        url = f"{self.comfyui_base_url}"
+        # Adjust this value as needed
+        retries = 0
+
+        while retries < max_retries or max_retries<0:
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    print("Service is available.")
+                    if self.app is not None:
+                        self.app.success("Comfyui Service is now available.")
+                    return True
+            except requests.exceptions.RequestException:
+                pass
+
+            retries += 1
+            time.sleep(1)
+        if show_warning:
+            print("Service did not become available within the given time.")
+            if self.app is not None:
+                self.app.error("Comfyui Service did not become available within the given time.")
+        return False

@@ -67,8 +67,8 @@ def start_sd():
         lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_sd manually then try again")
         return {"status":False, 'error':str(ex)}
 
-@router.get("/show_comfyui")
-def show_comfyui():
+@router.get("/show_sd")
+def show_sd():
     import webbrowser
     webbrowser.open(lollmsElfServer.config.sd_base_url)
     return {"status":True}
