@@ -2820,14 +2820,16 @@ The AI should respond in this format using data from actions_list:
         prompt = self.build_prompt(elements)
             
         gen = self.generate(prompt, max_answer_length, temperature=0.1, top_k=50, top_p=0.9, repeat_penalty=1.0, repeat_last_n=50, callback=self.sink).strip().replace("</s>","").replace("<s>","")
-        selection = gen.strip().split()[0].replace(",","").replace(".","")
-        self.print_prompt("Multi choice selection",prompt+gen)
-        try:
-            return int(selection)
-        except:
-            ASCIIColors.cyan("Model failed to answer the question")
+        if len(gen)>0:
+            selection = gen.strip().split()[0].replace(",","").replace(".","")
+            self.print_prompt("Multi choice selection",prompt+gen)
+            try:
+                return int(selection)
+            except:
+                ASCIIColors.cyan("Model failed to answer the question")
+                return -1
+        else:
             return -1
-
     def multichoice_ranking(self, question: str, possible_answers:list, context:str = "", max_answer_length: int = 50, conditionning="") -> int:
         """
         Ranks answers for a question from best to worst. returns a list of integers
