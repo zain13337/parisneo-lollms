@@ -1026,13 +1026,13 @@ class AIPersonality:
                                     save_db=self.config.data_vectorization_save_db,
                                     data_visualization_method=VisualizationMethod.PCA,
                                     database_dict=None)
-                        data = GenericDataLoader.read_file(path)
-                        self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size, add_first_line_to_all_chunks=True if path.suffix==".csv" else False)
-                        self.vectorizer.index()
-                        if callback is not None:
-                            callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
-                        self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
-                        return True
+                    data = GenericDataLoader.read_file(path)
+                    self.vectorizer.add_document(path, data, self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size, add_first_line_to_all_chunks=True if path.suffix==".csv" else False)
+                    self.vectorizer.index()
+                    if callback is not None:
+                        callback("File added successfully",MSG_TYPE.MSG_TYPE_INFO)
+                    self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
+                    return True
             except Exception as e:
                 trace_exception(e)
                 self.HideBlockingMessage("Adding file to vector store.\nPlease stand by")
