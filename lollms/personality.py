@@ -389,7 +389,15 @@ class AIPersonality:
         Do internet search and return the result
         """
         from lollms.internet import internet_search_with_vectorization
-        return internet_search_with_vectorization(query, "", self.config, self.model, quick_search=quick_search)
+        return internet_search_with_vectorization(
+                                                    query,
+                                                    internet_nb_search_pages=self.config.internet_nb_search_pages, 
+                                                    internet_vectorization_chunk_size=self.config.internet_vectorization_chunk_size,
+                                                    internet_vectorization_overlap_size=self.config.internet_vectorization_overlap_size, 
+                                                    internet_vectorization_nb_chunks=self.config.internet_vectorization_nb_chunks,
+                                                    model = self.model, 
+                                                    quick_search=quick_search
+                                                    )
 
     def sink(self, s=None,i=None,d=None):
         pass

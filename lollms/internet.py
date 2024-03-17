@@ -90,17 +90,20 @@ def press_buttons(driver, buttons_to_press=['accept']):
     soup = BeautifulSoup(driver.page_source, 'html.parser')
 
     # Find the button that contains the text "accept" (case-insensitive)
-    for button_to_press in buttons_to_press:
-        button = soup.find('button', text=lambda t: button_to_press in t.lower())
+    for button_to_press in buttons_to_press.split(","):
+        try:
+            button_to_press = button_to_press.strip()
+            button = soup.find('button', text=lambda t: button_to_press in t.lower())
 
-        if button:
-            # Click the button using Selenium
-            button_element = driver.find_element(By.XPATH, "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accept')]")
-            button_element.click()
-            print("Button clicked!")
-        else:
-            print("Button not found.")
-
+            if button:
+                # Click the button using Selenium
+                button_element = driver.find_element(By.XPATH, "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accept')]")
+                button_element.click()
+                print(f"Button {button_to_press} clicked!")
+            else:
+                print(f"Button {button_to_press} not found in page.")
+        except:
+            ASCIIColors.warning(f"Couldn't press button {button_to_press} in this page.")
 
 def scrape_and_save(url, file_path=None, lollms_com=None, chromedriver_path=None, wait_step_delay=1, buttons_to_press=['accept']):
     if not PackageManager.check_package_installed("selenium"):
@@ -147,7 +150,7 @@ def scrape_and_save(url, file_path=None, lollms_com=None, chromedriver_path=None
 def get_relevant_text_block(
                                 url,
                                 driver,
-                                config,
+                                internet_vectorization_chunk_size, internet_vectorization_overlap_size,
                                 vectorizer,
                                 title=None,
                                 brief=None,
@@ -175,7 +178,7 @@ def get_relevant_text_block(
         }
         document_id["title"] = title
         document_id["brief"] = brief
-        vectorizer.add_document(document_id,all_text, config.internet_vectorization_chunk_size, config.internet_vectorization_overlap_size)
+        vectorizer.add_document(document_id,all_text, internet_vectorization_chunk_size, internet_vectorization_overlap_size)
     except:
         ASCIIColors.warning(f"Couldn't scrape: {url}")
 
@@ -243,7 +246,7 @@ def extract_results(url, max_num, driver=None, wait_step_delay=0.5):
         pass
     return results_list
     
-def internet_search(query, config, chromedriver_path=None, quick_search:bool=False, buttons_to_press=['acccept']):
+def internet_search(query, internet_nb_search_pages, chromedriver_path=None, quick_search:bool=False, buttons_to_press=['acccept']):
     """
     """
 
@@ -259,7 +262,7 @@ def internet_search(query, config, chromedriver_path=None, quick_search:bool=Fal
 
     results = extract_results(
                                 f"https://duckduckgo.com/?q={format_url_parameter(query)}&t=h_&ia=web",
-                                config.internet_nb_search_pages,
+                                internet_nb_search_pages,
                                 driver
                             )
     
@@ -272,12 +275,12 @@ def internet_search(query, config, chromedriver_path=None, quick_search:bool=Fal
         else:
             search_results.append({'url':href, 'title':title, 'brief': brief, 'content':scrape_and_save(href, chromedriver_path=chromedriver_path, buttons_to_press=buttons_to_press)})
         nb_non_empty += 1
-        if nb_non_empty>=config.internet_nb_search_pages:
+        if nb_non_empty>=internet_nb_search_pages:
             break
 
     return search_results
 
-def internet_search_with_vectorization(query, chromedriver_path, config, model = None, quick_search:bool=False, vectorize=True):
+def internet_search_with_vectorization(query, chromedriver_path, internet_nb_search_pages=5, internet_vectorization_chunk_size=512, internet_vectorization_overlap_size=20, internet_vectorization_nb_chunks=4, model = None, quick_search:bool=False, vectorize=True):
     """
     """
 
@@ -294,7 +297,7 @@ def internet_search_with_vectorization(query, chromedriver_path, config, model =
 
     results = extract_results(
                                 f"https://duckduckgo.com/?q={format_url_parameter(query)}&t=h_&ia=web",
-                                config.internet_nb_search_pages,
+                                internet_nb_search_pages,
                                 driver
                             )
     
@@ -305,13 +308,13 @@ def internet_search_with_vectorization(query, chromedriver_path, config, model =
         if quick_search:
             vectorizer.add_document({'url':href, 'title':title, 'brief': brief}, brief)
         else:
-            get_relevant_text_block(href, driver, config, vectorizer, title, brief)
+            get_relevant_text_block(href, driver, internet_vectorization_chunk_size, internet_vectorization_overlap_size, vectorizer, title, brief)
         nb_non_empty += 1
-        if nb_non_empty>=config.internet_nb_search_pages:
+        if nb_non_empty>=internet_nb_search_pages:
             break
     vectorizer.index()
     # Close the browser
     driver.quit()
 
-    docs, sorted_similarities, document_ids = vectorizer.recover_text(query, config.internet_vectorization_nb_chunks)
+    docs, sorted_similarities, document_ids = vectorizer.recover_text(query, internet_vectorization_nb_chunks)
     return docs, sorted_similarities, document_ids
