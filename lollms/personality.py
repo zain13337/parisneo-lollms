@@ -384,12 +384,12 @@ class AIPersonality:
         f' </details>\n'
         ])
     
-    def internet_search(self, query, quick_search:bool=False):
+    def internet_search_with_vectorization(self, query, quick_search:bool=False):
         """
         Do internet search and return the result
         """
-        from lollms.internet import internet_search
-        return internet_search(query, "", self.config, self.model, quick_search=quick_search)
+        from lollms.internet import internet_search_with_vectorization
+        return internet_search_with_vectorization(query, "", self.config, self.model, quick_search=quick_search)
 
     def sink(self, s=None,i=None,d=None):
         pass
@@ -2258,11 +2258,11 @@ class APScript(StateMachine):
         f' </details>\n'
         ])
     
-    def internet_search(self, query, quick_search:bool=False ):
+    def internet_search_with_vectorization(self, query, quick_search:bool=False ):
         """
         Do internet search and return the result
         """
-        return self.personality.internet_search(query, quick_search=quick_search)
+        return self.personality.internet_search_with_vectorization(query, quick_search=quick_search)
 
 
     def step_start(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):

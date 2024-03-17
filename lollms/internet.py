@@ -82,7 +82,27 @@ def prepare_chrome_driver(chromedriver_path = None):
         driver = webdriver.Chrome(options=chrome_options)    
     return driver
 
-def scrape_and_save(url, file_path=None, lollms_com=None, chromedriver_path=None, wait_step_delay=1):
+def press_buttons(driver, buttons_to_press=['accept']):
+    from selenium.webdriver.common.by import By
+    from bs4 import BeautifulSoup
+
+    # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+    # Find the button that contains the text "accept" (case-insensitive)
+    for button_to_press in buttons_to_press:
+        button = soup.find('button', text=lambda t: button_to_press in t.lower())
+
+        if button:
+            # Click the button using Selenium
+            button_element = driver.find_element(By.XPATH, "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accept')]")
+            button_element.click()
+            print("Button clicked!")
+        else:
+            print("Button not found.")
+
+
+def scrape_and_save(url, file_path=None, lollms_com=None, chromedriver_path=None, wait_step_delay=1, buttons_to_press=['accept']):
     if not PackageManager.check_package_installed("selenium"):
         PackageManager.install_package("selenium")
     if not PackageManager.check_package_installed("bs4"):
@@ -92,7 +112,7 @@ def scrape_and_save(url, file_path=None, lollms_com=None, chromedriver_path=None
         
     from selenium import webdriver
     from selenium.common.exceptions import TimeoutException
-    from selenium.webdriver.common.by import By
+    
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
 
@@ -101,32 +121,7 @@ def scrape_and_save(url, file_path=None, lollms_com=None, chromedriver_path=None
     # Navigate to the URL
     driver.get(url)
     wait_for_page(driver, wait_step_delay)
-
-    # Parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-
-    # Find the button that contains the text "accept" (case-insensitive)
-    accept_button = soup.find('button', text=lambda t: 'accept' in t.lower())
-
-    if accept_button:
-        # Click the button using Selenium
-        button_element = driver.find_element(By.XPATH, "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accept')]")
-        button_element.click()
-        print("Button clicked!")
-    else:
-        print("Button not found.")
-    # Find and click the "Continue reading" button (if available)
-    try:
-        continue_button = WebDriverWait(driver, 0).until(
-            EC.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Continue reading')]"))
-        )
-        continue_button.click()
-        wait_for_page(driver, wait_step_delay)
-        # Wait for the additional content to load
-        time.sleep(5)
-    except:
-        if lollms_com:
-            lollms_com.info("No 'Continue reading' button found. Proceeding with the current content.")
+    press_buttons(driver, buttons_to_press)
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -248,7 +243,41 @@ def extract_results(url, max_num, driver=None, wait_step_delay=0.5):
         pass
     return results_list
     
-def internet_search(query, chromedriver_path, config, model = None, quick_search:bool=False):
+def internet_search(query, config, chromedriver_path=None, quick_search:bool=False, buttons_to_press=['acccept']):
+    """
+    """
+
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from safe_store.text_vectorizer import TextVectorizer, VectorizationMethod
+
+    search_results = []
+
+    nb_non_empty = 0
+    # Configure Chrome options
+    driver = prepare_chrome_driver(chromedriver_path)
+
+    results = extract_results(
+                                f"https://duckduckgo.com/?q={format_url_parameter(query)}&t=h_&ia=web",
+                                config.internet_nb_search_pages,
+                                driver
+                            )
+    
+    for i, result in enumerate(results):
+        title = result["title"]
+        brief = result["brief"]
+        href = result["href"]
+        if quick_search:
+            search_results.append({'url':href, 'title':title, 'brief': brief, 'content':""})
+        else:
+            search_results.append({'url':href, 'title':title, 'brief': brief, 'content':scrape_and_save(href, chromedriver_path=chromedriver_path, buttons_to_press=buttons_to_press)})
+        nb_non_empty += 1
+        if nb_non_empty>=config.internet_nb_search_pages:
+            break
+
+    return search_results
+
+def internet_search_with_vectorization(query, chromedriver_path, config, model = None, quick_search:bool=False, vectorize=True):
     """
     """
 

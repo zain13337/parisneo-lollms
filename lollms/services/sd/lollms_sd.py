@@ -287,10 +287,10 @@ class LollmsSD:
                 #     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
                 if share:
-                    run_script_in_env("autosd", script_path +" --share", cwd=self.sd_folder)
+                    run_script_in_env("autosd", str(script_path) +" --share", cwd=self.sd_folder)
                     # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.sd_folder)
                 else:
-                    run_script_in_env("autosd", script_path, cwd=self.sd_folder)
+                    run_script_in_env("autosd", str(script_path), cwd=self.sd_folder)
                     # subprocess.Popen(script_path, cwd=self.sd_folder)
             else:
                 ASCIIColors.info("Running on linux/MacOs")

@@ -582,15 +582,21 @@ class LollmsApplication(LoLLMsCom):
                     self.personality.step_end("Crafting internet search query")
                     self.personality.step(f"web search query: {query}")
 
-                    self.personality.step_start("Performing Internet search")
+                    if self.config.internet_quick_search:
+                        self.personality.step_start("Performing Internet search (quick mode)")
+                    else:
+                        self.personality.step_start("Performing Internet search (advanced mode: slower but more advanced)")
 
                     internet_search_results=f"!@>important information: Use the internet search results data to answer {self.config.user_name}'s last message. It is strictly forbidden to give the user an answer without having actual proof from the documentation.\n!@>Web search results:\n"
 
-                    docs, sorted_similarities, document_ids = self.personality.internet_search(query, self.config.internet_quick_search)
+                    docs, sorted_similarities, document_ids = self.personality.internet_search_with_vectorization(query, self.config.internet_quick_search)
                     for doc, infos,document_id in zip(docs, sorted_similarities, document_ids):
                         internet_search_infos.append(document_id)
                         internet_search_results += f"search result chunk:\nchunk_infos:{document_id['url']}\nchunk_title:{document_id['title']}\ncontent:{doc}"
-                    self.personality.step_end("Performing Internet search")
+                    if self.config.internet_quick_search:
+                        self.personality.step_end("Performing Internet search (quick mode)")
+                    else:
+                        self.personality.step_end("Performing Internet search (advanced mode: slower but more advanced)")
 
             if self.personality.persona_data_vectorizer:
                 if documentation=="":
