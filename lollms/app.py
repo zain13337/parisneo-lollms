@@ -236,7 +236,7 @@ class LollmsApplication(LoLLMsCom):
         if self.config.enable_comfyui_service:
             try:
                 from lollms.services.comfyui.lollms_comfyui import LollmsComfyUI
-                self.comfyui = LollmsComfyUI(self, auto_comfyui_base_url=self.config.comfyui_base_url)
+                self.comfyui = LollmsComfyUI(self, comfyui_base_url=self.config.comfyui_base_url)
             except:
                 self.warning(f"Couldn't load SD")
 

@@ -73,17 +73,17 @@ def install_comfyui(lollms_app:LollmsApplication):
             return
 
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI.git", str(comfyui_folder)])
-    subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI-Manager.git", str(comfyui_folder/"custom_nodes")])
+    subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI-Manager.git", str(comfyui_folder/"custom_nodes/ComfyUI-Manager")])
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
         download_file("https://civitai.com/api/download/models/351306", comfyui_folder/"models/checkpoints","dreamshaperXL_v21TurboDPMSDE.safetensors")
     create_conda_env("comfyui","3.10")
     if lollms_app.config.hardware_mode in ["nvidia", "nvidia-tensorcores"]:
-        run_script_in_env("comfyui", "pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121")
+        run_python_script_in_env("comfyui", "-m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121")
     if lollms_app.config.hardware_mode in ["amd", "amd-noavx"]:
-        run_script_in_env("comfyui", "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7")
+        run_python_script_in_env("comfyui", "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7")
     elif lollms_app.config.hardware_mode in ["cpu", "cpu-noavx"]:
-        run_script_in_env("comfyui", "pip install --pre torch torchvision torchaudio")
-    run_script_in_env("comfyui", f"pip install -r {comfyui_folder}/requirements.txt")
+        run_python_script_in_env("comfyui", "-m pip install --pre torch torchvision torchaudio")
+    run_python_script_in_env("comfyui", f"-m pip install -r {comfyui_folder}/requirements.txt")
     
     lollms_app.comfyui = LollmsComfyUI(lollms_app)
     ASCIIColors.green("Comfyui installed successfully")
@@ -93,11 +93,11 @@ def get_comfyui(lollms_paths:LollmsPaths):
     root_dir = lollms_paths.personal_path
     shared_folder = root_dir/"shared"
     comfyui_folder = shared_folder / "comfyui"
-    comfyui_script_path = comfyui_folder / "lollms_comfyui.py"
+    comfyui_script_path = comfyui_folder / "main.py"
     git_pull(comfyui_folder)
     
     if comfyui_script_path.exists():
-        ASCIIColors.success("lollms_comfyui found.")
+        ASCIIColors.success("comfyui found.")
         ASCIIColors.success("Loading source file...",end="")
         # use importlib to load the module from the file path
         from lollms.services.comfyui.lollms_comfyui import LollmsComfyUI

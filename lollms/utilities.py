@@ -42,27 +42,51 @@ import subprocess
 from functools import partial
 
 def create_conda_env(env_name, python_version):
-    from conda.cli.python_api import  run_command, Commands
+    # Activate the Conda environment
+    import platform
+    if platform.system()=="Windows":
+        conda_path = Path(sys.executable).parent.parent/"miniconda3"/"condabin"/"conda"
+    else:
+        conda_path = Path(sys.executable).parent.parent/"miniconda3"/"bin"/"conda"
+
+    process = subprocess.Popen(f'{conda_path} create --name {env_name} python={python_version} -y', shell=True)
+    
+    # Wait for the process to finish
+    process.wait()
+    #from conda.cli.python_api import  run_command, Commands
     # Create a new Conda environment with the specified Python version
-    run_command(Commands.CREATE, "-n", env_name, f"python={python_version}")
+    #run_command(Commands.CREATE, "-n", env_name, f"python={python_version}")
 
 def run_python_script_in_env(env_name, script_path, cwd=None):
     from conda.cli.python_api import  run_command, Commands
+    import platform
     # Set the current working directory if provided, otherwise use the current directory
     if cwd is None:
         cwd = os.getcwd()
     
     # Activate the Conda environment
-    run_command(Commands.RUN, "-n", env_name, "python", str(script_path), cwd=cwd)
+    python_path = Path(sys.executable).parent.parent/"miniconda3"/"envs"/env_name/"python"
+    process = subprocess.Popen(f'{python_path} {script_path}', shell=True)
+    
+    # Wait for the process to finish
+    process.wait()
+    #subprocess.Popen(f'conda activate {env_name} && {script_path}', shell=True, cwd=cwd)
+    #run_command(Commands.RUN, "-n", env_name, "python " + str(script_path), cwd=cwd)
 
 def run_script_in_env(env_name, script_path, cwd=None):
     from conda.cli.python_api import  run_command, Commands
+    import platform
     # Set the current working directory if provided, otherwise use the current directory
     if cwd is None:
         cwd = os.path.dirname(script_path)
     
     # Activate the Conda environment
-    subprocess.Popen(f'conda activate {env_name} && {script_path}', shell=True, cwd=cwd)
+    if platform.system()=="Windows":
+        python_path = Path(sys.executable).parent.parent/"miniconda3"/"condabin"/"python"
+    else:
+        python_path = Path(sys.executable).parent.parent/"miniconda3"/"bin"/"python"
+    # Activate the Conda environment
+    subprocess.Popen(f'{python_path} activate {env_name} && {script_path}', shell=True, cwd=cwd)
     #run_command(Commands.RUN, "-n", env_name, str(script_path), cwd=cwd)
 
 

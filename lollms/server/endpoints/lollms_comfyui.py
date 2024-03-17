@@ -44,7 +44,7 @@ def install_comfyui():
         return {"status":True}
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
-        lollmsElfServer.InfoMessage(f"It looks like I could not install Comfyui because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_comfyui manually then try again")
+        lollmsElfServer.InfoMessage(f"It looks like I could not install Comfyui because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/comfyui manually then try again")
         return {"status":False, 'error':str(ex)}
 
 @router.get("/start_comfyui")
@@ -64,7 +64,7 @@ def start_comfyui():
         return {"status":True}
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
-        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/auto_comfyui manually then try again")
+        lollmsElfServer.InfoMessage(f"It looks like I could not install SD because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/comfyui manually then try again")
         return {"status":False, 'error':str(ex)}
 
 @router.get("/show_comfyui")
