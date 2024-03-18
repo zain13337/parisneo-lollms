@@ -197,6 +197,7 @@ class LollmsApplication(LoLLMsCom):
                 "5. Exclude any messages with negative ranks and any content that is not pertinent or constructive to the analysis.",
                 "6. Compile your findings into a succinct bullet-point list, focusing exclusively on the insights gained, without extraneous commentary.",
                 "7. Make sure the summary is clear, to the point, and serves as an effective reference for the team's future endeavors.",
+                "8. If necessary write some code snippets in code tags."
                 f"{chunk}",
                 "!@>analysis:\n"])
 
