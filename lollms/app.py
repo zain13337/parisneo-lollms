@@ -137,7 +137,15 @@ class LollmsApplication(LoLLMsCom):
         content = self._extract_content(messages)
 
         # Generate title
-        title_prompt =  f"!@>system:Generate a concise and descriptive title for the following content. The title should summarize the main topic or subject of the content. Do not mention the format of the content (e.g., bullet points, discussion, etc.) in the title. Provide only the title without any additional explanations or context:\n\n{content}\n\n!@>Title:"
+        title_prompt =  "\n".join([
+            f"!@>system:Generate a concise and descriptive title for the following content.",
+            "The title should summarize the main topic or subject of the content.",
+            "Do not mention the format of the content (e.g., bullet points, discussion, etc.) in the title.",
+            "Provide only the title without any additional explanations or context.",
+            "!@>content:",
+            f"{content}",
+            "!@>title:"
+            ])
 
         title = self._generate_text(title_prompt)
 
@@ -179,7 +187,12 @@ class LollmsApplication(LoLLMsCom):
         
         summarized_chunks = []
         for chunk in chunks:
-            prompt = f"!@>system:\nAnalyze the following discussion chunk, focusing on the rank of each message to determine the relevance and quality of the information. Create a concise bullet-point summary of the key skills and important information contained in the high-ranking messages. Ignore low-ranking messages and exclude any irrelevant or garbage content. Return only the bullet-point summary without any additional commentary or explanations:\n\n{chunk}\n!@>summary:\n"
+            prompt = "\n".join([
+                f"!@>system:",
+                "Analyze the following discussion chunk, focusing on the rank of each message to determine the relevance and quality of the information. Create a concise bullet-point summary of the key skills and important information contained in the high-ranking messages.",
+                "Ignore negatively-ranked messages and exclude any irrelevant or garbage content. Return only the bullet-point summary without any additional commentary or explanations:",
+                f"{chunk}",
+                "!@>analysis:\n"])
             max_tokens = self.config.ctx_size - self.model.get_nb_tokens(prompt)
             if self.config.debug:
                 ASCIIColors.yellow(prompt)
