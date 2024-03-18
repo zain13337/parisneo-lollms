@@ -35,6 +35,7 @@ class PersonalPathParameters(BaseModel):
 router = APIRouter()
 lollmsElfServer = LOLLMSWebUI.get_instance()
 
+"""
 @router.post("/switch_personal_path")
 def switch_personal_path(data:PersonalPathParameters):
     client = check_access(lollmsElfServer, data.client_id)
@@ -50,6 +51,8 @@ def switch_personal_path(data:PersonalPathParameters):
         except Exception as ex:
             print(ex)
             return {"status": False, 'error':f"Couldn't switch path: {ex}"}    
+"""
+
         
 @router.post("/upload_avatar")
 async def upload_avatar(avatar: UploadFile = File(...)):
