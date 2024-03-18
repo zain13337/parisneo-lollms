@@ -15,6 +15,7 @@ from lollms.server.elf_server import LOLLMSElfServer
 from lollms.binding import BindingBuilder, InstallOption
 from ascii_colors import ASCIIColors
 from lollms.utilities import load_config, trace_exception, gc
+from lollms.security import check_access
 from pathlib import Path
 from typing import List
 import json
@@ -52,9 +53,9 @@ async def update_setting(request: Request):
     """
     # Prevent all outsiders from sending something to this endpoint
     forbid_remote_access(lollmsElfServer)
-
     try:
         config_data = (await request.json())
+        check_access(lollmsElfServer, config_data["client_id"])
         if "config" in config_data.keys():
             config_data = config_data["config"]
         setting_name = config_data["setting_name"]
@@ -122,6 +123,8 @@ async def update_setting(request: Request):
             lollmsElfServer.config.save_config()
         # Tell that the setting was changed
         return {'setting_name': setting_name, "status":True}
+    except HTTPException as ex:
+        raise ex
     except Exception as ex:
         trace_exception(ex)
         lollmsElfServer.error(ex)

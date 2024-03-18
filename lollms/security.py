@@ -7,6 +7,11 @@ from typing import List
 import os
 import re
 
+def check_access(lollmsElfServer, client_id):
+    client = lollmsElfServer.session.get_client(client_id)
+    if not client:
+        raise HTTPException(status_code=400, detail=f"Not accessible without id")
+    return client
 
 def sanitize_path(path:str, allow_absolute_path:bool=False, error_text="Absolute database path detected", exception_text="Detected an attempt of path traversal. Are you kidding me?"):
     if path is None:

@@ -16,6 +16,7 @@ from lollms.main_config import BaseConfig
 from lollms.utilities import detect_antiprompt, remove_text_from_string
 from ascii_colors import ASCIIColors
 from lollms.databases.discussions_database import DiscussionsDB
+from lollms.security import check_access
 from pathlib import Path
 from safe_store.text_vectorizer import TextVectorizer, VectorizationMethod, VisualizationMethod
 import tqdm
@@ -26,6 +27,7 @@ import os
 from PIL import Image
 
 class PersonalPathParameters(BaseModel):
+    client_id:str
     path:str
     
 # ----------------------- Defining router and main class ------------------------------
@@ -33,8 +35,9 @@ class PersonalPathParameters(BaseModel):
 router = APIRouter()
 lollmsElfServer = LOLLMSWebUI.get_instance()
 
-@router.get("/switch_personal_path")
+@router.post("/switch_personal_path")
 def switch_personal_path(data:PersonalPathParameters):
+    client = check_access(lollmsElfServer, data.client_id)
     path = data.path
     global_paths_cfg = Path("./global_paths_cfg.yaml")
     if global_paths_cfg.exists():
