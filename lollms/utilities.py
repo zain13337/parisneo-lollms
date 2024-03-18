@@ -74,7 +74,7 @@ def run_pip_in_env(env_name, pip_args, cwd=None):
     #run_command(Commands.RUN, "-n", env_name, "python " + str(script_path), cwd=cwd)
 
 
-def run_python_script_in_env(env_name, script_path, cwd=None):
+def run_python_script_in_env(env_name, script_path, cwd=None, wait=True):
     from conda.cli.python_api import  run_command, Commands
     import platform
     # Set the current working directory if provided, otherwise use the current directory
@@ -86,7 +86,8 @@ def run_python_script_in_env(env_name, script_path, cwd=None):
     process = subprocess.Popen(f'{python_path} {script_path}', shell=True)
     
     # Wait for the process to finish
-    process.wait()
+    if wait:
+        process.wait()
     #subprocess.Popen(f'conda activate {env_name} && {script_path}', shell=True, cwd=cwd)
     #run_command(Commands.RUN, "-n", env_name, "python " + str(script_path), cwd=cwd)
 

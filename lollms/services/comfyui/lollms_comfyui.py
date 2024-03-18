@@ -162,10 +162,10 @@ class LollmsComfyUI:
                 script_path = self.comfyui_folder / "main.py"
 
                 if share:
-                    run_python_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder)
+                    run_python_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder, wait=False)
                     # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.comfyui_folder)
                 else:
-                    run_python_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder)
+                    run_python_script_in_env("comfyui", str(script_path), cwd=self.comfyui_folder, wait=False)
                     # subprocess.Popen(script_path, cwd=self.comfyui_folder)
             else:
                 ASCIIColors.info("Running on linux/MacOs")
