@@ -197,7 +197,10 @@ class LollmsApplication(LoLLMsCom):
             if self.config.debug:
                 ASCIIColors.yellow(prompt)
             summarized_chunk = self.model.generate(prompt, max_tokens)
-            summarized_chunks.append(summarized_chunk.strip())
+            if summarized_chunk:
+                summarized_chunks.append(summarized_chunk.strip())
+            else:
+                raise Exception("Couldn't generate text.")
         
         summarized_content = "\n".join(summarized_chunks)
         return summarized_content
