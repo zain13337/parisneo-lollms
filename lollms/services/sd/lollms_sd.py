@@ -73,7 +73,7 @@ def install_sd(lollms_app:LollmsApplication):
 
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
-    if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
+    if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nI suggest dreamshaper xl.\nYou can install models manually by putting them inside your persona folder/auto_sd/models/stable_diffusion"):
         download_file("https://civitai.com/api/download/models/351306", sd_folder/"models/Stable-diffusion","dreamshaperXL_v21TurboDPMSDE.safetensors")
     
     lollms_app.sd = LollmsSD(lollms_app)
