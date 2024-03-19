@@ -90,7 +90,7 @@ def press_buttons(driver, buttons_to_press=['accept']):
     soup = BeautifulSoup(driver.page_source, 'html.parser')
 
     # Find the button that contains the text "accept" (case-insensitive)
-    for button_to_press in buttons_to_press.split(","):
+    for button_to_press in buttons_to_press.split(",") if type(buttons_to_press)==str else buttons_to_press:
         try:
             button_to_press = button_to_press.strip()
             button = soup.find('button', text=lambda t: button_to_press in t.lower())
