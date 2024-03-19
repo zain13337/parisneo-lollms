@@ -97,7 +97,7 @@ class ModelsDB:
                     "id": row[0],
                     "category": row[1],
                     "icon": row[2],
-                    "datasets": row[3].split(','),
+                    "datasets": row[3].split(',') if row[3] is not None else None,
                     "last_commit_time": row[4],
                     "license": row[5],
                     "model_creator": row[6],
