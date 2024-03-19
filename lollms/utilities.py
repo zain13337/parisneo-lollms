@@ -47,8 +47,9 @@ def create_conda_env(env_name, python_version):
     if platform.system()=="Windows":
         conda_path = Path(sys.executable).parent.parent/"miniconda3"/"condabin"/"conda"
     else:
-        conda_path = Path(sys.executable).parent.parent/"miniconda3"/"bin"/"conda"
-
+        conda_path = Path(sys.executable).parent.parent.parent/"miniconda3"/"bin"/"conda"
+    ASCIIColors.red("Conda path:")
+    ASCIIColors.yellow(conda_path)
     process = subprocess.Popen(f'{conda_path} create --name {env_name} python={python_version} -y', shell=True)
     
     # Wait for the process to finish
@@ -102,8 +103,10 @@ def run_script_in_env(env_name, script_path, cwd=None):
     if platform.system()=="Windows":
         python_path = Path(sys.executable).parent.parent/"miniconda3"/"condabin"/"conda"
     else:
-        python_path = Path(sys.executable).parent.parent/"miniconda3"/"bin"/"conda"
+        python_path = Path(sys.executable).parent.parent.parent/"miniconda3"/"bin"/"conda"
     # Activate the Conda environment
+    ASCIIColors.red("Python path:")
+    ASCIIColors.yellow(python_path)
     subprocess.Popen(f'{python_path} activate {env_name} && {script_path}', shell=True, cwd=cwd)
     #run_command(Commands.RUN, "-n", env_name, str(script_path), cwd=cwd)
 
