@@ -64,13 +64,12 @@ def install_sd(lollms_app:LollmsApplication):
     if sd_folder.exists():
         if show_yes_no_dialog("warning!","I have detected that there is a previous installation of stable diffusion.\nShould I remove it and continue installing?"):
             shutil.rmtree(sd_folder)
-        elif show_yes_no_dialog("warning!","Continue installation?"):
-            ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
-            create_conda_env("autosd","3.10")
-            ASCIIColors.cyan("Done")
+        elif not show_yes_no_dialog("warning!","Continue installation?"):
             return
-        else:
-            return
+
+    ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
+    create_conda_env("autosd","3.10")
+    ASCIIColors.cyan("Done")
 
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
