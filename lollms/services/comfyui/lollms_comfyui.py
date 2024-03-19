@@ -187,15 +187,6 @@ class LollmsComfyUI:
         else:
             ASCIIColors.warning("We are not waiting for the SD service to be up.\nThis means that you may need to wait a bit before you can use it.")
 
-        self.default_sampler = sampler
-        self.default_steps = steps
-
-        self.session = requests.Session()
-
-        if username and password:
-            self.set_auth(username, password)
-        else:
-            self.check_controlnet()
 
     def wait_for_service(self, max_retries = 50, show_warning=True):
         url = f"{self.comfyui_base_url}"
