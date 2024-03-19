@@ -75,7 +75,6 @@ def install_sd(lollms_app:LollmsApplication):
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
         download_file("https://civitai.com/api/download/models/351306", sd_folder/"models/Stable-diffusion","dreamshaperXL_v21TurboDPMSDE.safetensors")
-        create_conda_env("autosd","3.10")
     
     lollms_app.sd = LollmsSD(lollms_app)
     ASCIIColors.green("Stable diffusion installed successfully")
