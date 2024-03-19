@@ -273,23 +273,10 @@ class LollmsSD:
             if platform.system() == "Windows":
                 ASCIIColors.info("Running on windows")
                 script_path = self.sd_folder / "lollms_sd.bat"
-                # # Get the path to the parent directory, which should be the 'bin' directory
-                # bin_dir = Path(python_path).parent.parent/"miniconda3/envs/autosd"
-                # if bin_dir.exists():
-                #     python_path = Path(sys.executable).parent.parent/"miniconda3/envs/autosd/python"
-                #     command = f"{python_path}"
-                #     ASCIIColors.cyan(command)
-                #     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-                # else:
-                #     command = f'conda activate autosd && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}'
-                #     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
                 if share:
                     run_script_in_env("autosd", str(script_path) +" --share", cwd=self.sd_folder)
-                    # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.sd_folder)
                 else:
                     run_script_in_env("autosd", str(script_path), cwd=self.sd_folder)
-                    # subprocess.Popen(script_path, cwd=self.sd_folder)
             else:
                 ASCIIColors.info("Running on linux/MacOs")
                 script_path = str(self.sd_folder / "lollms_sd.sh")
@@ -298,7 +285,6 @@ class LollmsSD:
 
                 if share:
                     run_script_in_env("autosd","bash " + script_path +" --share", cwd=self.sd_folder)
-                    # subprocess.Popen("conda activate " + str(script_path) +" --share", cwd=self.sd_folder)
                 else:
                     run_script_in_env("autosd","bash " + script_path, cwd=self.sd_folder)
                 ASCIIColors.info("Process done")
