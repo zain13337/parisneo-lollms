@@ -29,7 +29,7 @@ from typing import List, Dict, Any
 
 from ascii_colors import ASCIIColors, trace_exception
 from lollms.paths import LollmsPaths
-from lollms.utilities import git_pull, show_yes_no_dialog, run_python_script_in_env
+from lollms.utilities import git_pull, show_yes_no_dialog, run_python_script_in_env, create_conda_env, run_pip_in_env
 import subprocess
 import platform
 
@@ -52,28 +52,13 @@ def install_xtts(lollms_app:LollmsApplication):
             return
     
     lollms_app.ShowBlockingMessage("Creating xtts environment")
-
-    # Get the path to the parent directory, which should be the 'bin' directory
-    if platform.system()=="Windows":
-        bin_dir = Path(sys.executable).parent.parent/"miniconda3/condabin"
-    else:
-        bin_dir = Path(sys.executable).parent.parent/"miniconda3/bin"
-    if bin_dir.exists():
-        conda_dir = str(bin_dir/ "conda")
-        # For Windows, the activate script has a '.bat' extension
-        if os.name == 'nt':
-            conda_dir += '.bat'
-            
-        result = subprocess.run([conda_dir, "create","--name","xtts","-y","python==3.11"])
-        python_path = Path(sys.executable).parent.parent/"miniconda3/envs/xtts/python"
-        result = subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "xtts-api-server"])
-        result = subprocess.run([python_path, "-m", "pip", "install", "torch==2.1.1+cu118","torchaudio==2.1.1+cu118","--index-url https://download.pytorch.org/whl/cu118"])
-    else:
-        import conda.cli
-        conda.cli.main("create","--name","xtts","-y","python==3.11")
-        result = subprocess.run(["conda","activate","xtts", "&&", "python", "-m", "pip", "install", "--upgrade", "xtts-api-server"])
-
-
+    ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
+    create_conda_env("xtts","3.10")
+    ASCIIColors.cyan("Done")
+    ASCIIColors.cyan("Installing xtts-api-server")
+    run_pip_in_env("xtts", "install --upgrade xtts-api-server")
+    run_pip_in_env("xtts", "install --upgrade torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118")
+    ASCIIColors.cyan("Done")
     xtts_folder.mkdir(exist_ok=True,parents=True)
     ASCIIColors.green("XTTS server installed successfully")
 
