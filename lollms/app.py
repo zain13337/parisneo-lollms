@@ -189,15 +189,8 @@ class LollmsApplication(LoLLMsCom):
         for chunk in chunks:
             prompt = "\n".join([
                 "!@>system:",
-                "Conduct an in-depth analysis of the provided discussion chunk, taking into account the AI-given ranks for each message. Your objective is to distill the essence of the discussion into actionable insights for future work. Proceed with the following instructions:",
-                "1. Review the messages and their corresponding ranks to determine the most relevant and high-quality contributions.",
-                "2. Create a bullet-point summary that encapsulates the key skills, knowledge, and crucial information from messages with positive ranks.",
-                "3. Extract lessons learned and best practices from the high-ranking messages that can be applied to enhance future projects.",
-                "4. Identify any mentioned strategies or approaches that should be avoided, as indicated by their negative impact or low rank, to prevent future missteps.",
-                "5. Exclude any messages with negative ranks and any content that is not pertinent or constructive to the analysis.",
-                "6. Compile your findings into a succinct bullet-point list, focusing exclusively on the insights gained, without extraneous commentary.",
-                "7. Make sure the summary is clear, to the point, and serves as an effective reference for the team's future endeavors.",
-                "8. If necessary write some code snippets in code tags."
+                "Analyzing the discussion chunk requires careful examination of each sub-question. First, carefully examine each sub-questions to extract key information components. Then, generate two-three intermediate thoughts as bullet-points representing steps towards an answer. Evaluate clarity, relevance, logical flow, and coverage of concepts using bullet-point evaluation. Backtrack and explore alternative paths by substituting different high-scoring thoughts. Throughout the reasoning process aim to provide concise and detailed explanations of key information or specific skills or methods or code sections. Once a comprehensive bullet-point summary of important information has been constructed, synthesize these insights into a final comprehensive bullet-point summary of important information. This summary includes specific skills or methods or code sections that related to each sub-question.",
+                "!@>discussion snippet:",
                 f"{chunk}",
                 "!@>analysis:\n"])
 
