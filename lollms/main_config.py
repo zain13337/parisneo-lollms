@@ -64,7 +64,10 @@ class LOLLMSConfig(BaseConfig):
         else:
             self.lollms_paths = lollms_paths
         
-
+    def copy(self):
+        cfg = LOLLMSConfig(self.file_path, self.lollms_paths)
+        cfg.config = self.config.copy()
+        return cfg
     @staticmethod
     def autoload(lollms_paths:LollmsPaths, config_path:str=None):
         # Configuration loading part

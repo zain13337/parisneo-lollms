@@ -275,6 +275,7 @@ class BaseConfig:
         return self.config[key]
     
     def copy(self):
+        
         return BaseConfig(self.exceptional_keys, self.config.copy(), self.file_path)
 
     def __getattr__(self, key):
