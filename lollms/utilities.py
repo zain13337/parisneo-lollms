@@ -91,6 +91,7 @@ def run_python_script_in_env(env_name, script_path, cwd=None, wait=True):
         process.wait()
     #subprocess.Popen(f'conda activate {env_name} && {script_path}', shell=True, cwd=cwd)
     #run_command(Commands.RUN, "-n", env_name, "python " + str(script_path), cwd=cwd)
+    return process
 
 def run_script_in_env(env_name, script_path, cwd=None):
     from conda.cli.python_api import  run_command, Commands

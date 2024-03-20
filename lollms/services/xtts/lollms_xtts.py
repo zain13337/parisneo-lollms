@@ -29,7 +29,7 @@ from typing import List, Dict, Any
 
 from ascii_colors import ASCIIColors, trace_exception
 from lollms.paths import LollmsPaths
-from lollms.utilities import git_pull, show_yes_no_dialog
+from lollms.utilities import git_pull, show_yes_no_dialog, run_python_script_in_env
 import subprocess
 import platform
 
@@ -155,19 +155,9 @@ class LollmsXTTS:
         python_path = sys.executable
         ASCIIColors.yellow("Loading XTTS ")
 
-        # Get the path to the parent directory, which should be the 'bin' directory
-        bin_dir = Path(python_path).parent.parent/"miniconda3/envs/xtts"
-        if bin_dir.exists():
-            python_path = Path(sys.executable).parent.parent/"miniconda3/envs/xtts/python"
-            command = f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}"
-            ASCIIColors.cyan(command)
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-        else:
-            command = f"conda activate xtts && python -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}"
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
+        process = run_python_script_in_env("xtts",f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}", wait= False)
         return process
+    
     def wait_for_service(self, max_retries = 150, show_warning=True):
         url = f"{self.xtts_base_url}/languages"
         # Adjust this value as needed
