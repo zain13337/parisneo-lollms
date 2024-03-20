@@ -132,7 +132,9 @@ def install_binding(data:BindingInstallParams):
     try:
         lollmsElfServer.info("Unmounting binding and model")
         lollmsElfServer.info("Installing binding")
-        BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
+        cfg = lollmsElfServer.config.copy()
+        cfg.binding_name = data.name
+        BindingBuilder().build_binding(cfg, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
         lollmsElfServer.success("Binding installed successfully")
         return {"status": True}
     except Exception as ex:
