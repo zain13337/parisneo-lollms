@@ -273,6 +273,9 @@ class BaseConfig:
         if self.config is None:
             raise ValueError("No configuration loaded.")
         return self.config[key]
+    
+    def copy(self):
+        return BaseConfig(self.exceptional_keys, self.config.copy(), self.file_path)
 
     def __getattr__(self, key):
         """
