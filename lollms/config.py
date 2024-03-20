@@ -310,7 +310,7 @@ class BaseConfig:
         """
         if key == "exceptional_keys":
             return super().__setattr__(key, value)
-        if key in self.exceptional_keys + ["config","file_path"] or key.startswith("__"):
+        if key in self.exceptional_keys + ["config","file_path","copy"] or key.startswith("__"):
             super().__setattr__(key, value)
         else:
             if self.config is None:
