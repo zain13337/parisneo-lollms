@@ -290,7 +290,7 @@ class BaseConfig:
         """
         if key == "exceptional_keys":
             return super().__getattribute__(key)
-        if key in self.exceptional_keys + ["config","file_path"] or key.startswith("__"):
+        if key in self.exceptional_keys + ["config","file_path","copy"] or key.startswith("__"):
             return super().__getattribute__(key)
         else:
             if self.config is None:
