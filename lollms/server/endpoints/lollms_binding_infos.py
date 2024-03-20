@@ -131,20 +131,9 @@ def install_binding(data:BindingInstallParams):
     ASCIIColors.info(f"- Reinstalling binding {data.name}...")
     try:
         lollmsElfServer.info("Unmounting binding and model")
-        lollmsElfServer.info("Reinstalling binding")
-        old_bn = lollmsElfServer.config.binding_name
-        lollmsElfServer.config.binding_name = sanitize_path(data.name)
-        lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
+        lollmsElfServer.info("Installing binding")
+        BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
         lollmsElfServer.success("Binding installed successfully")
-        del lollmsElfServer.binding
-        lollmsElfServer.binding = None
-        lollmsElfServer.config.binding_name = old_bn
-        if old_bn is not None:
-            lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, lollmsCom=lollmsElfServer)
-            lollmsElfServer.model = lollmsElfServer.binding.build_model()
-            for per in lollmsElfServer.mounted_personalities:
-                if per is not None:
-                    per.model = lollmsElfServer.model
         return {"status": True}
     except Exception as ex:
         lollmsElfServer.error(f"Couldn't build binding: [{ex}]")
@@ -170,17 +159,13 @@ def reinstall_binding(data:BindingInstallParams):
         lollmsElfServer.binding = None
         gc.collect()
         ASCIIColors.info("Reinstalling binding")
-        old_bn = lollmsElfServer.config.binding_name
         lollmsElfServer.config.binding_name = sanitize_path(data.name)
         lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, InstallOption.FORCE_INSTALL, lollmsCom=lollmsElfServer)
         lollmsElfServer.success("Binding reinstalled successfully")
-        lollmsElfServer.config.binding_name = old_bn
-        lollmsElfServer.binding =  BindingBuilder().build_binding(lollmsElfServer.config, lollmsElfServer.lollms_paths, lollmsCom=lollmsElfServer)
         lollmsElfServer.model = lollmsElfServer.binding.build_model()
         for per in lollmsElfServer.mounted_personalities:
             if per is not None:
                 per.model = lollmsElfServer.model
-        
         return {"status": True}
     except Exception as ex:
         ASCIIColors.error(f"Couldn't build binding: [{ex}]")
