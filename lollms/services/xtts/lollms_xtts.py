@@ -148,6 +148,7 @@ class LollmsXTTS:
         retries = 0
 
         while retries < max_retries or max_retries<0:
+            
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
@@ -160,6 +161,7 @@ class LollmsXTTS:
 
             retries += 1
             time.sleep(3)
+            ASCIIColors.yellow("Waiting ...")
         if show_warning:
             print("Service did not become available within the given time.")
             if self.app is not None:
