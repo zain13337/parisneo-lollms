@@ -139,7 +139,6 @@ class LollmsXTTS:
         # Get the path to the current Python interpreter
         python_path = sys.executable
         ASCIIColors.yellow("Loading XTTS ")
-
         process = run_python_script_in_env("xtts",f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}", wait= False)
         return process
     
