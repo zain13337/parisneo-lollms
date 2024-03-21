@@ -74,7 +74,7 @@ def install_comfyui(lollms_app:LollmsApplication):
 
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI.git", str(comfyui_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI-Manager.git", str(comfyui_folder/"custom_nodes/ComfyUI-Manager")])
-    subprocess.run(["git", "clone", "https://github.com/jags111/efficiency-nodes-comfyui.git", str(comfyui_folder/"custom_nodes/ComfyUI-Manager")])    
+    subprocess.run(["git", "clone", "https://github.com/jags111/efficiency-nodes-comfyui.git", str(comfyui_folder/"custom_nodes/efficiency-nodes-comfyui")])    
     if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest dreamshaper xl."):
         download_file("https://civitai.com/api/download/models/351306", comfyui_folder/"models/checkpoints","dreamshaperXL_v21TurboDPMSDE.safetensors")
     create_conda_env("comfyui","3.10")
