@@ -118,6 +118,9 @@ class LollmsXTTS:
                                                          
         ASCIIColors.red(" Forked from daswer123's XTTS server")
         ASCIIColors.red(" Integration in lollms by ParisNeo using daswer123's webapi")
+        ASCIIColors.red(" Address :",end="")
+        ASCIIColors.yellow(f"{self.xtts_base_url}")
+
         self.output_folder = app.lollms_paths.personal_outputs_path/"audio_out"
         self.output_folder.mkdir(parents=True, exist_ok=True)
 
@@ -135,7 +138,7 @@ class LollmsXTTS:
         # Get the path to the current Python interpreter
         python_path = sys.executable
         ASCIIColors.yellow("Loading XTTS ")
-        process = run_python_script_in_env("xtts",f"{python_path} -m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}", wait= False)
+        process = run_python_script_in_env("xtts",f"-m xtts_api_server -o  {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}", wait= False)
         return process
     
     def wait_for_service(self, max_retries = 150, show_warning=True):
