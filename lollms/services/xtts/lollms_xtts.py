@@ -121,14 +121,10 @@ class LollmsXTTS:
         self.output_folder = app.lollms_paths.personal_outputs_path/"audio_out"
         self.output_folder.mkdir(parents=True, exist_ok=True)
 
-        if not self.wait_for_service(1,False) and xtts_base_url is None:
+        if not self.wait_for_service(1,False):
             ASCIIColors.info("Loading lollms_xtts")
-            os.environ['xtts_WEBUI_RESTARTING'] = '1' # To forbid sd webui from showing on the browser automatically
             # Launch the Flask service using the appropriate script for the platform
             self.process = self.run_xtts_api_server()
-
-
-            # subprocess.Popen(["python", "-m", "xtts_api_server", "-o", f"{self.output_folder}", "-sf", f"{self.voice_samples_path}"])
 
         # Wait until the service is available at http://127.0.0.1:7860/
         if wait_for_service:
