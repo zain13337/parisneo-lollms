@@ -90,9 +90,6 @@ def upgrade_sd(lollms_app:LollmsApplication):
         elif not show_yes_no_dialog("warning!","Continue installation?"):
             return
 
-    ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
-    create_conda_env("autosd","3.10")
-    ASCIIColors.cyan("Done")
 
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
