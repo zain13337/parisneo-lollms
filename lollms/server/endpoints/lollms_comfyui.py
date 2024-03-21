@@ -47,6 +47,30 @@ def install_comfyui():
         lollmsElfServer.InfoMessage(f"It looks like I could not install Comfyui because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/comfyui manually then try again")
         return {"status":False, 'error':str(ex)}
 
+@router.get("/upgrade_comfyui")
+def upgrade_comfyui():
+    try:
+        if lollmsElfServer.config.headless_server_mode:
+            return {"status":False,"error":"Service upgrade is blocked when in headless mode for obvious security reasons!"}
+
+        if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
+            return {"status":False,"error":"Service upgrade is blocked when the server is exposed outside for very obvious reasons!"}
+
+        lollmsElfServer.ShowBlockingMessage("Upgrading comfyui server\nPlease stand by")
+        from lollms.services.comfyui.lollms_comfyui import upgrade_comfyui
+        upgrade_comfyui(lollmsElfServer)
+        ASCIIColors.success("Done")
+        lollmsElfServer.HideBlockingMessage()
+        return {"status":True}
+    
+    
+    except Exception as ex:
+        lollmsElfServer.HideBlockingMessage()
+        lollmsElfServer.InfoMessage(f"It looks like I could not install Comfyui because of this error:\n{ex}\nThis is commonly caused by a previous version that I couldn't delete. PLease remove {lollmsElfServer.lollms_paths.personal_path}/shared/comfyui manually then try again")
+        return {"status":False, 'error':str(ex)}
+
+
+
 @router.get("/start_comfyui")
 def start_comfyui():
     try:

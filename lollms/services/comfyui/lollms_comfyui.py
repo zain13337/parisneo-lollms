@@ -74,9 +74,14 @@ def install_comfyui(lollms_app:LollmsApplication):
 
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI.git", str(comfyui_folder)])
     subprocess.run(["git", "clone", "https://github.com/ParisNeo/ComfyUI-Manager.git", str(comfyui_folder/"custom_nodes/ComfyUI-Manager")])
-    subprocess.run(["git", "clone", "https://github.com/jags111/efficiency-nodes-comfyui.git", str(comfyui_folder/"custom_nodes/efficiency-nodes-comfyui")])    
-    if show_yes_no_dialog("warning!","Do you want to install a model from civitai?\nIsuggest Juggernaut XL."):
+    subprocess.run(["git", "clone", "https://github.com/jags111/efficiency-nodes-comfyui.git", str(comfyui_folder/"custom_nodes/efficiency-nodes-comfyui")]) 
+
+    if show_yes_no_dialog("warning!","Do you want to install an image model from civitai?\nIsuggest Juggernaut XL."):
         download_file("https://civitai.com/api/download/models/357609", comfyui_folder/"models/checkpoints","Juggernaut_XL.safetensors")
+
+    if show_yes_no_dialog("warning!","Do you want to install a video model from hugging face?\nIsuggest SVD XL."):
+        download_file("https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/svd_xt.safetensors", comfyui_folder/"models/checkpoints","svd_xt.safetensors")
+        
     create_conda_env("comfyui","3.10")
     if lollms_app.config.hardware_mode in ["nvidia", "nvidia-tensorcores"]:
         run_python_script_in_env("comfyui", "-m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121")
@@ -89,6 +94,19 @@ def install_comfyui(lollms_app:LollmsApplication):
     lollms_app.comfyui = LollmsComfyUI(lollms_app)
     ASCIIColors.green("Comfyui installed successfully")
     lollms_app.HideBlockingMessage()
+
+def upgrade_comfyui(lollms_app:LollmsApplication):
+    root_dir = lollms_app.lollms_paths.personal_path
+    shared_folder = root_dir/"shared"
+    comfyui_folder = shared_folder / "comfyui"
+    if not comfyui_folder.exists():
+        lollms_app.InfoMessage("Comfyui is not installed, install it first")
+        return
+
+    subprocess.run(["git", "pull", str(comfyui_folder)])
+    subprocess.run(["git", "pull", str(comfyui_folder/"custom_nodes/ComfyUI-Manager")])
+    subprocess.run(["git",  "pull", str(comfyui_folder/"custom_nodes/efficiency-nodes-comfyui")])
+    ASCIIColors.success("DONE")
 
 
 def get_comfyui(lollms_paths:LollmsPaths):

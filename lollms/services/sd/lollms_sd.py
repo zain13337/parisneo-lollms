@@ -80,6 +80,37 @@ def install_sd(lollms_app:LollmsApplication):
     ASCIIColors.green("Stable diffusion installed successfully")
 
 
+def upgrade_sd(lollms_app:LollmsApplication):
+    root_dir = lollms_app.lollms_paths.personal_path
+    shared_folder = root_dir/"shared"
+    sd_folder = shared_folder / "auto_sd"
+    if sd_folder.exists():
+        if show_yes_no_dialog("warning!","I have detected that there is a previous installation of stable diffusion.\nShould I remove it and continue installing?"):
+            shutil.rmtree(sd_folder)
+        elif not show_yes_no_dialog("warning!","Continue installation?"):
+            return
+
+    ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
+    create_conda_env("autosd","3.10")
+    ASCIIColors.cyan("Done")
+
+    subprocess.run(["git", "clone", "https://github.com/ParisNeo/stable-diffusion-webui.git", str(sd_folder)])
+    subprocess.run(["git", "clone", "https://github.com/ParisNeo/SD-CN-Animation.git", str(sd_folder/"extensions/SD-CN-Animation")])
+
+
+def upgrade_sd(lollms_app:LollmsApplication):
+    root_dir = lollms_app.lollms_paths.personal_path
+    shared_folder = root_dir/"shared"
+    sd_folder = shared_folder / "auto_sd"
+    if not sd_folder.exists():
+        lollms_app.InfoMessage("Comfyui is not installed, install it first")
+        return
+
+    subprocess.run(["git", "pull", str(sd_folder)])
+    subprocess.run(["git", "pull", str(sd_folder/"extensions/SD-CN-Animation")])
+    ASCIIColors.success("DONE")
+
+
 def get_sd(lollms_paths:LollmsPaths):
     root_dir = lollms_paths.personal_path
     shared_folder = root_dir/"shared"
