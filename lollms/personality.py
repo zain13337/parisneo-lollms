@@ -2802,10 +2802,8 @@ The AI should respond in this format using data from actions_list:
         choices = "\n".join([f"{i}. {possible_answer}" for i, possible_answer in enumerate(possible_answers)])
         elements = [conditionning] if conditionning!="" else []
         elements += [
-                "!@>instructions:",
+                "!@>system:",
                 "Answer this multi choices question.",
-                "Answer with an id from the possible answers.",
-                "Do not answer with an id outside this possible answers.",
                 f"!@>question: {question}",
                 "!@>possible answers:",
                 f"{choices}",
@@ -2815,7 +2813,11 @@ The AI should respond in this format using data from actions_list:
                        "!@>Context:",
                         f"{context}",
                     ]
-
+        elements +=[
+                "Answer with an id from the possible answers.",
+                "Do not answer with an id outside this possible answers.",
+                "Do not explain your reasons or add comments."
+        ]
         elements += ["!@>answer:"]
         prompt = self.build_prompt(elements)
             
