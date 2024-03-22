@@ -2816,7 +2816,8 @@ The AI should respond in this format using data from actions_list:
         elements +=[
                 "Answer with an id from the possible answers.",
                 "Do not answer with an id outside this possible answers.",
-                "Do not explain your reasons or add comments."
+                "Do not explain your reasons or add comments.",
+                "the output should be an integer."
         ]
         elements += ["!@>answer:"]
         prompt = self.build_prompt(elements)
