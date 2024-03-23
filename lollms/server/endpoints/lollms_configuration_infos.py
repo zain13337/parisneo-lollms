@@ -144,6 +144,8 @@ async def apply_settings(request: Request):
     try:
         config_data = await request.json()
         config = config_data["config"]
+        check_access(lollmsElfServer, config_data["client_id"])
+
         try:
             for key in lollmsElfServer.config.config.keys():
                 lollmsElfServer.config.config[key] = config.get(key, lollmsElfServer.config.config[key])

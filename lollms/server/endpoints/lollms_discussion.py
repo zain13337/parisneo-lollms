@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from lollms.types import MSG_TYPE
 from lollms.utilities import detect_antiprompt, remove_text_from_string, trace_exception
-from lollms.security import sanitize_path
+from lollms.security import sanitize_path, check_access
 from ascii_colors import ASCIIColors
 from lollms.databases.discussions_database import DiscussionsDB, Discussion
 from typing import List
@@ -123,9 +123,13 @@ async def make_title(discussion_title: DiscussionTitle):
         lollmsElfServer.error(ex)
         return {"status":False,"error":str(ex)}
     
-    
-@router.get("/export")
-def export():
+class DatabaseExport(BaseModel):
+    client_id: str
+
+
+@router.post("/export")
+def export(databaseExport:DatabaseExport):
+    check_access(databaseExport.client_id)
     return lollmsElfServer.db.export_to_json()
 
 
@@ -142,6 +146,7 @@ async def delete_discussion(discussion: DiscussionDelete):
     :param request: The HTTP request object.
     :return: A JSON response with the status of the operation.
     """
+    check_access(discussion.client_id)
 
     try:
 
@@ -159,11 +164,13 @@ async def delete_discussion(discussion: DiscussionDelete):
     
 # ----------------------------- import/export --------------------
 class DiscussionExport(BaseModel):
+    client_id: str
     discussion_ids: List[int]
     export_format: str
 
 @router.post("/export_multiple_discussions")
 async def export_multiple_discussions(discussion_export: DiscussionExport):
+    check_access(discussion_export.client_id)
     try:
         discussion_ids = discussion_export.discussion_ids
         export_format = discussion_export.export_format
@@ -186,10 +193,12 @@ class DiscussionInfo(BaseModel):
     content: str
 
 class DiscussionImport(BaseModel):
+    client_id: str
     jArray: List[DiscussionInfo]
 
 @router.post("/import_multiple_discussions")
 async def import_multiple_discussions(discussion_import: DiscussionImport):
+    check_access(discussion_import.client_id)
     try:
         discussions = discussion_import.jArray
         lollmsElfServer.db.import_from_json(discussions)
