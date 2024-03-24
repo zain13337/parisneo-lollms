@@ -3031,7 +3031,71 @@ The AI should respond in this format using data from actions_list:
         pth = "/".join(pth[idx:])
         file_path = f"![](/{pth})\n"
         return file_path
-            
+
+    def build_a_document_block(self, title="Title", link="", content="content"):
+        if link!="":
+            return f'''
+<div style="width: 100%; border: 1px solid #ccc; border-radius: 5px; padding: 20px; font-family: Arial, sans-serif; margin-bottom: 20px; box-sizing: border-box;">
+    <h3 style="margin-top: 0;">
+        <a href="{link}" target="_blank" style="text-decoration: none; color: #333;">{title}</a>
+    </h3>
+    <p style="color: #666;">{content}</p>
+</div>
+'''
+        else:
+            return f'''
+<div style="width: 100%; border: 1px solid #ccc; border-radius: 5px; padding: 20px; font-family: Arial, sans-serif; margin-bottom: 20px; box-sizing: border-box;">
+    <h3 style="margin-top: 0;">
+        <p style="text-decoration: none; color: #333;">{title}</p>
+    </h3>
+    <p style="color: #666;">{content}</p>
+</div>
+'''
+        
+    def build_a_folder_link(self, folder_path, link_text="Open Folder"):
+        return '''
+<a href="#" onclick="path=\''''+f'{folder_path}'+'''\';
+fetch('/open_folder', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ path: path })
+    })
+    .then(response => response.json())
+    .then(data => {
+    if (data.status) {
+        console.log('Folder opened successfully');
+    } else {
+        console.error('Error opening folder:', data.error);
+    }
+    })
+    .catch(error => {
+    console.error('Error:', error);
+    });
+">'''+f'''{link_text}</a>'''
+    def build_a_file_link(self, folder_path, link_text="Open Folder"):
+        return '''
+<a href="#" onclick="path=\''''+f'{folder_path}'+'''\';
+fetch('/open_folder', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ path: path })
+    })
+    .then(response => response.json())
+    .then(data => {
+    if (data.status) {
+        console.log('Folder opened successfully');
+    } else {
+        console.error('Error opening folder:', data.error);
+    }
+    })
+    .catch(error => {
+    console.error('Error:', error);
+    });
+">'''+f'''{link_text}</a>'''           
 # ===========================================================
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
@@ -3102,3 +3166,5 @@ class PersonalityBuilder:
     
     def get_personality(self):
         return self.personality
+
+
