@@ -146,7 +146,7 @@ async def delete_discussion(discussion: DiscussionDelete):
     :param request: The HTTP request object.
     :return: A JSON response with the status of the operation.
     """
-    check_access(discussion.client_id)
+    check_access(lollmsElfServer, discussion.client_id)
 
     try:
 
