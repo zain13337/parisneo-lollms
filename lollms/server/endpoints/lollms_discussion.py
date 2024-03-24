@@ -129,7 +129,7 @@ class DatabaseExport(BaseModel):
 
 @router.post("/export")
 def export(databaseExport:DatabaseExport):
-    check_access(databaseExport.client_id)
+    check_access(lollmsElfServer, databaseExport.client_id)
     return lollmsElfServer.db.export_to_json()
 
 
@@ -170,7 +170,7 @@ class DiscussionExport(BaseModel):
 
 @router.post("/export_multiple_discussions")
 async def export_multiple_discussions(discussion_export: DiscussionExport):
-    check_access(discussion_export.client_id)
+    check_access(lollmsElfServer, discussion_export.client_id)
     try:
         discussion_ids = discussion_export.discussion_ids
         export_format = discussion_export.export_format
@@ -198,7 +198,7 @@ class DiscussionImport(BaseModel):
 
 @router.post("/import_multiple_discussions")
 async def import_multiple_discussions(discussion_import: DiscussionImport):
-    check_access(discussion_import.client_id)
+    check_access(lollmsElfServer, discussion_import.client_id)
     try:
         discussions = discussion_import.jArray
         lollmsElfServer.db.import_from_json(discussions)
