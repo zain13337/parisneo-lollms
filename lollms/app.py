@@ -772,8 +772,15 @@ class LollmsApplication(LoLLMsCom):
                         message.message_type <= MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_USER.value and message.message_type != MSG_TYPE.MSG_TYPE_FULL_INVISIBLE_TO_AI.value):
 
                     # Tokenize the message content
-                    message_tokenized = self.model.tokenize(
-                        "\n" + self.config.discussion_prompt_separator + message.sender + ": " + message.content.strip())
+                    if self.config.use_model_name_in_discussions:
+                        if message.model:
+                            msg = "\n" + self.config.discussion_prompt_separator + message.sender + f"({message.model}): " + message.content.strip()
+                        else:
+                            msg = "\n" + self.config.discussion_prompt_separator + message.sender + ": " + message.content.strip()
+                        message_tokenized = self.model.tokenize(msg)
+                    else:
+                        message_tokenized = self.model.tokenize(
+                            "\n" + self.config.discussion_prompt_separator + message.sender + ": " + message.content.strip())
 
                     # Check if adding the message will exceed the available space
                     if tokens_accumulated + len(message_tokenized) > available_space:
