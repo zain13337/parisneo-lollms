@@ -2518,26 +2518,22 @@ class APScript(StateMachine):
             with open(tmp_file,"w") as f:
                 f.write(code)
 
-            try:
-                # Execute the Python code in a temporary file.
-                process = subprocess.Popen(
-                    ["python", str(tmp_file)],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    cwd=root_folder
-                )
+            # Execute the Python code in a temporary file.
+            process = subprocess.Popen(
+                ["python", str(tmp_file)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=root_folder
+            )
 
-                # Get the output and error from the process.
-                output, error = process.communicate()
-            except Exception as ex:
-                error_message = f"Error executing Python code: {ex}"
-                raise Exception(error_message)
+            # Get the output and error from the process.
+            output, error = process.communicate()
 
             # Check if the process was successful.
             if process.returncode != 0:
                 # The child process threw an exception.
                 error_message = f"Error executing Python code: {error.decode('utf8')}"
-                raise Exception(error_message)
+                return error_message
 
             # The child process was successful.
             return output.decode("utf8")
