@@ -88,7 +88,8 @@ def install_comfyui(lollms_app:LollmsApplication):
         download_file("https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/svd_xt.safetensors", comfyui_folder/"models/checkpoints","svd_xt.safetensors")
 
     if show_yes_no_dialog("warning!","Do you want to install all control net models?"):
-        (comfyui_folder/"models/controlnet").mkdir(parents=True, exist_ok=True)
+        (comfyui_folder/"models/controlnet").mkdir(parents=True, exist_ok=True)        
+        download_file("https://huggingface.co/thibaud/controlnet-openpose-sdxl-1.0/resolve/main/OpenPoseXL2.safetensors", comfyui_folder/"models/controlnet","OpenPoseXL2.safetensors")
         download_file("https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_openpose_anime.safetensors", comfyui_folder/"models/controlnet","kohya_controllllite_xl_openpose_anime.safetensors")
         download_file("https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_canny.safetensors", comfyui_folder/"models/controlnet","kohya_controllllite_xl_canny.safetensors")
         download_file("https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_depth.safetensors", comfyui_folder/"models/controlnet","kohya_controllllite_xl_depth.safetensors")

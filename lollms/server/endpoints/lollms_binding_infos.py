@@ -49,6 +49,7 @@ def list_bindings():
             if card.exists():
                 try:
                     bnd = load_config(card)
+                    bnd["name"]=f.stem
                     bnd["folder"]=f.stem
                     installed = (lollmsElfServer.lollms_paths.personal_configuration_path/"bindings"/f.stem/f"config.yaml").exists()
                     bnd["installed"]=installed
