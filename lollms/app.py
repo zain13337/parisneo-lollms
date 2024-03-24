@@ -845,6 +845,7 @@ class LollmsApplication(LoLLMsCom):
 
         # Details
         context_details = {
+            "client_id":client_id,
             "conditionning":conditionning,
             "internet_search_infos":internet_search_infos,
             "internet_search_results":internet_search_results,
@@ -858,7 +859,6 @@ class LollmsApplication(LoLLMsCom):
             "force_language":force_language,
             "fun_mode":fun_mode,
             "ai_prefix":ai_prefix
-
         }    
 
         # Return the prepared query, original message content, and tokenized query
