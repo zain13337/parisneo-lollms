@@ -31,7 +31,7 @@ from lollms.types import MSG_TYPE
 import json
 from typing import Any, List, Optional, Type, Callable, Dict, Any, Union
 import json
-from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod
+from safe_store import TextVectorizer, GenericDataLoader, VisualizationMethod, VectorizationMethod, DocumentDecomposer
 from functools import partial
 import sys
 from lollms.com import LoLLMsCom
@@ -2184,13 +2184,26 @@ class APScript(StateMachine):
                                     ]),
                                     max_generation_size=max_generation_size))
         return translated
-    def summerize(self, chunks, summary_instruction="summerize", chunk_name="chunk", answer_start="", max_generation_size=3000, callback=None):
+
+    def summerize_text(self, text, summary_instruction="summerize", doc_name="chunk", answer_start="", max_generation_size=3000, max_summary_size=512, callback=None):
+        depth=0
+        tk = self.personality.model.tokenize(text)
+        while len(tk)>max_summary_size:
+            self.step_start(f"Comprerssing.. [depth {depth}]")
+            chunk_size = int(self.personality.config.ctx_size*0.6)
+            document_chunks = DocumentDecomposer.decompose_document(text, chunk_size, 0, self.personality.model.tokenize, self.personality.model.detokenize, True)
+            text = self.summerize_chunks(document_chunks,summary_instruction, doc_name, answer_start, max_generation_size, callback)
+            tk = self.personality.model.tokenize(text)
+            self.step_end(f"Comprerssing.. [depth {depth}]")
+        return text
+
+    def summerize_chunks(self, chunks, summary_instruction="summerize", doc_name="chunk", answer_start="", max_generation_size=3000, callback=None):
         summeries = []
         for i, chunk in enumerate(chunks):
             self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
             summary = f"```markdown\n{answer_start}"+ self.fast_gen(
                         "\n".join([
-                            f"!@>Document_chunk: {chunk_name}:",
+                            f"!@>Document_chunk: {doc_name}:",
                             f"{chunk}",
                             f"!@>instruction: {summary_instruction}",
                             f"!@>summary:",
@@ -2271,6 +2284,17 @@ class APScript(StateMachine):
         Do internet search and return the result
         """
         return self.personality.internet_search_with_vectorization(query, quick_search=quick_search)
+
+
+    def vectorize_and_query(self, text, query, max_chunk_size=512, overlap_size=20, internet_vectorization_nb_chunks=3):
+        vectorizer = TextVectorizer(VectorizationMethod.TFIDF_VECTORIZER, model = self.personality.model)
+        decomposer = DocumentDecomposer()
+        chunks = decomposer.decompose_document(text, max_chunk_size, overlap_size,self.personality.model.tokenize,self.personality.model.detokenize)
+        for i, chunk in enumerate(chunks):
+            vectorizer.add_document(f"chunk_{i}", self.personality.model.detokenize(chunk))
+        vectorizer.index()
+        docs, sorted_similarities, document_ids = vectorizer.recover_text(query, internet_vectorization_nb_chunks)        
+        return docs, sorted_similarities
 
 
     def step_start(self, step_text, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
