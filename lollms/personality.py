@@ -2509,35 +2509,33 @@ class APScript(StateMachine):
         if code_folder is not None:
             code_folder = Path(code_folder)
 
-        def spawn_process(code):
-            """Executes Python code and returns the output as JSON."""
-            # Create a temporary file.
-            root_folder = code_folder if code_folder is not None else self.personality.personality_output_folder
-            root_folder.mkdir(parents=True,exist_ok=True)
-            tmp_file = root_folder/(code_file_name if code_file_name is not None else f"ai_code.py")
-            with open(tmp_file,"w") as f:
-                f.write(code)
+        """Executes Python code and returns the output as JSON."""
+        # Create a temporary file.
+        root_folder = code_folder if code_folder is not None else self.personality.personality_output_folder
+        root_folder.mkdir(parents=True,exist_ok=True)
+        tmp_file = root_folder/(code_file_name if code_file_name is not None else f"ai_code.py")
+        with open(tmp_file,"w") as f:
+            f.write(code)
 
-            # Execute the Python code in a temporary file.
-            process = subprocess.Popen(
-                ["python", str(tmp_file)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                cwd=root_folder
-            )
+        # Execute the Python code in a temporary file.
+        process = subprocess.Popen(
+            ["python", str(tmp_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=root_folder
+        )
 
-            # Get the output and error from the process.
-            output, error = process.communicate()
+        # Get the output and error from the process.
+        output, error = process.communicate()
 
-            # Check if the process was successful.
-            if process.returncode != 0:
-                # The child process threw an exception.
-                error_message = f"Error executing Python code: {error.decode('utf8')}"
-                return error_message
+        # Check if the process was successful.
+        if process.returncode != 0:
+            # The child process threw an exception.
+            error_message = f"Error executing Python code: {error.decode('utf8')}"
+            return error_message
 
-            # The child process was successful.
-            return output.decode("utf8")
-        return spawn_process(code)
+        # The child process was successful.
+        return output.decode("utf8")
 
     def build_python_code(self, prompt, max_title_length=4096):
         if not PackageManager.check_package_installed("autopep8"):
