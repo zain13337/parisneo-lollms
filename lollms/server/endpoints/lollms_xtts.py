@@ -7,7 +7,7 @@ description:
     application. These routes allow users to 
 
 """
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, UploadFile, File, HTTPException
 from lollms_webui import LOLLMSWebUI
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse
@@ -167,3 +167,28 @@ def start_xtts():
     except Exception as ex:
         lollmsElfServer.HideBlockingMessage()
         return {"url": None, "error":f"{ex}"}
+
+
+@router.post("/upload_voice/")
+async def upload_voice_file(file: UploadFile = File(...)):
+    allowed_extensions = {'wav', 'mp3'}
+
+    # Use Pathlib to handle the filename
+    file_path = Path(file.filename)
+    file_extension = file_path.suffix[1:].lower()
+
+    if file_extension not in allowed_extensions:
+        return {"message": "Invalid file type. Only .wav and .mp3 files are allowed."}
+
+    # Check for path traversal attempts
+    if file_path.is_absolute() or any(part == '..' for part in file_path.parts):
+        raise HTTPException(status_code=400, detail="Invalid filename. Path traversal detected.")
+
+    # Save the file to disk or process it further
+    contents = await file.read()
+    safe_filename = f"voice_{file_path.name}"
+    safe_file_path = lollmsElfServer.lollms_paths.custom_voices_path/safe_filename
+    with safe_file_path.open("wb") as f:
+        f.write(contents)
+
+    return {"message": f"Successfully uploaded {safe_filename}"}

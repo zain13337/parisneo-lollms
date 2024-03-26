@@ -851,6 +851,8 @@ class AIPersonality:
         self.data_path = self.personality_package_path / "data"
         # Get the data folder path
         self.audio_path = self.personality_package_path / "audio"
+        # Get the data folder path
+        self.welcome_audio_path = self.personality_package_path / "welcome_audio"
 
         # If not exist recreate
         self.assets_path.mkdir(parents=True, exist_ok=True)
