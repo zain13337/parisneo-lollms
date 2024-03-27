@@ -678,7 +678,7 @@ def reinstall_pytorch_with_cuda():
     except Exception as ex:
         ASCIIColors.error(ex)
     try:
-        ASCIIColors.info("Installing pytorch 2.1.1")
+        ASCIIColors.info("Installing pytorch 2.2.1")
         result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "torch", "torchvision", "torchaudio", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu121"])
     except Exception as ex:
         ASCIIColors.error(ex)
@@ -714,7 +714,7 @@ def reinstall_pytorch_with_cpu():
             ASCIIColors.error("Pytorch installed successfully!!")     
 
 
-def check_and_install_torch(enable_gpu:bool, version:float=2.1):
+def check_and_install_torch(enable_gpu:bool, version:float=2.2):
     if enable_gpu:
         ASCIIColors.yellow("This installation has enabled GPU support. Trying to install with GPU support")
         ASCIIColors.info("Checking pytorch")

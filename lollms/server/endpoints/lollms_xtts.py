@@ -122,8 +122,11 @@ async def text2Audio(request: LollmsText2AudioRequest):
             lollmsElfServer.tts.set_speaker_folder(voices_folder)
             url = f"audio/{output_fn}"
             preprocessed_text= add_period(request.text)
+            voice_file =  [v for v in voices_folder.iterdir() if v.stem==voice]
+            if len(voice_file)==0:
+                return {"status":False,"error":"Voice not found"}
 
-            lollmsElfServer.tts.tts_to_file(preprocessed_text, f"{voice}.wav", f"{output_fn}", language=language)
+            lollmsElfServer.tts.tts_to_file(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
             lollmsElfServer.info(f"Voice file ready at {url}")
             return {"url": url}
         except Exception as ex:
@@ -171,14 +174,14 @@ def start_xtts():
 
 @router.post("/upload_voice/")
 async def upload_voice_file(file: UploadFile = File(...)):
-    allowed_extensions = {'wav', 'mp3'}
+    allowed_extensions = {'wav'}
 
     # Use Pathlib to handle the filename
     file_path = Path(file.filename)
     file_extension = file_path.suffix[1:].lower()
 
     if file_extension not in allowed_extensions:
-        return {"message": "Invalid file type. Only .wav and .mp3 files are allowed."}
+        return {"message": "Invalid file type. Only .wav files are allowed."}
 
     # Check for path traversal attempts
     if file_path.is_absolute() or any(part == '..' for part in file_path.parts):
@@ -190,5 +193,8 @@ async def upload_voice_file(file: UploadFile = File(...)):
     safe_file_path = lollmsElfServer.lollms_paths.custom_voices_path/safe_filename
     with safe_file_path.open("wb") as f:
         f.write(contents)
+    lollmsElfServer.config.current_voice=safe_filename
+    if lollmsElfServer.config.auto_save:
+        lollmsElfServer.config.save_config()
 
     return {"message": f"Successfully uploaded {safe_filename}"}
