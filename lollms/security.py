@@ -43,7 +43,6 @@ def sanitize_path(path:str, allow_absolute_path:bool=False, error_text="Absolute
     if path is None:
         return path
     
-    
     # Regular expression to detect patterns like "...." and multiple forward slashes
     suspicious_patterns = re.compile(r'(\.\.+)|(/+/)')
     

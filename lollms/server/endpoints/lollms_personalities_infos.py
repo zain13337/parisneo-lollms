@@ -250,6 +250,8 @@ class PersonalityDataRequest(BaseModel):
     category:str
     name:str
 
+
+
 @router.post("/get_personality_config")
 def get_personality_config(data:PersonalityDataRequest):
     print("- Recovering personality config")
@@ -459,8 +461,12 @@ def unmount_personality(data:PersonalityMountingInfos):
         return {"status": False, "error":"Couldn't unmount personality"}
     
 
-@router.get("/unmount_all_personalities")
-def unmount_all_personalities():
+class AuthenticationInfos(BaseModel):
+    client_id:str
+
+@router.post("/unmount_all_personalities")
+def unmount_all_personalities(data:AuthenticationInfos):
+    check_access(lollmsElfServer, data.client_id)
     lollmsElfServer.config.personalities=["generic/lollms"]
     lollmsElfServer.mounted_personalities=[]
     lollmsElfServer.personality=None
@@ -474,6 +480,7 @@ def unmount_all_personalities():
 
 @router.post("/select_personality")
 def select_personality(data:PersonalitySelectionInfos):
+    check_access(lollmsElfServer, data.client_id)
     ASCIIColors.info("Selecting personality")
     id = data.id
     print(f"- Selecting active personality {id} ...",end="")
@@ -502,6 +509,7 @@ def select_personality(data:PersonalitySelectionInfos):
 
 @router.post("/get_personality_settings")
 def get_personality_settings(data:PersonalityMountingInfos):
+    check_access(lollmsElfServer, data.client_id)
     print("- Retreiving personality settings")
     category = sanitize_path(data.category)
     name = sanitize_path(data.folder)
