@@ -30,7 +30,7 @@ class PersonalityListingInfos(BaseModel):
 
 
 class PersonalitySelectionInfos(BaseModel):
-    client_id: str
+    client_id:str
     id:int
 
 # ----------------------- Defining router and main class ------------------------------
