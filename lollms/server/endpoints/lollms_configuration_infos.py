@@ -14,7 +14,7 @@ import pkg_resources
 from lollms.server.elf_server import LOLLMSElfServer
 from lollms.binding import BindingBuilder, InstallOption
 from ascii_colors import ASCIIColors
-from lollms.utilities import load_config, trace_exception, gc
+from lollms.utilities import load_config, trace_exception, gc, show_yes_no_dialog
 from lollms.security import check_access
 from pathlib import Path
 from typing import List
@@ -58,6 +58,7 @@ async def update_setting(request: Request):
         check_access(lollmsElfServer, config_data["client_id"])
         if "config" in config_data.keys():
             config_data = config_data["config"]
+
         setting_name = config_data["setting_name"]
         setting_value = sanitize_path(config_data["setting_value"])
 
@@ -150,6 +151,12 @@ async def apply_settings(request: Request):
 
         try:
             for key in lollmsElfServer.config.config.keys():
+                if key=="host" and lollmsElfServer.config.config[key] in ["127.0.0.1","localhost"] and config.get(key, lollmsElfServer.config.config[key]) not in ["127.0.0.1","localhost"]:
+                    if not show_yes_no_dialog("WARNING!!!","You are changing the host value to something else than the localhost which is dangerous if you do not trust the network you are on.\nIt is adviced not to do this as it may expose your own PC to remote access which may be dangerous.\nDo you want to ignore this message and continue changing the host to the nex value?"):
+                        config["host"]=lollmsElfServer.config.config[key]
+                if key=="turn_on_code_validation" and lollmsElfServer.config.config[key]==True and config.get(key, lollmsElfServer.config.config[key])==False:
+                    if not show_yes_no_dialog("WARNING!!!","I received a request to deactivate code execution validation.\nAre you sure?\nThis is a very bad idea especially if you activate remote access.\nDo this only if you are certain of the security of your system.\nDo you want to continue despite the warning?"):
+                        config["turn_on_code_validation"]=False
                 lollmsElfServer.config.config[key] = config.get(key, lollmsElfServer.config.config[key])
             ASCIIColors.success("OK")
             lollmsElfServer.rebuild_personalities()
