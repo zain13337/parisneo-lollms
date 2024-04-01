@@ -879,8 +879,22 @@ class AIPersonality:
                         database_dict=None)
             ASCIIColors.green("Ok")
         else:
-            self.persona_data_vectorizer = None
-            self._data = None
+            files = [f for f in self.data_path.iterdir() if f.suffix.lower() in [".txt", ".pdf", ".docx", ".pptx", ".md", ".py", ".c", ".cpp"] ]
+            if len(files>0):
+                dl = GenericDataLoader()
+                self.persona_data_vectorizer = TextVectorizer(
+                            "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
+                            model=self.model, #needed in case of using model_embedding
+                            save_db=True,
+                            database_path=self.database_path,
+                            data_visualization_method=VisualizationMethod.PCA,
+                            database_dict=None)
+                for f in files:
+                    text = dl.read_file(f)
+
+            else:
+                self.persona_data_vectorizer = None
+                self._data = None
  
 
         if self.run_scripts:
