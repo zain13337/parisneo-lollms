@@ -2465,7 +2465,7 @@ class APScript(StateMachine):
             callback(full_text, MSG_TYPE.MSG_TYPE_CHUNK)
 
 
-    def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+    def full(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None, msg_type:MSG_TYPE = MSG_TYPE.MSG_TYPE_FULL):
         """This sends full text to front end
 
         Args:
@@ -2476,7 +2476,7 @@ class APScript(StateMachine):
             callback = self.callback
 
         if callback:
-            callback(full_text, MSG_TYPE.MSG_TYPE_FULL)
+            callback(full_text, msg_type)
 
     def full_invisible_to_ai(self, full_text:str, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
         """This sends full text to front end (INVISIBLE to AI)
@@ -3035,7 +3035,7 @@ The AI should respond in this format using data from actions_list:
     <h3 style="margin-top: 0;">
         <a href="{link}" target="_blank" style="text-decoration: none; color: #333;">{title}</a>
     </h3>
-    <p style="color: #666;">{content}</p>
+    <pre style="white-space: pre-wrap;color: #666;">{content}</pre>
 </div>
 '''
         else:
@@ -3044,7 +3044,7 @@ The AI should respond in this format using data from actions_list:
     <h3 style="margin-top: 0;">
         <p style="text-decoration: none; color: #333;">{title}</p>
     </h3>
-    <p style="color: #666;">{content}</p>
+    <pre style="white-space: pre-wrap;color: #666;">{content}</pre>
 </div>
 '''
         
