@@ -867,21 +867,10 @@ class AIPersonality:
         self.audio_samples = [f for f in self.audio_path.iterdir()]
 
         # Verify if the persona has a data folder
-        self.database_path = self.data_path / "db.json"
-        if self.database_path.exists():
-            ASCIIColors.info("Loading database ...",end="")
-            self.persona_data_vectorizer = TextVectorizer(
-                        "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
-                        model=self.model, #needed in case of using model_embedding
-                        save_db=True,
-                        database_path=self.database_path,
-                        data_visualization_method=VisualizationMethod.PCA,
-                        database_dict=None)
-            ASCIIColors.green("Ok")
-        else:
-            files = [f for f in self.data_path.iterdir() if f.suffix.lower() in [".txt", ".pdf", ".docx", ".pptx", ".md", ".py", ".c", ".cpp"] ]
-            if len(files>0):
-                dl = GenericDataLoader()
+        if self.data_path.exists():
+            self.database_path = self.data_path / "db.json"
+            if self.database_path.exists():
+                ASCIIColors.info("Loading database ...",end="")
                 self.persona_data_vectorizer = TextVectorizer(
                             "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
                             model=self.model, #needed in case of using model_embedding
@@ -889,13 +878,28 @@ class AIPersonality:
                             database_path=self.database_path,
                             data_visualization_method=VisualizationMethod.PCA,
                             database_dict=None)
-                for f in files:
-                    text = dl.read_file(f)
-
+                ASCIIColors.green("Ok")
             else:
-                self.persona_data_vectorizer = None
-                self._data = None
- 
+                files = [f for f in self.data_path.iterdir() if f.suffix.lower() in [".txt", ".pdf", ".docx", ".pptx", ".md", ".py", ".c", ".cpp"] ]
+                if len(files>0):
+                    dl = GenericDataLoader()
+                    self.persona_data_vectorizer = TextVectorizer(
+                                "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
+                                model=self.model, #needed in case of using model_embedding
+                                save_db=True,
+                                database_path=self.database_path,
+                                data_visualization_method=VisualizationMethod.PCA,
+                                database_dict=None)
+                    for f in files:
+                        text = dl.read_file(f)
+
+                else:
+                    self.persona_data_vectorizer = None
+                    self._data = None
+    
+        else:
+            self.persona_data_vectorizer = None
+            self._data = None
 
         if self.run_scripts:
             # Search for any processor code
