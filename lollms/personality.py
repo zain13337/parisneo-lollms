@@ -881,7 +881,7 @@ class AIPersonality:
                 ASCIIColors.green("Ok")
             else:
                 files = [f for f in self.data_path.iterdir() if f.suffix.lower() in [".txt", ".pdf", ".docx", ".pptx", ".md", ".py", ".c", ".cpp"] ]
-                if len(files>0):
+                if len(files)>0:
                     dl = GenericDataLoader()
                     self.persona_data_vectorizer = TextVectorizer(
                                 "tfidf_vectorizer", # self.config.data_vectorization_method, # supported "model_embedding" or "tfidf_vectorizer"
@@ -892,7 +892,12 @@ class AIPersonality:
                                 database_dict=None)
                     for f in files:
                         text = dl.read_file(f)
-
+                        self.persona_data_vectorizer.add_document(f.name,text,self.config.data_vectorization_chunk_size, self.config.data_vectorization_overlap_size)
+                        # data_vectorization_chunk_size: 512 # chunk size
+                        # data_vectorization_overlap_size: 128 # overlap between chunks size
+                        # data_vectorization_nb_chunks: 2 # number of chunks to use
+                    self.persona_data_vectorizer.index()
+                    self.persona_data_vectorizer.save_db()
                 else:
                     self.persona_data_vectorizer = None
                     self._data = None
