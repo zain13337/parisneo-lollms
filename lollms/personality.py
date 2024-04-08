@@ -929,14 +929,15 @@ class AIPersonality:
     
 
 
-    def remove_file(self, path, callback=None):
+    def remove_file(self, file_name, callback=None):
         try:
-            if path in self.text_files:
-                self.text_files.remove(path)
-                Path(path).unlink()
+            if any(file_name == entry.name for entry in self.text_files):
+                fn = [entry for entry in self.text_files if entry.name == file_name][0]
+                self.text_files = [entry for entry in self.text_files if entry.name != file_name]
+                Path(fn).unlink()
                 if len(self.text_files)>0:
                     try:
-                        self.vectorizer.remove_document(path)
+                        self.vectorizer.remove_document(fn)
                         if callback is not None:
                             callback("File removed successfully",MSG_TYPE.MSG_TYPE_INFO)
                         return True
@@ -945,23 +946,13 @@ class AIPersonality:
                         return False
                 else:
                     self.vectorizer = None
-            elif path in self.image_files:
-                self.image_files.remove(path)
-                Path(path).unlink()
-                if len(self.text_files)>0:
-                    try:
-                        self.vectorizer.remove_document(path)
-                        if callback is not None:
-                            callback("File removed successfully",MSG_TYPE.MSG_TYPE_INFO)
-                        return True
-                    except ValueError as ve:
-                        ASCIIColors.error(f"Couldn't remove file")
-                        return False
-                else:
-                    self.vectorizer = None
+            elif any(file_name == entry.name for entry in self.image_files):
+                fn = [entry for entry in self.image_files if entry.name == file_name][0]
+                self.text_files = [entry for entry in self.image_files if entry.name != file_name]
+                Path(fn).unlink()
 
         except Exception as ex:
-            ASCIIColors.warning(f"Couldn't remove the file {path}")
+            ASCIIColors.warning(f"Couldn't remove the file {file_name}")
 
     def remove_all_files(self, callback=None):
         for file in self.text_files:
@@ -2224,25 +2215,39 @@ class APScript(StateMachine):
             self.step_end(f"Comprerssing.. [depth {depth}]")
         return text
 
+    def smart_data_extraction(self, text, data_extraction_instruction="summerize", final_task_instruction="reformulate with better wording", doc_name="chunk", answer_start="", max_generation_size=3000, max_summary_size=512, callback=None):
+        depth=0
+        tk = self.personality.model.tokenize(text)
+        while len(tk)>max_summary_size:
+            self.step_start(f"Comprerssing.. [depth {depth}]")
+            chunk_size = int(self.personality.config.ctx_size*0.6)
+            document_chunks = DocumentDecomposer.decompose_document(text, chunk_size, 0, self.personality.model.tokenize, self.personality.model.detokenize, True)
+            text = self.summerize_chunks(document_chunks, 
+            data_extraction_instruction, doc_name, answer_start, max_generation_size, callback)
+            tk = self.personality.model.tokenize(text)
+            self.step_end(f"Comprerssing.. [depth {depth}]")
+        self.step_start(f"Rewriting..")
+        text = self.summerize_chunks([text], 
+        final_task_instruction, doc_name, answer_start, max_generation_size, callback)
+        self.step_end(f"Rewriting..")
+        
+        return text
+
     def summerize_chunks(self, chunks, summary_instruction="summerize", doc_name="chunk", answer_start="", max_generation_size=3000, callback=None):
         summeries = []
         for i, chunk in enumerate(chunks):
             self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
-            summary = f"```markdown\n{answer_start}"+ self.fast_gen(
+            summary = f"{answer_start}"+ self.fast_gen(
                         "\n".join([
                             f"!@>Document_chunk: {doc_name}:",
                             f"{chunk}",
                             f"!@>instruction: {summary_instruction}",
+                            f"Answer directly with the summary with no extra comments.",
                             f"!@>summary:",
-                            f"```markdown\n{answer_start}"
+                            f"{answer_start}"
                             ]),
-                            max_generation_size=max_generation_size, callback=callback).replace("```markdown\n```markdown","```markdown")
-            summary = self.extract_code_blocks(summary)
-            if len(summary)>0:
-                summeries.append(summary[0]["content"])
-                self.step_end(f"Processing chunk : {i+1}/{len(chunks)}")
-            else:
-                raise Exception("The model returned an empty or corrupted text")
+                            max_generation_size=max_generation_size, callback=callback)
+            summeries.append(summary)
         return "\n".join(summeries)
 
 
@@ -3233,4 +3238,24 @@ class PersonalityBuilder:
     def get_personality(self):
         return self.personality
 
+    def extract_function_call(self, query):
+        # Match the pattern @@function|param1|param2@@
+        lq = len(query)
+        parts = query.split("@@")
+        if len(parts)>1:
+            query_ = parts[1].split("@@")
+            query_=query_[0]
+            parts = query_.split("|")
+            fn = parts[0]
+            if len(parts)>1:
+                params = parts[1:]
+            else:
+                params=[]
+            try:
+                end_pos = query.index("@@")
+            except:
+                end_pos = lq
+            return fn, params, end_pos
 
+        else:
+            return None, None, 0
