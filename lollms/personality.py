@@ -1720,7 +1720,7 @@ class StateMachine:
 
 
 
-    def process_state(self, command, full_context, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None):
+    def process_state(self, command, full_context, callback: Callable[[str, MSG_TYPE, dict, list], bool]=None, client:Client=None):
         """
         Process the given command based on the current state.
 
@@ -1739,7 +1739,10 @@ class StateMachine:
         
         for cmd, func in commands.items():
             if cmd == command[0:len(cmd)]:
-                func(command, full_context)
+                try:
+                    func(command, full_context,client)
+                except:# retrocompatibility
+                    func(command, full_context)
                 return
         
         default_func = current_state.get("default")
@@ -1923,7 +1926,7 @@ class APScript(StateMachine):
         """
         pass
 
-    def execute_command(self, command: str, parameters:list=[]):
+    def execute_command(self, command: str, parameters:list=[], client:Client=None):
         """
         Recovers user commands and executes them. Each personality can define a set of commands that they can receive and execute
         Args:
@@ -1932,7 +1935,7 @@ class APScript(StateMachine):
 
         """
         try:
-            self.process_state(command, "", self.callback)
+            self.process_state(command, "", self.callback, client)
         except Exception as ex:
             trace_exception(ex)
             self.warning(f"Couldn't execute command {command}")
@@ -2246,7 +2249,8 @@ class APScript(StateMachine):
                             f"!@>summary:",
                             f"{answer_start}"
                             ]),
-                            max_generation_size=max_generation_size, callback=callback)
+                            max_generation_size=max_generation_size,
+                            callback=callback)
             summeries.append(summary)
         return "\n".join(summeries)
 
