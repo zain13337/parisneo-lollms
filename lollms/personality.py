@@ -2221,14 +2221,21 @@ class APScript(StateMachine):
                     ):
         depth=0
         tk = self.personality.model.tokenize(text)
+        prev_len = len(tk)
         while len(tk)>max_summary_size:
             self.step_start(f"Comprerssing {doc_name}... [depth {depth+1}]")
             chunk_size = int(self.personality.config.ctx_size*0.6)
             document_chunks = DocumentDecomposer.decompose_document(text, chunk_size, 0, self.personality.model.tokenize, self.personality.model.detokenize, True)
             text = self.summerize_chunks(document_chunks,summary_instruction, doc_name, answer_start, max_generation_size, callback, chunk_summary_post_processing=chunk_summary_post_processing)
             tk = self.personality.model.tokenize(text)
+            tk = self.personality.model.tokenize(text)
+            dtk_ln=prev_len-len(tk)
+            prev_len = len(tk)
+            self.step(f"Current text size : {prev_len}, max summary size : {max_summary_size}")
             self.step_end(f"Comprerssing {doc_name}... [depth {depth+1}]")
             depth += 1
+            if dtk_ln<=10: # it is not sumlmarizing
+                break
         return text
 
     def smart_data_extraction(
