@@ -2245,15 +2245,20 @@ class APScript(StateMachine):
                             ):
         depth=0
         tk = self.personality.model.tokenize(text)
+        prev_len = len(tk)
         while len(tk)>max_summary_size:
             self.step_start(f"Comprerssing... [depth {depth+1}]")
             chunk_size = int(self.personality.config.ctx_size*0.6)
             document_chunks = DocumentDecomposer.decompose_document(text, chunk_size, 0, self.personality.model.tokenize, self.personality.model.detokenize, True)
             text = self.summerize_chunks(document_chunks, data_extraction_instruction, doc_name, answer_start, max_generation_size, callback, chunk_summary_post_processing=chunk_summary_post_processing)
             tk = self.personality.model.tokenize(text)
-            self.step(f"Current text size : {len(tk)}, max summary size : {max_summary_size}")
+            dtk_ln=prev_len-len(tk)
+            prev_len = len(tk)
+            self.step(f"Current text size : {prev_len}, max summary size : {max_summary_size}")
             self.step_end(f"Comprerssing... [depth {depth+1}]")
             depth += 1
+            if dtk_ln<=10: # it is not sumlmarizing
+                break
         self.step_start(f"Rewriting ...")
         text = self.summerize_chunks([text], 
         final_task_instruction, doc_name, answer_start, max_generation_size, callback, chunk_summary_post_processing=chunk_summary_post_processing)
@@ -2291,7 +2296,7 @@ class APScript(StateMachine):
             self.step_end(f" Summary of {doc_name} - Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
-    def sequencial_summary(
+    def sequencial_chunks_summary(
                             self, 
                             chunks, 
                             summary_instruction="summerize", 
