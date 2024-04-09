@@ -2222,13 +2222,13 @@ class APScript(StateMachine):
         depth=0
         tk = self.personality.model.tokenize(text)
         while len(tk)>max_summary_size:
-            self.step_start(f"Comprerssing.. [depth {depth}]")
+            self.step_start(f"Comprerssing... [depth {depth+1}]")
             chunk_size = int(self.personality.config.ctx_size*0.6)
             document_chunks = DocumentDecomposer.decompose_document(text, chunk_size, 0, self.personality.model.tokenize, self.personality.model.detokenize, True)
-            text = self.summerize_chunks(document_chunks, 
-            data_extraction_instruction, doc_name, answer_start, max_generation_size, callback)
+            text = self.summerize_chunks(document_chunks, data_extraction_instruction, doc_name, answer_start, max_generation_size, callback)
             tk = self.personality.model.tokenize(text)
-            self.step_end(f"Comprerssing.. [depth {depth}]")
+            self.step(f"Current text size : {tk}, max summary size : {max_summary_size}")
+            self.step_end(f"Comprerssing... [depth {depth+1}]")
         self.step_start(f"Rewriting..")
         text = self.summerize_chunks([text], 
         final_task_instruction, doc_name, answer_start, max_generation_size, callback)
@@ -2239,7 +2239,7 @@ class APScript(StateMachine):
     def summerize_chunks(self, chunks, summary_instruction="summerize", doc_name="chunk", answer_start="", max_generation_size=3000, callback=None):
         summeries = []
         for i, chunk in enumerate(chunks):
-            self.step_start(f"Processing chunk : {i+1}/{len(chunks)}")
+            self.step_start(f" Summary of {doc_name} - Processing chunk : {i+1}/{len(chunks)}")
             summary = f"{answer_start}"+ self.fast_gen(
                         "\n".join([
                             f"!@>Document_chunk: {doc_name}:",
@@ -2252,6 +2252,7 @@ class APScript(StateMachine):
                             max_generation_size=max_generation_size,
                             callback=callback)
             summeries.append(summary)
+            self.step_end(f" Summary of {doc_name} - Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
 
