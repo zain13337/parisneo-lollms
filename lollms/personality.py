@@ -2227,7 +2227,7 @@ class APScript(StateMachine):
             document_chunks = DocumentDecomposer.decompose_document(text, chunk_size, 0, self.personality.model.tokenize, self.personality.model.detokenize, True)
             text = self.summerize_chunks(document_chunks, data_extraction_instruction, doc_name, answer_start, max_generation_size, callback)
             tk = self.personality.model.tokenize(text)
-            self.step(f"Current text size : {tk}, max summary size : {max_summary_size}")
+            self.step(f"Current text size : {len(tk)}, max summary size : {max_summary_size}")
             self.step_end(f"Comprerssing... [depth {depth+1}]")
         self.step_start(f"Rewriting..")
         text = self.summerize_chunks([text], 
