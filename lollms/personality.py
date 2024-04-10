@@ -1012,6 +1012,7 @@ class AIPersonality:
                             self.new_message("",MSG_TYPE.MSG_TYPE_FULL)
                             output = f'<img src="{pth}" width="800">\n\n'
                             self.full(output)
+                            self.app.close_message(client.client_id if client is not None else 0)
 
                         if self.model.binding_type not in [BindingType.TEXT_IMAGE, BindingType.TEXT_IMAGE_VIDEO]:
                             # self.ShowBlockingMessage("Understanding image (please wait)")
@@ -1022,6 +1023,7 @@ class AIPersonality:
                             output += "## image description :\n"+ self.model.interrogate_blip([img])[0]
                             # output += "## image description :\n"+ self.model.qna_blip([img],"q:Describe this photo with as much details as possible.\na:")[0]
                             self.full(output)
+                            self.app.close_message(client.client_id if client is not None else 0)
                             self.HideBlockingMessage("Understanding image (please wait)")
                             if self.config.debug:
                                 ASCIIColors.yellow(output)
