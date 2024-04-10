@@ -2202,7 +2202,7 @@ class APScript(StateMachine):
                                     f"Translate the following text to {output_language}.",
                                     "Be faithful to the original text and do not add or remove any information.",
                                     "Respond only with the translated text.",
-                                    "Do not add comments, just the translation.",
+                                    "Do not add comments or explanations.",
                                     f"!@>text to translate:",
                                     f"{text_chunk}",
                                     f"!@>translation:",
