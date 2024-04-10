@@ -880,7 +880,7 @@ class AIPersonality:
                             database_dict=None)
                 ASCIIColors.green("Ok")
             else:
-                files = [f for f in self.data_path.iterdir() if f.suffix.lower() in [".txt", ".pdf", ".docx", ".pptx", ".md", ".py", ".c", ".cpp"] ]
+                files = [f for f in self.data_path.iterdir() if f.suffix.lower() in ['.sh', '.json', '.sym', '.log', '.snippet', '.se', '.yml', '.snippets', '.lua', '.pdf', '.md', '.docx', '.yaml', '.inc', '.txt', '.ini', '.pas', '.pptx', '.map', '.php', '.xlsx', '.rtf', '.hpp', '.h', '.asm', '.xml', '.hh', '.sql', '.java', '.c', '.html', '.inf', '.rb', '.py', '.cs', '.js', '.bat', '.css', '.s', '.cpp', '.csv'] ]
                 if len(files)>0:
                     dl = GenericDataLoader()
                     self.persona_data_vectorizer = TextVectorizer(
