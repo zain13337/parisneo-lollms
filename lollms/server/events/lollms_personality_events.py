@@ -50,8 +50,12 @@ def add_events(sio:socketio):
     import mimetypes
 
     ALLOWED_EXTENSIONS = {
-        'txt', 'csv', 'py', 'html', 'js', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'ico', 'svg', 'mp4', 'mp3', 'avi', 'mov',
-        'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'md', 'json', 'lua', 'cs', 'pas', 'ts'
+        'asm', 'avi', 'bat', 'bmp', 'c', 'cpp', 'cs', 'csproj', 'css', 'csv', 'doc', 'docx',
+        'gif', 'h', 'hh', 'hpp', 'html', 'ico', 'inc', 'ini', 'java', 'jpeg', 'jpg',
+        'js', 'json', 'log', 'lua', 'map', 'md', 'mov', 'mp3', 'mp4', 'pas', 'pdf',
+        'php', 'png', 'ppt', 'pptx', 'ps1', 'py', 'rb', 'rtf', 's', 'se', 'sh', 'sln', 'snippet',
+        'snippets', 'sql', 'svg', 'sym', 'tif', 'tiff', 'ts', 'txt', 'wav', 'webp',
+        'xlsx', 'xls', 'xml', 'yaml', 'yml'
     }
 
     def allowed_file(filename):
