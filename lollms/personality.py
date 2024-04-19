@@ -699,7 +699,7 @@ class AIPersonality:
         antiprompt = self.detect_antiprompt(bot_says)
         if antiprompt:
             self.bot_says = self.remove_text_from_string(bot_says,antiprompt)
-            ASCIIColors.warning(f"\nDetected hallucination with antiprompt: {antiprompt}")
+            ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
             return False
         else:
             if callback:
