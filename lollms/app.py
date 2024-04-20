@@ -813,6 +813,8 @@ class LollmsApplication(LoLLMsCom):
 
                     # Check if adding the message will exceed the available space
                     if tokens_accumulated + len(message_tokenized) > available_space:
+                        message_tokenized[:-(available_space-tokens_accumulated)]
+                        full_message_list.insert(0, message_tokenized)
                         break
 
                     # Add the tokenized message to the full_message_list
