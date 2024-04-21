@@ -20,6 +20,7 @@ import pkg_resources
 from pathlib import Path
 from PIL import Image
 import re
+
 from datetime import datetime
 import importlib
 import shutil
@@ -3276,7 +3277,11 @@ fetch('/open_file', {
         return compress_python(code)
     def compress_html(self, code):
         return compress_html(code)
-    
+
+# ===========================================================
+    def select_model(self, binding_name, model_name):
+        self.personality.app.select_model(binding_name, model_name)
+
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
         self.personality = personality
