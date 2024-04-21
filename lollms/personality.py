@@ -38,6 +38,8 @@ from lollms.com import LoLLMsCom
 from lollms.helpers import trace_exception
 from lollms.utilities import PackageManager
 
+from lollms.code_parser import compress_js, compress_python
+
 
 import requests
 from bs4 import BeautifulSoup
@@ -3268,6 +3270,11 @@ fetch('/open_file', {
     });
 ">'''+f'''{link_text}</a>'''
 # ===========================================================
+    def compress_js(self, code):
+        return compress_js(code)
+    def compress_python(self, code):
+        return compress_python(code)
+    
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
         self.personality = personality
