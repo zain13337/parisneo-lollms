@@ -1,6 +1,7 @@
 import re
 from lollms.utilities import PackageManager
-
+from pipmaster import PackageManager
+from bs4 import BeautifulSoup
 def compress_js(js_code):
     # Patterns to match function, class, and variable declarations
     function_pattern = r"function\s+(\w+)\s*\(([^)]*)\)"

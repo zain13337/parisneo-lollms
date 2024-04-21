@@ -38,7 +38,7 @@ from lollms.com import LoLLMsCom
 from lollms.helpers import trace_exception
 from lollms.utilities import PackageManager
 
-from lollms.code_parser import compress_js, compress_python
+from lollms.code_parser import compress_js, compress_python, compress_html
 
 
 import requests
@@ -3274,6 +3274,8 @@ fetch('/open_file', {
         return compress_js(code)
     def compress_python(self, code):
         return compress_python(code)
+    def compress_html(self, code):
+        return compress_html(code)
     
 class AIPersonalityInstaller:
     def __init__(self, personality:AIPersonality) -> None:
