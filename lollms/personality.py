@@ -150,7 +150,7 @@ class AIPersonality:
         self._user_name: str = "user"
         self._category: str = "General"
         self._category_desc: str = "General"
-        self._language: str = "englsish"
+        self._language: str = "english"
         self._supported_languages: str = []
         self._selected_language: str = selected_language
 
