@@ -103,6 +103,7 @@ async def lollms_generate(request: LollmsGenerateRequest):
     """
 
     try:
+        headers = { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive',}
         reception_manager=RECEPTION_MANAGER()
         prompt = request.prompt
         n_predict = request.n_predict if request.n_predict>0 else 1024
@@ -161,11 +162,11 @@ async def lollms_generate(request: LollmsGenerateRequest):
                         lk.acquire()
                         for i in range(len(new_output["new_values"])):
                             current_index += 1                        
-                            yield (new_output["new_values"][i] + '\n')
+                            yield (new_output["new_values"][i])
                         new_output["new_values"]=[]
                         lk.release()
                     elf_server.cancel_gen = False         
-                return StreamingResponse(generate_chunks(), media_type="text/plain")
+                return StreamingResponse(generate_chunks(), media_type="text/plain", headers=headers)
             else:
                 def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
                     # Yield each chunk of data
@@ -423,7 +424,8 @@ async def ollama_completion(request: CompletionGenerationRequest):
     :return: A JSON response with the status of the operation.
     """
     try:
-        text = request.prompt
+        reception_manager=RECEPTION_MANAGER()
+        prompt = request.prompt
         n_predict = request.max_tokens if request.max_tokens>=0 else elf_server.config.max_n_predict
         temperature = request.temperature if request.temperature>=0 else elf_server.config.temperature
         # top_k = request.top_k if request.top_k>=0 else elf_server.config.top_k
@@ -434,52 +436,199 @@ async def ollama_completion(request: CompletionGenerationRequest):
         
         if elf_server.binding is not None:
             if stream:
-                output = {"response":""}
-                def generate_chunks():
+                new_output={"new_values":[]}
+                async def generate_chunks():
+                    lk = threading.Lock()
+
                     def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
-                        # Yield each chunk of data
-                        output["response"] += chunk
-                        antiprompt = detect_antiprompt(output["text"])
-                        if antiprompt:
-                            ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
-                            output["response"] = remove_text_from_string(output["response"],antiprompt)
+                        if elf_server.cancel_gen:
                             return False
-                        else:
-                            yield {"response":chunk}
+                        
+                        if chunk is None:
+                            return
+
+                        rx = reception_manager.new_chunk(chunk)
+                        if rx.status!=ROLE_CHANGE_DECISION.MOVE_ON:
+                            if rx.status==ROLE_CHANGE_DECISION.PROGRESSING:
+                                return True
+                            elif rx.status==ROLE_CHANGE_DECISION.ROLE_CHANGED:
+                                return False
+                            else:
+                                chunk = chunk + rx.value
+
+                        # Yield each chunk of data
+                        lk.acquire()
+                        try:
+                            new_output["new_values"].append(reception_manager.chunk)
+                            lk.release()
                             return True
-                    return iter(elf_server.binding.generate(
-                                                text, 
+                        except Exception as ex:
+                            trace_exception(ex)
+                            lk.release()
+                            return False
+                        
+                    def chunks_builder():
+                        if request.model in elf_server.binding.list_models() and elf_server.binding.model_name!=request.model:
+                            elf_server.binding.build_model(request.model)    
+
+                        elf_server.binding.generate(
+                                                prompt, 
                                                 n_predict, 
                                                 callback=callback, 
-                                                temperature=temperature,
-                            ))
-                
-                return StreamingResponse(generate_chunks())
+                                                temperature=temperature or elf_server.config.temperature
+                                            )
+                        reception_manager.done = True
+                    thread = threading.Thread(target=chunks_builder)
+                    thread.start()
+                    current_index = 0
+                    while (not reception_manager.done and elf_server.cancel_gen == False):
+                        while (not reception_manager.done and len(new_output["new_values"])==0):
+                            time.sleep(0.001)
+                        lk.acquire()
+                        for i in range(len(new_output["new_values"])):
+                            current_index += 1                        
+                            yield {"response":new_output["new_values"][i]}
+                        new_output["new_values"]=[]
+                        lk.release()
+                    elf_server.cancel_gen = False         
+                return StreamingResponse(generate_chunks(), media_type="text/plain")
             else:
-                output = {"response":""}
                 def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
                     # Yield each chunk of data
-                    output["response"] += chunk
-                    antiprompt = detect_antiprompt(output["response"])
-                    if antiprompt:
-                        ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
-                        output["response"] = remove_text_from_string(output["response"],antiprompt)
-                        return False
-                    else:
+                    if chunk is None:
                         return True
+
+                    rx = reception_manager.new_chunk(chunk)
+                    if rx.status!=ROLE_CHANGE_DECISION.MOVE_ON:
+                        if rx.status==ROLE_CHANGE_DECISION.PROGRESSING:
+                            return True
+                        elif rx.status==ROLE_CHANGE_DECISION.ROLE_CHANGED:
+                            return False
+                        else:
+                            chunk = chunk + rx.value
+
+
+                    return True
                 elf_server.binding.generate(
-                                                text, 
+                                                prompt, 
                                                 n_predict, 
                                                 callback=callback,
-                                                temperature=request.temperature if request.temperature>=0 else elf_server.config.temperature
+                                                temperature=request.temperature or elf_server.config.temperature
                                             )
-                return output
-        else:
-            return None
+                return {"response":reception_manager.reception_buffer}
     except Exception as ex:
         trace_exception(ex)
         elf_server.error(ex)
         return {"status":False,"error":str(ex)}
+
+
+@router.post("/api/generate")
+async def ollama_chat(request: CompletionGenerationRequest):
+    """
+    Executes Python code and returns the output.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+    try:
+        reception_manager=RECEPTION_MANAGER()
+        prompt = request.prompt
+        n_predict = request.max_tokens if request.max_tokens>=0 else elf_server.config.max_n_predict
+        temperature = request.temperature if request.temperature>=0 else elf_server.config.temperature
+        # top_k = request.top_k if request.top_k>=0 else elf_server.config.top_k
+        # top_p = request.top_p if request.top_p>=0 else elf_server.config.top_p
+        # repeat_last_n = request.repeat_last_n if request.repeat_last_n>=0 else elf_server.config.repeat_last_n
+        # repeat_penalty = request.repeat_penalty if request.repeat_penalty>=0 else elf_server.config.repeat_penalty
+        stream = request.stream
+        headers = { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive',}
+        if elf_server.binding is not None:
+            if stream:
+                new_output={"new_values":[]}
+                async def generate_chunks():
+                    lk = threading.Lock()
+
+                    def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                        if elf_server.cancel_gen:
+                            return False
+                        
+                        if chunk is None:
+                            return
+
+                        rx = reception_manager.new_chunk(chunk)
+                        if rx.status!=ROLE_CHANGE_DECISION.MOVE_ON:
+                            if rx.status==ROLE_CHANGE_DECISION.PROGRESSING:
+                                return True
+                            elif rx.status==ROLE_CHANGE_DECISION.ROLE_CHANGED:
+                                return False
+                            else:
+                                chunk = chunk + rx.value
+
+                        # Yield each chunk of data
+                        lk.acquire()
+                        try:
+                            new_output["new_values"].append(reception_manager.chunk)
+                            lk.release()
+                            return True
+                        except Exception as ex:
+                            trace_exception(ex)
+                            lk.release()
+                            return False
+                        
+                    def chunks_builder():
+                        if request.model in elf_server.binding.list_models() and elf_server.binding.model_name!=request.model:
+                            elf_server.binding.build_model(request.model)    
+
+                        elf_server.binding.generate(
+                                                prompt, 
+                                                n_predict, 
+                                                callback=callback, 
+                                                temperature=temperature or elf_server.config.temperature
+                                            )
+                        reception_manager.done = True
+                    thread = threading.Thread(target=chunks_builder)
+                    thread.start()
+                    current_index = 0
+                    while (not reception_manager.done and elf_server.cancel_gen == False):
+                        while (not reception_manager.done and len(new_output["new_values"])==0):
+                            time.sleep(0.001)
+                        lk.acquire()
+                        for i in range(len(new_output["new_values"])):
+                            current_index += 1                        
+                            yield (json.dumps({"response":new_output["new_values"][i]})+"\n").encode("utf-8")
+                        new_output["new_values"]=[]
+                        lk.release()
+                    elf_server.cancel_gen = False         
+                return StreamingResponse(generate_chunks(), media_type="application/json", headers=headers)
+            else:
+                def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                    # Yield each chunk of data
+                    if chunk is None:
+                        return True
+
+                    rx = reception_manager.new_chunk(chunk)
+                    if rx.status!=ROLE_CHANGE_DECISION.MOVE_ON:
+                        if rx.status==ROLE_CHANGE_DECISION.PROGRESSING:
+                            return True
+                        elif rx.status==ROLE_CHANGE_DECISION.ROLE_CHANGED:
+                            return False
+                        else:
+                            chunk = chunk + rx.value
+
+
+                    return True
+                elf_server.binding.generate(
+                                                prompt, 
+                                                n_predict, 
+                                                callback=callback,
+                                                temperature=request.temperature or elf_server.config.temperature
+                                            )
+                return json.dumps(reception_manager.reception_buffer).encode("utf-8")
+    except Exception as ex:
+        trace_exception(ex)
+        elf_server.error(ex)
+        return {"status":False,"error":str(ex)}
+
+
 
 @router.post("/v1/completions")
 async def v1_completion(request: CompletionGenerationRequest):
