@@ -99,3 +99,44 @@ def add_reference_to_local_model(data:ModelReferenceParams):
     else:        
         return {"status": False, "error":"Model not found"}       
 
+
+
+
+
+@router.get("/api/tags")
+async def ollama_list_models():
+    """
+    Retrieve a list of available models for the currently selected binding.
+
+    Returns:
+        List[str]: A list of model names.
+    """
+    if lollmsElfServer.binding is None:
+        return []
+    try:
+        model_list = lollmsElfServer.binding.get_available_models(lollmsElfServer)
+
+        md = {
+        "models": [
+            {
+            "name": model,
+            "modified_at": "2023-11-04T14:56:49.277302595-07:00",
+            "size": 7365960935,
+            "digest": "9f438cb9cd581fc025612d27f7c1a6669ff83a8bb0ed86c94fcf4c5440555697",
+            "details": {
+                "format": "gguf",
+                "family": "llama",
+                "families": None,
+                "parameter_size": "13B",
+                "quantization_level": "Q4_0"
+            }
+            }
+            for model in model_list
+        ]
+        }
+    except Exception as ex:
+        trace_exception(ex)
+        lollmsElfServer.error("Coudln't list models. Please reinstall the binding or notify ParisNeo on the discord server")
+        return []
+
+    return md

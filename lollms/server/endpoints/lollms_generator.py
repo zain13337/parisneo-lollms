@@ -414,6 +414,73 @@ class CompletionGenerationRequest(BaseModel):
     temperature: Optional[float] = -1
 
 
+@router.post("/instruct/generate")
+async def ollama_completion(request: CompletionGenerationRequest):
+    """
+    Executes Python code and returns the output.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+    try:
+        text = request.prompt
+        n_predict = request.max_tokens if request.max_tokens>=0 else elf_server.config.max_n_predict
+        temperature = request.temperature if request.temperature>=0 else elf_server.config.temperature
+        # top_k = request.top_k if request.top_k>=0 else elf_server.config.top_k
+        # top_p = request.top_p if request.top_p>=0 else elf_server.config.top_p
+        # repeat_last_n = request.repeat_last_n if request.repeat_last_n>=0 else elf_server.config.repeat_last_n
+        # repeat_penalty = request.repeat_penalty if request.repeat_penalty>=0 else elf_server.config.repeat_penalty
+        stream = request.stream
+        
+        if elf_server.binding is not None:
+            if stream:
+                output = {"response":""}
+                def generate_chunks():
+                    def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                        # Yield each chunk of data
+                        output["response"] += chunk
+                        antiprompt = detect_antiprompt(output["text"])
+                        if antiprompt:
+                            ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
+                            output["response"] = remove_text_from_string(output["response"],antiprompt)
+                            return False
+                        else:
+                            yield {"response":chunk}
+                            return True
+                    return iter(elf_server.binding.generate(
+                                                text, 
+                                                n_predict, 
+                                                callback=callback, 
+                                                temperature=temperature,
+                            ))
+                
+                return StreamingResponse(generate_chunks())
+            else:
+                output = {"response":""}
+                def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                    # Yield each chunk of data
+                    output["response"] += chunk
+                    antiprompt = detect_antiprompt(output["response"])
+                    if antiprompt:
+                        ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
+                        output["response"] = remove_text_from_string(output["response"],antiprompt)
+                        return False
+                    else:
+                        return True
+                elf_server.binding.generate(
+                                                text, 
+                                                n_predict, 
+                                                callback=callback,
+                                                temperature=request.temperature if request.temperature>=0 else elf_server.config.temperature
+                                            )
+                return output
+        else:
+            return None
+    except Exception as ex:
+        trace_exception(ex)
+        elf_server.error(ex)
+        return {"status":False,"error":str(ex)}
+
 @router.post("/v1/completions")
 async def v1_completion(request: CompletionGenerationRequest):
     """
@@ -471,7 +538,7 @@ async def v1_completion(request: CompletionGenerationRequest):
                                                 text, 
                                                 n_predict, 
                                                 callback=callback,
-                                                temperature=data.get("temperature", elf_server.config.temperature)
+                                                temperature=request.temperature if request.temperature>=0 else elf_server.config.temperature
                                             )
                 return output["text"]
         else:
