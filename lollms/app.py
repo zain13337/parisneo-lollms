@@ -581,17 +581,16 @@ class LollmsApplication(LoLLMsCom):
             language = self.config.force_output_language_to_be.lower().strip().split()[0]
             language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{language}.yaml"
             if not language_path.exists():
-                self.ShowBlockingMessage(f"This is the first time this personality seaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
+                self.info(f"This is the first time this personality seaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
                 language_path.parent.mkdir(exist_ok=True, parents=True)
                 conditionning = "!@>system: "+self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.personality_conditioning.replace('!@>system:','')}\n!@>translation:\n")
                 welcome_message = self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.welcome_message}\n!@>translation:\n")
                 with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
-                    yaml.dump({"conditionning":conditionning,"welcome_message":welcome_message})
-                self.HideBlockingMessage()
+                    yaml.safe_dump({"conditionning":conditionning,"welcome_message":welcome_message}, f)
             else:
-                with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
-                    language_pack = yaml.load(f)
-                    welcome_message = language_pack["welcome_message"]
+                with open(language_path,"r",encoding="utf-8", errors="ignore") as f:
+                    language_pack = yaml.safe_load(f)
+                    conditionning = language_pack["conditionning"]
         else:
             conditionning = self.personality.personality_conditioning
 
