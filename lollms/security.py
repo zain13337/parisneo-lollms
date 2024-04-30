@@ -123,14 +123,15 @@ def sanitize_path(path: str, allow_absolute_path: bool = False, error_text="Abso
     -----
     This function checks for patterns like "....", multiple forward slashes, and command injection attempts like $(whoami). It also checks for unauthorized punctuation characters, excluding the dot (.) character.
     """    
+    if path is None:
+        return path
+    
     if not allow_absolute_path and path.strip().startswith("/"):
         raise HTTPException(status_code=400, detail=exception_text)
 
     # Normalize path to use forward slashes
     path = path.replace('\\', '/')
 
-    if path is None:
-        return path
 
     # Regular expression to detect patterns like "....", multiple forward slashes, and command injection attempts like $(whoami)
     suspicious_patterns = re.compile(r'(\.\.+)|(/+/)|(\$\(.*\))')
