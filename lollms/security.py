@@ -141,7 +141,7 @@ def sanitize_path(path: str, allow_absolute_path: bool = False, error_text="Abso
         raise HTTPException(status_code=400, detail=exception_text)
 
     # Detect if any unauthorized characters, excluding the dot character, are present in the path
-    unauthorized_chars = set('!"#$%&\'()*+,:;<=>?@[]^`{|}~')
+    unauthorized_chars = set('!"#$%&\'()*+,;<=>?@[]^`{|}~')
     if any(char in unauthorized_chars for char in path):
         raise HTTPException(status_code=400, detail=exception_text)
 
@@ -184,7 +184,7 @@ def sanitize_path_from_endpoint(path: str, error_text: str = "A suspected LFI at
     suspicious_patterns = re.compile(r'(\.\.+)|(/+/)')
 
     # Detect if any unauthorized characters, excluding the dot character, are present in the path
-    unauthorized_chars = set('!"#$%&\'()*+,:;<=>?@[]^`{|}~')
+    unauthorized_chars = set('!"#$%&\'()*+,;<=>?@[]^`{|}~')
     if any(char in unauthorized_chars for char in path):
         raise HTTPException(status_code=400, detail=exception_text)
 
