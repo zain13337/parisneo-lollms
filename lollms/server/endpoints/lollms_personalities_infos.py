@@ -15,7 +15,7 @@ import pkg_resources
 from lollms.server.elf_server import LOLLMSElfServer
 from lollms.personality import AIPersonality, InstallOption
 from ascii_colors import ASCIIColors
-from lollms.utilities import load_config, trace_exception, gc
+from lollms.utilities import load_config, trace_exception, gc, show_yes_no_dialog
 from lollms.security import check_access
 from pathlib import Path
 from typing import List, Optional
@@ -287,6 +287,24 @@ def set_personality_language(request: SetLanguageRequest):
 
     # Calling the method to set the personality language
     success = lollmsElfServer.set_personality_language(request.language)
+    
+    # Returning an appropriate response depending on whether the operation was successful or not
+    if success:
+        return {"message": f"The personality language has been successfully set to {request.language}."}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to set the personality language")
+
+# Definition of the endpoint for setting the personality language
+@router.post("/del_personality_language")
+def del_personality_language(request: SetLanguageRequest):
+    # Access verification
+    check_access(lollmsElfServer, request.client_id)
+
+    # Calling the method to set the personality language
+    if lollmsElfServer.config.turn_on_language_validation:
+        if not show_yes_no_dialog("Language deletion request received","I have received a language deletion request. Are you sure?"):
+            return
+    success = lollmsElfServer.del_personality_language(request.language)
     
     # Returning an appropriate response depending on whether the operation was successful or not
     if success:
