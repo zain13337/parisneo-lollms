@@ -602,7 +602,12 @@ class LollmsApplication(LoLLMsCom):
     def del_personality_language(self, language:str):
         if language is None or  language == "":
             return False
+        
         language = language.lower().strip().split()[0]
+        default_language = self.personality.language.lower().strip().split()[0]
+        if language == default_language:
+            return False # Can't remove the default language
+                
         language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{language}.yaml"
         if language_path.exists():
             try:

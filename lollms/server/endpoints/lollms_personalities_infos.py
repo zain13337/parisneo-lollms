@@ -301,6 +301,12 @@ def del_personality_language(request: SetLanguageRequest):
     # Access verification
     check_access(lollmsElfServer, request.client_id)
     sanitize_path(request.language)
+    language = request.language.lower().strip().split()[0]
+    default_language = lollmsElfServer.personality.language.lower().strip().split()[0]
+
+    if language==default_language:
+        lollmsElfServer.InfoMessage("It is not possible to delete the default language of a personality")
+        return
     # Calling the method to set the personality language
     if lollmsElfServer.config.turn_on_language_validation:
         if not show_yes_no_dialog("Language deletion request received","I have received a language deletion request. Are you sure?"):
