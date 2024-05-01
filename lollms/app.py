@@ -560,7 +560,7 @@ class LollmsApplication(LoLLMsCom):
         languages = []
         # Construire le chemin vers le dossier contenant les fichiers de langue pour la personnalité actuelle
         languages_dir = self.lollms_paths.personal_configuration_path / "personalities" / self.personality.name
-        
+        default_language = self.personality.language.lower().strip().split()[0]
         # Vérifier si le dossier existe
         if not languages_dir.exists():
             print(f"Le dossier {languages_dir} n'existe pas.")
@@ -570,28 +570,31 @@ class LollmsApplication(LoLLMsCom):
         for language_file in languages_dir.glob("languages_*.yaml"):
             # Extraire le code de langue depuis le nom du fichier
             language_code = language_file.stem.split("_")[-1]
-            languages.append(language_code)
+            if language_code!=default_language:
+                languages.append(language_code)
         
-        return languages
+        return [default_language]+languages
 
 
     def set_personality_language(self, language:str):
         if language is None or  language == "":
             return False
         language = language.lower().strip().split()[0]
-        language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{language}.yaml"
-        if not language_path.exists():
-            self.ShowBlockingMessage(f"This is the first time this personality seaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
-            language_path.parent.mkdir(exist_ok=True, parents=True)
-            conditionning = "!@>system: "+self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.personality_conditioning.replace('!@>system:','')}\n!@>translation:\n")
-            welcome_message = self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.welcome_message}\n!@>translation:\n")
-            with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
-                yaml.safe_dump({"conditionning":conditionning,"welcome_message":welcome_message}, f)
-            self.HideBlockingMessage()
-        else:
-            with open(language_path,"r",encoding="utf-8", errors="ignore") as f:
-                language_pack = yaml.safe_load(f)
-                conditionning = language_pack["conditionning"]
+        default_language = self.personality.language.lower().strip().split()[0]
+        if language!= default_language:
+            language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{language}.yaml"
+            if not language_path.exists():
+                self.ShowBlockingMessage(f"This is the first time this personality seaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
+                language_path.parent.mkdir(exist_ok=True, parents=True)
+                conditionning = "!@>system: "+self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.personality_conditioning.replace('!@>system:','')}\n!@>translation:\n")
+                welcome_message = self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.welcome_message}\n!@>translation:\n")
+                with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
+                    yaml.safe_dump({"conditionning":conditionning,"welcome_message":welcome_message}, f)
+                self.HideBlockingMessage()
+            else:
+                with open(language_path,"r",encoding="utf-8", errors="ignore") as f:
+                    language_pack = yaml.safe_load(f)
+                    conditionning = language_pack["conditionning"]
         self.config.current_language=language
         self.config.save_config()
         return True
@@ -641,14 +644,16 @@ class LollmsApplication(LoLLMsCom):
         current_message = messages[message_index]
 
         # Build the conditionning text block
-        if self.config.current_language and self.config.current_language.lower().strip() !="english":
-            language = self.config.current_language.lower().strip().split()[0]
-            language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{language}.yaml"
+        default_language = self.personality.language.lower().strip().split()[0]
+        current_language = self.config.current_language.lower().strip().split()[0]
+
+        if self.config.current_language and  current_language!= default_language:
+            language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{current_language}.yaml"
             if not language_path.exists():
-                self.info(f"This is the first time this personality seaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
+                self.info(f"This is the first time this personality seaks {current_language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {current_language} out of the box")
                 language_path.parent.mkdir(exist_ok=True, parents=True)
-                conditionning = "!@>system: "+self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.personality_conditioning.replace('!@>system:','')}\n!@>translation:\n")
-                welcome_message = self.personality.fast_gen(f"!@>instruction: Translate the following text to {language}:\n{self.personality.welcome_message}\n!@>translation:\n")
+                conditionning = "!@>system: "+self.personality.fast_gen(f"!@>instruction: Translate the following text to {current_language}:\n{self.personality.personality_conditioning.replace('!@>system:','')}\n!@>translation:\n")
+                welcome_message = self.personality.fast_gen(f"!@>instruction: Translate the following text to {current_language}:\n{self.personality.welcome_message}\n!@>translation:\n")
                 with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
                     yaml.safe_dump({"conditionning":conditionning,"welcome_message":welcome_message}, f)
             else:

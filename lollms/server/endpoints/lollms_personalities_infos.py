@@ -270,7 +270,7 @@ def get_current_personality_files_list(data:Identification):
     return languages_list
 
 @router.post("/get_personality_language")
-def set_personality_language(request: Identification):
+def get_personality_language(request: Identification):
     # Access verification
     check_access(lollmsElfServer, request.client_id)
     return lollmsElfServer.config.current_language
@@ -284,6 +284,7 @@ class SetLanguageRequest(BaseModel):
 def set_personality_language(request: SetLanguageRequest):
     # Access verification
     check_access(lollmsElfServer, request.client_id)
+    sanitize_path(request.language)
 
     # Calling the method to set the personality language
     success = lollmsElfServer.set_personality_language(request.language)
@@ -299,7 +300,7 @@ def set_personality_language(request: SetLanguageRequest):
 def del_personality_language(request: SetLanguageRequest):
     # Access verification
     check_access(lollmsElfServer, request.client_id)
-
+    sanitize_path(request.language)
     # Calling the method to set the personality language
     if lollmsElfServer.config.turn_on_language_validation:
         if not show_yes_no_dialog("Language deletion request received","I have received a language deletion request. Are you sure?"):
@@ -311,8 +312,6 @@ def del_personality_language(request: SetLanguageRequest):
         return {"message": f"The personality language has been successfully set to {request.language}."}
     else:
         raise HTTPException(status_code=400, detail="Failed to set the personality language")
-
-
 
 # ------------------------------------------- Mounting/Unmounting/Remounting ------------------------------------------------
 class PersonalityDataRequest(BaseModel):
