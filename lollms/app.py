@@ -568,12 +568,18 @@ class LollmsApplication(LoLLMsCom):
         
         # Itérer sur chaque fichier YAML dans le dossier
         for language_file in languages_dir.glob("languages_*.yaml"):
-            # Extraire le code de langue depuis le nom du fichier
-            language_code = language_file.stem.split("_")[-1]
-            if language_code!=default_language:
+            # Improved extraction of the language code to handle names with underscores
+            parts = language_file.stem.split("_")
+            if len(parts) > 2:
+                language_code = "_".join(parts[1:])  # Rejoin all parts after "languages"
+            else:
+                language_code = parts[-1]
+            
+            if language_code != default_language:
                 languages.append(language_code)
         
-        return [default_language]+languages
+        return [default_language] + languages
+
 
 
     def set_personality_language(self, language:str):
