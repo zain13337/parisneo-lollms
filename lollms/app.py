@@ -562,9 +562,7 @@ class LollmsApplication(LoLLMsCom):
         languages_dir = self.lollms_paths.personal_configuration_path / "personalities" / self.personality.name
         default_language = self.personality.language.lower().strip().split()[0]
         # Vérifier si le dossier existe
-        if not languages_dir.exists():
-            print(f"Le dossier {languages_dir} n'existe pas.")
-            return languages
+        languages_dir.mkdir(parents=True, exist_ok=True)
         
         # Itérer sur chaque fichier YAML dans le dossier
         for language_file in languages_dir.glob("languages_*.yaml"):

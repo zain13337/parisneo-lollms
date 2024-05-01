@@ -567,7 +567,15 @@ def select_personality(data:PersonalitySelectionInfos):
         if lollmsElfServer.personality.processor:
             lollmsElfServer.personality.processor.selected()
         ASCIIColors.success("ok")
+        
         print(f"Selected {lollmsElfServer.personality.name}")
+
+        language = lollmsElfServer.config.current_language
+        default_language = lollmsElfServer.personality.language.lower().strip().split()[0]
+
+        if language != default_language:
+            lollmsElfServer.set_personality_language(language)
+
         if lollmsElfServer.config.auto_save:
             ASCIIColors.info("Saving configuration")
             lollmsElfServer.config.save_config()
