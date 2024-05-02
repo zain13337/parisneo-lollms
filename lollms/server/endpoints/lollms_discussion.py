@@ -98,7 +98,7 @@ async def edit_title(discussion_edit_title: DiscussionEditTitle):
         client_id = discussion_edit_title.client_id
         title = discussion_edit_title.title
         discussion_id = discussion_edit_title.id
-        lollmsElfServer.session.get_client(client_id).discussion = Discussion(discussion_id, lollmsElfServer.db)
+        lollmsElfServer.session.get_client(client_id).discussion = Discussion(lollmsElfServer, discussion_id, lollmsElfServer.db)
         lollmsElfServer.session.get_client(client_id).discussion.rename(title)
         return {'status':True}
     except Exception as ex:
