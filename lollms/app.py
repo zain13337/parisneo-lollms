@@ -699,13 +699,6 @@ class LollmsApplication(LoLLMsCom):
             negative_boost=""
             n_negative_boost = 0
 
-        if self.config.current_language:
-            force_language="\n!@>important information: Answer the user in "+self.config.current_language+" and do not translate your answer to english\n"
-            n_force_language = len(self.model.tokenize(force_language))
-        else:
-            force_language=""
-            n_force_language = 0
-
         if self.config.fun_mode:
             fun_mode="\n!@>important information: Fun mode activated. In this mode you must answer in a funny playful way. Do not be serious in your answers. Each answer needs to make the user laugh.\n"
             n_fun_mode = len(self.model.tokenize(positive_boost))
