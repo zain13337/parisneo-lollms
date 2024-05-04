@@ -1090,3 +1090,22 @@ class File_Path_Generator:
             
             # If the file exists, increment the index and try again
             index += 1
+
+
+def remove_text_from_string(string: str, text_to_find:str):
+    """
+    Removes everything from the first occurrence of the specified text in the string (case-insensitive).
+
+    Parameters:
+    string (str): The original string.
+    text_to_find (str): The text to find in the string.
+
+    Returns:
+    str: The updated string.
+    """
+    index = string.lower().find(text_to_find.lower())
+
+    if index != -1:
+        string = string[:index]
+
+    return string

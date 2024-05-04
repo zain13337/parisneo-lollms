@@ -12,6 +12,7 @@ from lollms.types import MSG_TYPE, SENDER_TYPES
 from lollms.utilities import PromptReshaper
 from lollms.client_session import Client, Session
 from lollms.databases.skills_database import SkillsLibrary
+from lollms.tasks import TasksLibrary
 from safe_store import TextVectorizer, VectorizationMethod, VisualizationMethod
 from typing import Callable
 from pathlib import Path
@@ -63,7 +64,7 @@ class LollmsApplication(LoLLMsCom):
         self.session                    = Session(lollms_paths)
         self.skills_library             = SkillsLibrary(self.lollms_paths.personal_skills_path/(self.config.skills_lib_database_name+".db"))
 
-
+        self.tasks_library              = TasksLibrary(self)
         if not free_mode:
             try:
                 if config.auto_update:
