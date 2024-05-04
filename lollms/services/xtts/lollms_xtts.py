@@ -22,6 +22,7 @@ import subprocess
 import time
 import json
 import platform
+import threading
 from dataclasses import dataclass
 from PIL import Image, PngImagePlugin
 from enum import Enum
@@ -108,13 +109,14 @@ class LollmsXTTS:
                     app:LollmsApplication, 
                     xtts_base_url=None,
                     share=False,
-                    max_retries=10,
+                    max_retries=20,
                     voice_samples_path="",
                     wait_for_service=True,
                     use_deep_speed=False,
                     use_streaming_mode = True
 
                     ):
+        self.ready = False
         if xtts_base_url=="" or xtts_base_url=="http://127.0.0.1:8020":
             xtts_base_url = None
         # Get the current directory
@@ -157,8 +159,7 @@ class LollmsXTTS:
             self.process = self.run_xtts_api_server()
 
         # Wait until the service is available at http://127.0.0.1:7860/
-        if wait_for_service:
-            self.wait_for_service(max_retries=max_retries)
+        self.wait_for_service_in_another_thread(max_retries=max_retries)
 
 
     def run_xtts_api_server(self):
@@ -172,7 +173,12 @@ class LollmsXTTS:
             options += " --streaming-mode --streaming-mode-improve --stream-play-sync"
         process = run_python_script_in_env("xtts", f"-m xtts_api_server {options} -o {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}", wait= False)
         return process
-    
+
+    def wait_for_service_in_another_thread(self, max_retries=150, show_warning=True):
+        thread = threading.Thread(target=self.wait_for_service, args=(max_retries, show_warning))
+        thread.start()
+        return thread
+
     def wait_for_service(self, max_retries = 150, show_warning=True):
         url = f"{self.xtts_base_url}/languages"
         # Adjust this value as needed
@@ -186,12 +192,13 @@ class LollmsXTTS:
                     print("Service is available.")
                     if self.app is not None:
                         self.app.success("XTTS Service is now available.")
+                    self.ready = True
                     return True
             except requests.exceptions.RequestException:
                 pass
 
             retries += 1
-            time.sleep(3)
+            time.sleep(5)
             ASCIIColors.yellow("Waiting ...")
         if show_warning:
             print("Service did not become available within the given time.")
@@ -265,5 +272,9 @@ class LollmsXTTS:
         if response.status_code == 200:
             print("Request successful")
             # You can access the response data using response.json()
+            # Open a new file in binary write mode
+            with open(self.output_folder/file_name_or_path, 'wb') as file:
+                # Write the binary content to the file
+                file.write(response.content)
         else:
             print("Request failed with status code:", response.status_code)

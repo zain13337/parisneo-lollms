@@ -122,22 +122,25 @@ async def text2Audio(request: LollmsText2AudioRequest):
                                                     use_deep_speed=lollmsElfServer.config.xtts_use_deepspeed,
                                                     use_streaming_mode=lollmsElfServer.config.xtts_use_streaming_mode                                                    
                                                 )
-            language = lollmsElfServer.config.current_language# convert_language_name()
-            if voice!="main_voice":
-                voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
+            if lollmsElfServer.tts.ready:
+                language = lollmsElfServer.config.xtts_current_language# convert_language_name()
+                if voice!="main_voice":
+                    voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
+                else:
+                    voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
+                lollmsElfServer.tts.set_speaker_folder(voices_folder)
+                url = f"audio/{output_fn}"
+                preprocessed_text= add_period(request.text)
+                voice_file =  [v for v in voices_folder.iterdir() if v.stem==voice and v.suffix==".wav"]
+                if len(voice_file)==0:
+                    return {"status":False,"error":"Voice not found"}
+                if not lollmsElfServer.config.xtts_use_streaming_mode:
+                    lollmsElfServer.tts.tts_to_file(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
+                    lollmsElfServer.info(f"Voice file ready at {url}")
+                else:
+                    lollmsElfServer.tts.tts_to_audio(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
             else:
-                voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
-            lollmsElfServer.tts.set_speaker_folder(voices_folder)
-            url = f"audio/{output_fn}"
-            preprocessed_text= add_period(request.text)
-            voice_file =  [v for v in voices_folder.iterdir() if v.stem==voice]
-            if len(voice_file)==0:
-                return {"status":False,"error":"Voice not found"}
-            if not lollmsElfServer.config.xtts_use_streaming_mode:
-                lollmsElfServer.tts.tts_to_file(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
-                lollmsElfServer.info(f"Voice file ready at {url}")
-            else:
-                lollmsElfServer.tts.tts_to_audio(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
+                lollmsElfServer.InfoMessage("xtts is not up yet.\nPlease wait for it to load then try again. This may take some time.") 
                  
             return {"url": url}
         except Exception as ex:
