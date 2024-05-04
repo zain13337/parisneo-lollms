@@ -164,7 +164,6 @@ class LollmsXTTS:
 
     def run_xtts_api_server(self):
         # Get the path to the current Python interpreter
-        python_path = sys.executable
         ASCIIColors.yellow("Loading XTTS ")
         options= ""
         if self.use_deep_speed:
@@ -192,6 +191,7 @@ class LollmsXTTS:
                     print("Service is available.")
                     if self.app is not None:
                         self.app.success("XTTS Service is now available.")
+                    self.tts_to_audio("xtts is ready",)
                     self.ready = True
                     return True
             except requests.exceptions.RequestException:
@@ -251,7 +251,7 @@ class LollmsXTTS:
         else:
             print("Request failed with status code:", response.status_code)
 
-    def tts_to_audio(self, text, speaker_wav, file_name_or_path, language="en"):
+    def tts_to_audio(self, text, speaker_wav, file_name_or_path:Path|str=None, language="en"):
         url = f"{self.xtts_base_url}/tts_to_audio"
 
         # Define the request body
@@ -273,8 +273,9 @@ class LollmsXTTS:
             print("Request successful")
             # You can access the response data using response.json()
             # Open a new file in binary write mode
-            with open(self.output_folder/file_name_or_path, 'wb') as file:
-                # Write the binary content to the file
-                file.write(response.content)
+            if file_name_or_path is not None:
+                with open(self.output_folder/file_name_or_path, 'wb') as file:
+                    # Write the binary content to the file
+                    file.write(response.content)
         else:
             print("Request failed with status code:", response.status_code)
