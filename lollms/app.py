@@ -596,7 +596,6 @@ class LollmsApplication(LoLLMsCom):
                 self.ShowBlockingMessage(f"This is the first time this personality speaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
                 language_path.parent.mkdir(exist_ok=True, parents=True)
                 # Translating
-                current_language = self.config.current_language
                 conditionning = self.tasks_library.translate_conditionning(self.personality._personality_conditioning, self.personality.language, current_language)
                 welcome_message = self.tasks_library.translate_message(self.personality.welcome_message, self.personality.language, current_language)
                 with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
