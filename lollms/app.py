@@ -560,8 +560,6 @@ class LollmsApplication(LoLLMsCom):
         languages = []
         # Construire le chemin vers le dossier contenant les fichiers de langue pour la personnalité actuelle
         languages_dir = self.lollms_paths.personal_configuration_path / "personalities" / self.personality.name
-        if self.personality.language is None:
-            self.personality.language="english"
         default_language = self.personality.language.lower().strip().split()[0]
         # Vérifier si le dossier existe
         languages_dir.mkdir(parents=True, exist_ok=True)
@@ -879,7 +877,7 @@ class LollmsApplication(LoLLMsCom):
 
 
         # Calculate the total number of tokens between conditionning, documentation, and knowledge
-        total_tokens = n_cond_tk + n_isearch_tk + n_doc_tk + n_history_tk + n_user_description_tk + n_positive_boost + n_negative_boost + n_force_language + n_fun_mode
+        total_tokens = n_cond_tk + n_isearch_tk + n_doc_tk + n_history_tk + n_user_description_tk + n_positive_boost + n_negative_boost + n_fun_mode
 
         # Calculate the available space for the messages
         available_space = min(self.config.ctx_size - n_tokens - total_tokens, self.config.max_n_predict)
@@ -975,7 +973,7 @@ class LollmsApplication(LoLLMsCom):
         else:
             ai_prefix = ""
         # Build the final prompt by concatenating the conditionning and discussion messages
-        prompt_data = conditionning + internet_search_results + documentation + knowledge + user_description + discussion_messages + positive_boost + negative_boost + force_language + fun_mode + ai_prefix
+        prompt_data = conditionning + internet_search_results + documentation + knowledge + user_description + discussion_messages + positive_boost + negative_boost + fun_mode + ai_prefix
 
         # Tokenize the prompt data
         tokens = self.model.tokenize(prompt_data)
@@ -1012,7 +1010,6 @@ class LollmsApplication(LoLLMsCom):
             "discussion_messages":discussion_messages,
             "positive_boost":positive_boost,
             "negative_boost":negative_boost,
-            "force_language":force_language,
             "fun_mode":fun_mode,
             "ai_prefix":ai_prefix
         }    
