@@ -587,8 +587,6 @@ class LollmsApplication(LoLLMsCom):
         language = language.lower().strip().split()[0]
         # Build the conditionning text block
         default_language = self.personality.language.lower().strip().split()[0]
-        current_language = language
-
 
         if language!= default_language:
             language_path = self.lollms_paths.personal_configuration_path/"personalities"/self.personality.name/f"languages_{language}.yaml"
@@ -596,8 +594,8 @@ class LollmsApplication(LoLLMsCom):
                 self.ShowBlockingMessage(f"This is the first time this personality speaks {language}\nLollms is reconditionning the persona in that language.\nThis will be done just once. Next time, the personality will speak {language} out of the box")
                 language_path.parent.mkdir(exist_ok=True, parents=True)
                 # Translating
-                conditionning = self.tasks_library.translate_conditionning(self.personality._personality_conditioning, self.personality.language, current_language)
-                welcome_message = self.tasks_library.translate_message(self.personality.welcome_message, self.personality.language, current_language)
+                conditionning = self.tasks_library.translate_conditionning(self.personality._personality_conditioning, self.personality.language, language)
+                welcome_message = self.tasks_library.translate_message(self.personality.welcome_message, self.personality.language, language)
                 with open(language_path,"w",encoding="utf-8", errors="ignore") as f:
                     yaml.safe_dump({"conditionning":conditionning,"welcome_message":welcome_message}, f)
                 self.HideBlockingMessage()
