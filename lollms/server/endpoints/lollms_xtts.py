@@ -58,7 +58,7 @@ async def set_voice(request: Request):
 
     try:
         data = (await request.json())
-        lollmsElfServer.config.current_voice=data["voice"]
+        lollmsElfServer.config.xtts_current_voice=data["voice"]
         if lollmsElfServer.config.auto_save:
             lollmsElfServer.config.save_config()
         return {"status":True}
@@ -106,7 +106,7 @@ async def text2Audio(request: LollmsText2AudioRequest):
         except Exception as ex:
             return {"url": None, "error":f"{ex}"}
             
-        voice=lollmsElfServer.config.current_voice if request.voice is None else request.voice
+        voice=lollmsElfServer.config.xtts_current_voice if request.voice is None else request.voice
         index = find_first_available_file_index(lollmsElfServer.tts.output_folder, "voice_sample_",".wav")
         output_fn=f"voice_sample_{index}.wav" if request.fn is None else request.fn
         if voice is None:
@@ -133,9 +133,12 @@ async def text2Audio(request: LollmsText2AudioRequest):
             voice_file =  [v for v in voices_folder.iterdir() if v.stem==voice]
             if len(voice_file)==0:
                 return {"status":False,"error":"Voice not found"}
-
-            lollmsElfServer.tts.tts_to_file(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
-            lollmsElfServer.info(f"Voice file ready at {url}")
+            if not lollmsElfServer.config.xtts_use_streaming_mode:
+                lollmsElfServer.tts.tts_to_file(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
+                lollmsElfServer.info(f"Voice file ready at {url}")
+            else:
+                lollmsElfServer.tts.tts_to_audio(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
+                 
             return {"url": url}
         except Exception as ex:
             trace_exception(ex)
@@ -205,7 +208,7 @@ async def upload_voice_file(file: UploadFile = File(...)):
     safe_file_path = lollmsElfServer.lollms_paths.custom_voices_path/safe_filename
     with safe_file_path.open("wb") as f:
         f.write(contents)
-    lollmsElfServer.config.current_voice=safe_filename
+    lollmsElfServer.config.xtts_current_voice=safe_filename
     if lollmsElfServer.config.auto_save:
         lollmsElfServer.config.save_config()
 

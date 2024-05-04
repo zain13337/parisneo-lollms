@@ -167,9 +167,9 @@ class LollmsXTTS:
         ASCIIColors.yellow("Loading XTTS ")
         options= ""
         if self.use_deep_speed:
-            options += "--deepspeed"
+            options += " --deepspeed"
         if self.use_streaming_mode:
-            options += "--streaming-mode --streaming-mode-improve --stream-play-sync"
+            options += " --streaming-mode --streaming-mode-improve --stream-play-sync"
         process = run_python_script_in_env("xtts", f"-m xtts_api_server {options} -o {self.output_folder} -sf {self.voice_samples_path} -p {self.xtts_base_url.split(':')[-1].replace('/','')}", wait= False)
         return process
     
@@ -228,6 +228,30 @@ class LollmsXTTS:
             "speaker_wav": speaker_wav,
             "language": language,
             "file_name_or_path": file_name_or_path
+        }
+        headers = {
+            'accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        # Send the POST request
+        response =  requests.post(url, headers=headers, data=json.dumps(payload))
+
+        # Check the response status code
+        if response.status_code == 200:
+            print("Request successful")
+            # You can access the response data using response.json()
+        else:
+            print("Request failed with status code:", response.status_code)
+
+    def tts_to_audio(self, text, speaker_wav, file_name_or_path, language="en"):
+        url = f"{self.xtts_base_url}/tts_to_audio"
+
+        # Define the request body
+        payload = {
+            "text": text,
+            "speaker_wav": speaker_wav,
+            "language": language
         }
         headers = {
             'accept': 'application/json',
