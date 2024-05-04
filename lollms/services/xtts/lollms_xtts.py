@@ -110,12 +110,13 @@ class LollmsXTTS:
                     xtts_base_url=None,
                     share=False,
                     max_retries=20,
+                    voices_folder=None,
                     voice_samples_path="",
                     wait_for_service=True,
                     use_deep_speed=False,
                     use_streaming_mode = True
-
-                    ):
+                ):
+        self.voices_folder = voices_folder
         self.ready = False
         if xtts_base_url=="" or xtts_base_url=="http://127.0.0.1:8020":
             xtts_base_url = None
@@ -159,7 +160,8 @@ class LollmsXTTS:
             self.process = self.run_xtts_api_server()
 
         # Wait until the service is available at http://127.0.0.1:7860/
-        self.wait_for_service_in_another_thread(max_retries=max_retries)
+        if wait_for_service:
+            self.wait_for_service_in_another_thread(max_retries=max_retries)
 
 
     def run_xtts_api_server(self):
@@ -191,7 +193,8 @@ class LollmsXTTS:
                     print("Service is available.")
                     if self.app is not None:
                         self.app.success("XTTS Service is now available.")
-                    self.tts_to_audio("xtts is ready",)
+                    voice_file =  [v for v in self.voices_folder.iterdir() if v.suffix==".wav"]
+                    self.tts_to_audio("xtts is ready",voice_file[0])
                     self.ready = True
                     return True
             except requests.exceptions.RequestException:

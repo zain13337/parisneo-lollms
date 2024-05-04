@@ -114,9 +114,14 @@ async def text2Audio(request: LollmsText2AudioRequest):
         lollmsElfServer.info("Starting to build voice")
         try:
             from lollms.services.xtts.lollms_xtts import LollmsXTTS
+            if voice!="main_voice":
+                voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
+            else:
+                voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
             if lollmsElfServer.tts is None:
                 lollmsElfServer.tts = LollmsXTTS(
                                                     lollmsElfServer, 
+                                                    voices_folder=voices_folder,
                                                     voice_samples_path=Path(__file__).parent/"voices", 
                                                     xtts_base_url= lollmsElfServer.config.xtts_base_url,
                                                     use_deep_speed=lollmsElfServer.config.xtts_use_deepspeed,
@@ -124,10 +129,6 @@ async def text2Audio(request: LollmsText2AudioRequest):
                                                 )
             if lollmsElfServer.tts.ready:
                 language = lollmsElfServer.config.xtts_current_language# convert_language_name()
-                if voice!="main_voice":
-                    voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
-                else:
-                    voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
                 lollmsElfServer.tts.set_speaker_folder(voices_folder)
                 url = f"audio/{output_fn}"
                 preprocessed_text= add_period(request.text)
