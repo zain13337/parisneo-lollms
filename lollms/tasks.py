@@ -237,7 +237,7 @@ class TasksLibrary:
         cond_translation = f"```{language}\n"+self.fast_gen(message_translation_text, temperature=0.1, callback=self.sink)
         response = self.extract_code_blocks(cond_translation)
         if len(response)>0 and len(response[0]["content"])>0:
-            translated = "!@>system: "+response[0]["content"]
+            translated = response[0]["content"]
         else:
             ASCIIColors.print(f"Failed to translate the message. Reverting to english conditionning with a request to use the lanuage {language}")
             message_translation_text = f"!@>instruction: Translate the following message to {language}.\nDo not translate any css or code, just the text and strings.\n!@>message:\n{prompt.replace('!@>','')}\n!@>translation:\n"
