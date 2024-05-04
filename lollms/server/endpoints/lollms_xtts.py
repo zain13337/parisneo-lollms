@@ -160,6 +160,7 @@ def install_xtts():
         lollmsElfServer.HideBlockingMessage()
         return {"status":True}
     except Exception as ex:
+        trace_exception(ex)
         lollmsElfServer.HideBlockingMessage()
         return {"status":False, 'error':str(ex)}
 
@@ -178,6 +179,7 @@ def start_xtts():
             )
         lollmsElfServer.HideBlockingMessage()
     except Exception as ex:
+        trace_exception(ex)
         lollmsElfServer.HideBlockingMessage()
         return {"url": None, "error":f"{ex}"}
 

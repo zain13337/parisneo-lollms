@@ -87,7 +87,7 @@ xtts_use_deepspeed: false
 xtts_use_streaming_mode: true
 auto_read: false
 current_voice: null
-current_language: en
+xtts_current_language: en
 
 # Image generation service
 enable_sd_service: false

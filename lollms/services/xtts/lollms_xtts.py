@@ -29,7 +29,7 @@ from typing import List, Dict, Any
 
 from ascii_colors import ASCIIColors, trace_exception
 from lollms.paths import LollmsPaths
-from lollms.utilities import git_pull, show_yes_no_dialog, run_python_script_in_env, create_conda_env, run_pip_in_env
+from lollms.utilities import git_pull, show_yes_no_dialog, run_python_script_in_env, create_conda_env, run_pip_in_env, environment_exists
 import subprocess
 import platform
 
@@ -37,29 +37,51 @@ def verify_xtts(lollms_paths:LollmsPaths):
     # Clone repository
     root_dir = lollms_paths.personal_path
     shared_folder = root_dir/"shared"
-    xtts_folder = shared_folder / "xtts"
-    return xtts_folder.exists()
+    xtts_path = shared_folder / "xtts"
+    return xtts_path.exists()
     
 def install_xtts(lollms_app:LollmsApplication):
     ASCIIColors.green("XTTS installation started")
-
+    repo_url = "https://github.com/ParisNeo/xtts-api-server"
     root_dir = lollms_app.lollms_paths.personal_path
     shared_folder = root_dir/"shared"
-    xtts_folder = shared_folder / "xtts"
-    if xtts_folder.exists() and PackageManager.check_package_installed("xtts-api-server"):
-        if not show_yes_no_dialog("warning!","It looks like xtts is already installed on your system.\nDo you want to reinstall it?"):
-            lollms_app.error("Service installation canceled")
-            return
-    
-    lollms_app.ShowBlockingMessage("Creating xtts environment")
-    ASCIIColors.cyan("Installing autosd conda environment with python 3.10")
-    create_conda_env("xtts","3.10")
+    xtts_path = shared_folder / "xtts"
+
+    # Step 1: Clone or update the repository
+    if os.path.exists(xtts_path):
+        print("Repository already exists. Pulling latest changes...")
+        try:
+            subprocess.run(["git", "-C", xtts_path, "pull"], check=True)
+        except:
+            subprocess.run(["git", "clone", repo_url, xtts_path], check=True)
+
+    else:
+        print("Cloning repository...")
+        subprocess.run(["git", "clone", repo_url, xtts_path], check=True)
+
+    # Step 2: Create or update the Conda environment
+    if environment_exists("xtts"):
+        print("Conda environment 'xtts' already exists. Updating...")
+        # Here you might want to update the environment, e.g., update Python or dependencies
+        # This step is highly dependent on how you manage your Conda environments and might involve
+        # running `conda update` commands or similar.
+    else:
+        print("Creating Conda environment 'xtts'...")
+        create_conda_env("xtts", "3.8")
+
+    # Step 3: Install or update dependencies using your custom function
+    requirements_path = os.path.join(xtts_path, "requirements.txt")
+    run_pip_in_env("xtts", f"install -r {requirements_path}", cwd=xtts_path)
+    run_pip_in_env("xtts", f"install torch==2.1.1+cu118 torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118", cwd=xtts_path)
+
+    # Step 4: Launch the server
+    # Assuming the server can be started with a Python script in the cloned repository
+    print("Launching XTTS API server...")
+    run_python_script_in_env("xtts", "xtts_api_server", cwd=xtts_path)
+
+    print("XTTS API server setup and launch completed.")
     ASCIIColors.cyan("Done")
     ASCIIColors.cyan("Installing xtts-api-server")
-    run_pip_in_env("xtts", "install --upgrade xtts-api-server")
-    run_pip_in_env("xtts", "install --upgrade torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118")
-    ASCIIColors.cyan("Done")
-    xtts_folder.mkdir(exist_ok=True,parents=True)
     ASCIIColors.green("XTTS server installed successfully")
 
 
@@ -67,9 +89,9 @@ def install_xtts(lollms_app:LollmsApplication):
 def get_xtts(lollms_paths:LollmsPaths):
     root_dir = lollms_paths.personal_path
     shared_folder = root_dir/"shared"
-    xtts_folder = shared_folder / "xtts"
-    xtts_script_path = xtts_folder / "lollms_xtts.py"
-    git_pull(xtts_folder)
+    xtts_path = shared_folder / "xtts"
+    xtts_script_path = xtts_path / "lollms_xtts.py"
+    git_pull(xtts_path)
     
     if xtts_script_path.exists():
         ASCIIColors.success("lollms_xtts found.")
@@ -113,7 +135,7 @@ class LollmsXTTS:
 
         self.auto_xtts_url = self.xtts_base_url+"/sdapi/v1"
         shared_folder = root_dir/"shared"
-        self.xtts_folder = shared_folder / "xtts"
+        self.xtts_path = shared_folder / "xtts"
 
         ASCIIColors.red("   __    ___  __    __          __     __  ___   _        ")
         ASCIIColors.red("  / /   /___\/ /   / /   /\/\  / _\    \ \/ / |_| |_ ___  ")

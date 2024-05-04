@@ -82,7 +82,7 @@ enable_voice_service: false
 xtts_base_url: http://localhost:8020
 auto_read: false
 current_voice: null
-current_language: en
+xtts_current_language: en
 
 # Image generation service
 enable_sd_service: false

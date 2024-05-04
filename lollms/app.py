@@ -353,28 +353,7 @@ class LollmsApplication(LoLLMsCom):
                 self.cancel_gen = False
                 ASCIIColors.warning("Generation canceled")
                 return False
-                
-    def learn_from_discussion(self, title, discussion, nb_gen=None, callback=None):
-        if self.config.summerize_discussion:
-            prompt = f"!@>discussion:\n--\n!@>title:{title}!@>content:\n{discussion}\n--\n!@>question:What should we learn from this discussion?!@>Summerizer: Here is a summary of the most important informations extracted from the discussion:\n"
-            if nb_gen is None:
-                nb_gen = self.config.max_summary_size
-            generated = ""
-            gen_infos={
-                "nb_received_tokens":0,
-                "generated_text":"",
-                "processing":False,
-                "first_chunk": True,
-            }
-            if callback is None:
-                callback = partial(self.default_callback, generation_infos=gen_infos)
-            self.model.generate(prompt, nb_gen, callback)
-            if self.config.debug:
-                ASCIIColors.yellow(gen_infos["generated_text"])
-            return gen_infos["generated_text"]
-        else:
-            return  discussion
-    
+   
     def remove_text_from_string(self, string, text_to_find):
         """
         Removes everything from the first occurrence of the specified text in the string (case-insensitive).
@@ -679,7 +658,7 @@ class LollmsApplication(LoLLMsCom):
         else:
             conditionning = self.personality._personality_conditioning
 
-        conditionning = self.personality.replace_keys(conditionning, self.personality.conditionning_commands)
+        conditionning = self.personality.replace_keys(conditionning, self.personality.conditionning_commands) +"" if conditionning[-1]=="\n" else "\n"
 
         # Check if there are document files to add to the prompt
         internet_search_results = ""

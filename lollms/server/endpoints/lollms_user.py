@@ -55,6 +55,7 @@ def switch_personal_path(data:PersonalPathParameters):
 
         
 @router.post("/upload_avatar")
+@router.post("/upload_logo")
 async def upload_avatar(avatar: UploadFile = File(...)):
     """
     Uploads a user avatar file to a dedicated directory, preventing path traversal attacks.
