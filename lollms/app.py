@@ -665,7 +665,8 @@ class LollmsApplication(LoLLMsCom):
         else:
             conditionning = self.personality._personality_conditioning
 
-        conditionning = self.personality.replace_keys(conditionning, self.personality.conditionning_commands) +"" if conditionning[-1]=="\n" else "\n"
+        if len(conditionning)>0:
+            conditionning = self.personality.replace_keys(conditionning, self.personality.conditionning_commands) +"" if conditionning[-1]=="\n" else "\n"
 
         # Check if there are document files to add to the prompt
         internet_search_results = ""
