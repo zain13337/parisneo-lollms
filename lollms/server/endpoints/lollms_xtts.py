@@ -150,7 +150,6 @@ async def text2Audio(request: LollmsText2AudioRequest):
             else:
                 lollmsElfServer.InfoMessage("xtts is not up yet.\nPlease wait for it to load then try again. This may take some time.") 
                 return  {"status":False, "error":"Service not ready yet"} 
-            return {"url": url}
         except Exception as ex:
             trace_exception(ex)
             return {"url": None}

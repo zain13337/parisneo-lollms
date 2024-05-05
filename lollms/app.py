@@ -26,6 +26,7 @@ import sys, os
 import platform
 import gc
 import yaml
+import time
 class LollmsApplication(LoLLMsCom):
     def __init__(
                     self, 
@@ -265,7 +266,15 @@ class LollmsApplication(LoLLMsCom):
                 trace_exception(ex)
                 self.warning(f"Couldn't load vllm")
 
-
+        if self.config.whisper_activate:
+            try:
+                from lollms.media import AudioRecorder
+                self.rec = AudioRecorder(self.lollms_paths.personal_outputs_path/"test.wav")
+                self.rec.start_recording()
+                time.sleep(1)
+                self.rec.stop_recording()
+            except:
+                pass
         if self.config.xtts_enable:
             try:
                 from lollms.services.xtts.lollms_xtts import LollmsXTTS
