@@ -161,6 +161,8 @@ class LollmsXTTS:
 
         # Wait until the service is available at http://127.0.0.1:7860/
         if wait_for_service:
+            self.wait_for_service()
+        else:
             self.wait_for_service_in_another_thread(max_retries=max_retries)
 
 
@@ -181,28 +183,32 @@ class LollmsXTTS:
         return thread
 
     def wait_for_service(self, max_retries = 150, show_warning=True):
+        print(f"Waiting for xtts service (max_retries={max_retries})")
         url = f"{self.xtts_base_url}/languages"
         # Adjust this value as needed
         retries = 0
 
         while retries < max_retries or max_retries<0:
-            
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
+                    print(f"voices_folder is {self.voices_folder}.")
+                    if self.voices_folder is not None:
+                        print("Senerating sample audio.")
+                        voice_file =  [v for v in self.voices_folder.iterdir() if v.suffix==".wav"]
+                        self.tts_to_audio("xtts is ready",voice_file[0].name)
                     print("Service is available.")
                     if self.app is not None:
                         self.app.success("XTTS Service is now available.")
-                    voice_file =  [v for v in self.voices_folder.iterdir() if v.suffix==".wav"]
-                    self.tts_to_audio("xtts is ready",voice_file[0])
                     self.ready = True
                     return True
-            except requests.exceptions.RequestException:
+            except:
                 pass
 
             retries += 1
+            ASCIIColors.yellow("Waiting for xtts...")
             time.sleep(5)
-            ASCIIColors.yellow("Waiting ...")
+
         if show_warning:
             print("Service did not become available within the given time.")
             if self.app is not None:

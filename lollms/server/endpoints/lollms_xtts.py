@@ -95,9 +95,17 @@ async def text2Audio(request: LollmsText2AudioRequest):
         # Get the JSON data from the POST request.
         try:
             from lollms.services.xtts.lollms_xtts import LollmsXTTS
+            voice=lollmsElfServer.config.xtts_current_voice
             if lollmsElfServer.tts is None:
+                voice=lollmsElfServer.config.xtts_current_voice
+                if voice!="main_voice":
+                    voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
+                else:
+                    voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
+
                 lollmsElfServer.tts = LollmsXTTS(
                     lollmsElfServer, 
+                    voices_folder=voices_folder,
                     voice_samples_path=Path(__file__).parent/"voices", 
                     xtts_base_url= lollmsElfServer.config.xtts_base_url,
                     use_deep_speed= lollmsElfServer.config.xtts_use_deep_speed,
@@ -142,7 +150,7 @@ async def text2Audio(request: LollmsText2AudioRequest):
                     lollmsElfServer.tts.tts_to_audio(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
             else:
                 lollmsElfServer.InfoMessage("xtts is not up yet.\nPlease wait for it to load then try again. This may take some time.") 
-                 
+                return  {"status":False, "error":"Service not ready yet"} 
             return {"url": url}
         except Exception as ex:
             trace_exception(ex)
@@ -177,8 +185,15 @@ def start_xtts():
         lollmsElfServer.ShowBlockingMessage("Starting xTTS api server\nPlease stand by")
         from lollms.services.xtts.lollms_xtts import LollmsXTTS
         if lollmsElfServer.tts is None:
+            voice=lollmsElfServer.config.xtts_current_voice
+            if voice!="main_voice":
+                voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
+            else:
+                voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
+
             lollmsElfServer.tts = LollmsXTTS(
                 lollmsElfServer, 
+                voices_folder=voices_folder,
                 voice_samples_path=Path(__file__).parent/"voices", 
                 xtts_base_url= lollmsElfServer.config.xtts_base_url,
                 use_deep_speed=lollmsElfServer.config.xtts_use_deepspeed,

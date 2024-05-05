@@ -269,8 +269,15 @@ class LollmsApplication(LoLLMsCom):
         if self.config.enable_voice_service:
             try:
                 from lollms.services.xtts.lollms_xtts import LollmsXTTS
+                voice=self.config.xtts_current_voice
+                if voice!="main_voice":
+                    voices_folder = self.lollms_paths.custom_voices_path
+                else:
+                    voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"
+
                 self.tts = LollmsXTTS(
-                                        self, 
+                                        self,
+                                        voices_folder=voices_folder,
                                         voice_samples_path=self.lollms_paths.custom_voices_path, 
                                         xtts_base_url=self.config.xtts_base_url,
                                         wait_for_service=False,

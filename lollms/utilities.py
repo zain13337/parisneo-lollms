@@ -178,7 +178,8 @@ def process_ai_output(output, images, output_folder):
             cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
         # Save the modified image
-        output_path = Path(output_folder)/f"image_{image_index}.jpg"
+        random_stuff = np.random
+        output_path = Path(output_folder)/f"image_{image_index}_{random_stuff}.jpg"
         cv2.imwrite(str(output_path), image)
 
     # Remove bounding box text from the output
