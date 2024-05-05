@@ -123,7 +123,10 @@ async def text2Audio(request: LollmsText2AudioRequest):
         try:
             from lollms.services.xtts.lollms_xtts import LollmsXTTS
             # If the personality has a voice, then use it
-            if voice!="main_voice":
+            personality_audio:Path = lollmsElfServer.personality.personality_package_path/"audio"
+            if personality_audio.exists() and len([v for v in personality_audio.iterdir()])>0:
+                voices_folder = personality_audio
+            elif voice!="main_voice":
                 voices_folder = lollmsElfServer.lollms_paths.custom_voices_path
             else:
                 voices_folder = Path(__file__).parent.parent.parent/"services/xtts/voices"

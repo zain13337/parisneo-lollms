@@ -1,5 +1,5 @@
 # =================== Lord Of Large Language Multimodal Systems Configuration file =========================== 
-version: 90
+version: 91
 binding_name: null
 model_name: null
 model_variant: null
@@ -186,4 +186,5 @@ activate_audio_infos: true
 
 
 # whisper configuration
+whisper_activate: false
 whisper_model: base

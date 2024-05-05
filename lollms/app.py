@@ -266,7 +266,7 @@ class LollmsApplication(LoLLMsCom):
                 self.warning(f"Couldn't load vllm")
 
 
-        if self.config.enable_voice_service:
+        if self.config.xtts_enable:
             try:
                 from lollms.services.xtts.lollms_xtts import LollmsXTTS
                 voice=self.config.xtts_current_voice
