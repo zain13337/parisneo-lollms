@@ -406,6 +406,147 @@ async def v1_chat_completions(request: ChatGenerationRequest):
         elf_server.error(ex)
         return {"status":False,"error":str(ex)}
 
+class OllamaModelResponse(BaseModel):
+    id: str
+    """A unique identifier for the completion."""
+
+    choices: List[Choices]
+    """The list of completion choices the model generated for the input prompt."""
+
+    created: int
+    """The Unix timestamp (in seconds) of when the completion was created."""
+
+    model: Optional[str] = None
+    """The model used for completion."""
+
+    object: Optional[str] = "text_completion"
+    """The object type, which is always "text_completion" """
+
+    system_fingerprint: Optional[str] = None
+    """This fingerprint represents the backend configuration that the model runs with.
+
+    Can be used in conjunction with the `seed` request parameter to understand when
+    backend changes have been made that might impact determinism.
+    """
+
+    usage: Optional[Usage] = None
+    """Usage statistics for the completion request."""
+
+
+@router.post("/api/chat")
+async def ollama_chat_completion(request: ChatGenerationRequest):
+    try:
+        reception_manager=RECEPTION_MANAGER()
+        messages = request.messages
+        max_tokens = request.max_tokens if request.max_tokens>0 else elf_server.config.max_n_predict
+        temperature = request.temperature if  elf_server.config.temperature else elf_server.config.temperature
+        prompt = ""
+        roles= False
+        for message in messages:
+            if message.role!="":
+                prompt += f"!@>{message.role}: {message.content}\n"
+                roles = True
+            else:
+                prompt += f"{message.content}\n"
+        if roles:
+            prompt += "!@>assistant:"
+        n_predict = max_tokens if max_tokens>0 else 1024
+        stream = request.stream
+        prompt_tokens = len(elf_server.binding.tokenize(prompt))
+        if elf_server.binding is not None:
+            if stream:
+                new_output={"new_values":[]}
+                async def generate_chunks():
+                    lk = threading.Lock()
+
+                    def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                        if elf_server.cancel_gen:
+                            return False
+                        
+                        if chunk is None:
+                            return
+
+                        rx = reception_manager.new_chunk(chunk)
+                        if rx.status!=ROLE_CHANGE_DECISION.MOVE_ON:
+                            if rx.status==ROLE_CHANGE_DECISION.PROGRESSING:
+                                return True
+                            elif rx.status==ROLE_CHANGE_DECISION.ROLE_CHANGED:
+                                return False
+                            else:
+                                chunk = chunk + rx.value
+
+                        # Yield each chunk of data
+                        lk.acquire()
+                        try:
+                            new_output["new_values"].append(reception_manager.chunk)
+                            lk.release()
+                            return True
+                        except Exception as ex:
+                            trace_exception(ex)
+                            lk.release()
+                            return False
+                        
+                    def chunks_builder():
+                        elf_server.binding.generate(
+                                                prompt, 
+                                                n_predict, 
+                                                callback=callback, 
+                                                temperature=temperature
+                                            )
+                        reception_manager.done = True
+                    thread = threading.Thread(target=chunks_builder)
+                    thread.start()
+                    current_index = 0
+                    while (not reception_manager.done and elf_server.cancel_gen == False):
+                        while (not reception_manager.done and len(new_output["new_values"])==0):
+                            time.sleep(0.001)
+                        lk.acquire()
+                        for i in range(len(new_output["new_values"])):
+                            output_val = StreamingModelResponse(
+                                id = _generate_id(), 
+                                choices = [StreamingChoices(index= current_index, delta=Delta(content=new_output["new_values"][i]))], 
+                                created=int(time.time()),
+                                model=elf_server.config.model_name,
+                                object="chat.completion.chunk",
+                                usage=Usage(prompt_tokens= prompt_tokens, completion_tokens= 1)
+                                )
+                            current_index += 1                        
+                            yield (output_val.json() + '\n')
+                        new_output["new_values"]=[]
+                        lk.release()
+                    elf_server.cancel_gen = False         
+                return StreamingResponse(generate_chunks(), media_type="application/json")
+            else:
+                def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                    # Yield each chunk of data
+                    if chunk is None:
+                        return True
+
+                    rx = reception_manager.new_chunk(chunk)
+                    if rx.status!=ROLE_CHANGE_DECISION.MOVE_ON:
+                        if rx.status==ROLE_CHANGE_DECISION.PROGRESSING:
+                            return True
+                        elif rx.status==ROLE_CHANGE_DECISION.ROLE_CHANGED:
+                            return False
+                        else:
+                            chunk = chunk + rx.value
+
+
+                    return True
+                elf_server.binding.generate(
+                                                prompt, 
+                                                n_predict, 
+                                                callback=callback,
+                                                temperature=temperature
+                                            )
+                completion_tokens = len(elf_server.binding.tokenize(reception_manager.reception_buffer))
+                return OllamaModelResponse(id = _generate_id(), choices = [Choices(message=Message(role="assistant", content=reception_manager.reception_buffer), finish_reason="stop", index=0)], created=int(time.time()), model=request.model,usage=Usage(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens))
+        else:
+            return None
+    except Exception as ex:
+        trace_exception(ex)
+        elf_server.error(ex)
+        return {"status":False,"error":str(ex)}
 
 class CompletionGenerationRequest(BaseModel):
     model: Optional[str] = ""
@@ -413,6 +554,76 @@ class CompletionGenerationRequest(BaseModel):
     max_tokens: Optional[int] = -1
     stream: Optional[bool] = False
     temperature: Optional[float] = -1
+
+
+@router.post("/api/generate")
+async def ollama_generate(request: CompletionGenerationRequest):
+    """
+    Executes Python code and returns the output.
+
+    :param request: The HTTP request object.
+    :return: A JSON response with the status of the operation.
+    """
+    try:
+        text = request.prompt
+        n_predict = request.max_tokens if request.max_tokens>=0 else elf_server.config.max_n_predict
+        temperature = request.temperature if request.temperature>=0 else elf_server.config.temperature
+        # top_k = request.top_k if request.top_k>=0 else elf_server.config.top_k
+        # top_p = request.top_p if request.top_p>=0 else elf_server.config.top_p
+        # repeat_last_n = request.repeat_last_n if request.repeat_last_n>=0 else elf_server.config.repeat_last_n
+        # repeat_penalty = request.repeat_penalty if request.repeat_penalty>=0 else elf_server.config.repeat_penalty
+        stream = request.stream
+        
+        if elf_server.binding is not None:
+            if stream:
+                output = {"text":""}
+                def generate_chunks():
+                    def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                        # Yield each chunk of data
+                        output["text"] += chunk
+                        antiprompt = detect_antiprompt(output["text"])
+                        if antiprompt:
+                            ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
+                            output["text"] = remove_text_from_string(output["text"],antiprompt)
+                            return False
+                        else:
+                            yield chunk
+                            return True
+                    return iter(elf_server.binding.generate(
+                                                text, 
+                                                n_predict, 
+                                                callback=callback, 
+                                                temperature=temperature,
+                            ))
+                
+                return StreamingResponse(generate_chunks())
+            else:
+                output = {"text":""}
+                def callback(chunk, chunk_type:MSG_TYPE=MSG_TYPE.MSG_TYPE_CHUNK):
+                    # Yield each chunk of data
+                    output["text"] += chunk
+                    antiprompt = detect_antiprompt(output["text"])
+                    if antiprompt:
+                        ASCIIColors.warning(f"\n{antiprompt} detected. Stopping generation")
+                        output["text"] = remove_text_from_string(output["text"],antiprompt)
+                        return False
+                    else:
+                        return True
+                elf_server.binding.generate(
+                                                text, 
+                                                n_predict, 
+                                                callback=callback,
+                                                temperature=request.temperature if request.temperature>=0 else elf_server.config.temperature
+                                            )
+                return output["text"]
+        else:
+            return None
+    except Exception as ex:
+        trace_exception(ex)
+        elf_server.error(ex)
+        return {"status":False,"error":str(ex)}
+
+
 
 
 @router.post("/instruct/generate")
