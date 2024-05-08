@@ -165,9 +165,13 @@ class LollmsApplication(LoLLMsCom):
         messages = client.discussion.get_messages()
 
         # Extract relevant information from messages
-        def cb(str, MSG_TYPE, dict, list):
-            self.ShowBlockingMessage(f"Learning\n{str}")
+        def cb(str, MSG_TYPE_=MSG_TYPE.MSG_TYPE_FULL, dict=None, list=None):
+            if MSG_TYPE_!=MSG_TYPE.MSG_TYPE_CHUNK:
+                self.ShowBlockingMessage(f"Learning\n{str}")
+        bk_cb = self.tasks_library.callback
+        self.tasks_library.callback = cb
         content = self._extract_content(messages, cb)
+        self.tasks_library.callback = bk_cb
 
         # Generate title
         title_prompt =  "\n".join([
@@ -707,7 +711,7 @@ class LollmsApplication(LoLLMsCom):
                     docs, sorted_similarities, document_ids = self.personality.internet_search_with_vectorization(query, self.config.internet_quick_search)
                     for doc, infos,document_id in zip(docs, sorted_similarities, document_ids):
                         internet_search_infos.append(document_id)
-                        internet_search_results += f"search result chunk:\nchunk_infos:{document_id['url']}\nchunk_title:{document_id['title']}\ncontent:{doc}"
+                        internet_search_results += f"!@>search result chunk:\nchunk_infos:{document_id['url']}\nchunk_title:{document_id['title']}\ncontent:{doc}\n"
                     if self.config.internet_quick_search:
                         self.personality.step_end("Performing Internet search (quick mode)")
                     else:
