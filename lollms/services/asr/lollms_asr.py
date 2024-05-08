@@ -110,14 +110,9 @@ class LollmsASR:
                     asr_base_url=None,
                     share=False,
                     max_retries=20,
-                    voices_folder=None,
-                    voice_samples_path="",
-                    wait_for_service=True,
-                    use_deep_speed=False,
-                    use_streaming_mode = True
+                    wait_for_service=True
                 ):
         self.generation_threads = []
-        self.voices_folder = voices_folder
         self.ready = False
         if asr_base_url=="" or asr_base_url=="http://127.0.0.1:9000":
             asr_base_url = None
@@ -125,9 +120,6 @@ class LollmsASR:
         lollms_paths = app.lollms_paths
         self.app = app
         root_dir = lollms_paths.personal_path
-        self.voice_samples_path = voice_samples_path
-        self.use_deep_speed = use_deep_speed
-        self.use_streaming_mode = use_streaming_mode
         
         # Store the path to the script
         if asr_base_url is None:
