@@ -1936,7 +1936,7 @@ class APScript(StateMachine):
         """
         pass
 
-    def get_welcome(self):
+    def get_welcome(self, client:Client):
         """
         triggered when a new conversation is created
         """
