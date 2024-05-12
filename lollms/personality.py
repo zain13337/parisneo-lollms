@@ -1936,7 +1936,7 @@ class APScript(StateMachine):
         """
         pass
 
-    def get_welcome(self, client:Client):
+    def get_welcome(self, welcome_message:str, client:Client):
         """
         triggered when a new conversation is created
         """
@@ -3293,6 +3293,29 @@ The AI should respond in this format using data from actions_list:
 
         return generated_text, function_calls
 
+    def generate_with_function_calls_and_images(self, prompt: str, images:list, functions: List[Dict[str, Any]], max_answer_length: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Performs text generation with function calls.
+
+        Args:
+            prompt (str): The full prompt (including conditioning, user discussion, extra data, and the user prompt).
+            functions (List[Dict[str, Any]]): A list of dictionaries describing functions that can be called.
+            max_answer_length (int, optional): Maximum string length allowed for the generated text.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries with the function names and parameters to execute.
+        """
+        # Upgrade the prompt with information about the function calls.
+        upgraded_prompt = self._upgrade_prompt_with_function_info(prompt, functions)
+
+        # Generate the initial text based on the upgraded prompt.
+        generated_text = self.fast_gen_with_images(upgraded_prompt, images, max_answer_length)
+
+        # Extract the function calls from the generated text.
+        function_calls = self.extract_function_calls_as_json(generated_text)
+
+        return generated_text, function_calls
+
 
     def execute_function_calls(self, function_calls: List[Dict[str, Any]], function_definitions: List[Dict[str, Any]]) -> List[Any]:
         """
@@ -3347,7 +3370,8 @@ The AI should respond in this format using data from actions_list:
                                  '"function_parameters": a list of  parameter values',
                                  "}",
                                  "```",
-                                 "You can call multiple functions in one generation. If you need the output of a function to proceed, then use the keyword @<NEXT>@ at the end of your message."
+                                 "You can call multiple functions in one generation. If you need the output of a function to proceed, then use the keyword @<NEXT>@ at the end of your message.",
+                                 "Do not add status of the execution as it will be added automatically by the system.",
                                  "!@>List of possible functions to be called:\n"]
         for function in functions:
             description = f"{function['function_name']}: {function['function_description']}\nparameters:{function['function_parameters']}"
