@@ -377,7 +377,10 @@ class LollmsSD:
                 width=512,
                 height=512,
                 restore_faces=True,
+                output_path=None
                 ):
+        if output_path is None:
+            output_path = self.output_dir
         infos = {}
         img_paths = []
         if len(files)>0:
@@ -404,7 +407,7 @@ class LollmsSD:
                     info: dict
                 """
                 for img in generated.images:
-                    img_paths.append(self.saveImage(img))
+                    img_paths.append(self.saveImage(img, output_path))
                 infos = generated.info
             except Exception as ex:
                 ASCIIColors.error("Couldn't generate the image")
@@ -431,7 +434,7 @@ class LollmsSD:
                     info: dict
                 """
                 for img in generated.images:
-                    img_paths.append(self.saveImage(img))
+                    img_paths.append(self.saveImage(img, output_path))
                 infos = generated.info
             except Exception as ex:
                 ASCIIColors.error("Couldn't generate the image")
