@@ -3341,7 +3341,10 @@ The AI should respond in this format using data from actions_list:
             if function:
                 try:
                     # Assuming parameters is a dictionary that maps directly to the function's arguments.
-                    result = function(*parameters)
+                    if type(parameters)==list:
+                        result = function(*parameters)
+                    elif type(parameters)==dict:
+                        result = function(**parameters)
                     results.append(result)
                 except TypeError as e:
                     # Handle cases where the function call fails due to incorrect parameters, etc.
