@@ -3366,8 +3366,8 @@ The AI should respond in this format using data from actions_list:
         Returns:
             str: The upgraded prompt that includes information about the function calls.
         """
-        function_descriptions = ["!@>information: If you need to call a function to fulfull the user request, use a json markdown tag with the function call as the following json format:",
-                                 "```json",
+        function_descriptions = ["!@>information: If you need to call a function to fulfull the user request, use a function markdown tag with the function call as the following json format:",
+                                 "```function",
                                  "{",
                                  '"function_name":the name of the function to be called,',
                                  '"function_parameters": a list of  parameter values',
@@ -3402,14 +3402,15 @@ The AI should respond in this format using data from actions_list:
         # Filter out and parse JSON entries.
         function_calls = []
         for block in code_blocks:
-            content = block.get("content", "")
-            try:
-                # Attempt to parse the JSON content of the code block.
-                function_call = json.loads(content)
-                function_calls.append(function_call)
-            except json.JSONDecodeError:
-                # If the content is not valid JSON, skip it.
-                continue
+            if block["type"]=="function":
+                content = block.get("content", "")
+                try:
+                    # Attempt to parse the JSON content of the code block.
+                    function_call = json.loads(content)
+                    function_calls.append(function_call)
+                except json.JSONDecodeError:
+                    # If the content is not valid JSON, skip it.
+                    continue
 
         return function_calls
 
