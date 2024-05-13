@@ -3373,8 +3373,10 @@ The AI should respond in this format using data from actions_list:
                                  '"function_parameters": a list of  parameter values',
                                  "}",
                                  "```",
-                                 "You can call multiple functions in one generation. If you need the output of a function to proceed, then use the keyword @<NEXT>@ at the end of your message.",
+                                 "You can call multiple functions in one generation.",
+                                 "Each function call needs to be in a separate function markdown tag.",
                                  "Do not add status of the execution as it will be added automatically by the system.",
+                                 "If you want to get the output of the function before answering the user, then use the keyword @<NEXT>@ at the end of your message.",
                                  "!@>List of possible functions to be called:\n"]
         for function in functions:
             description = f"{function['function_name']}: {function['function_description']}\nparameters:{function['function_parameters']}"
@@ -3407,7 +3409,10 @@ The AI should respond in this format using data from actions_list:
                 try:
                     # Attempt to parse the JSON content of the code block.
                     function_call = json.loads(content)
-                    function_calls.append(function_call)
+                    if type(function_call)==dict:
+                        function_calls.append(function_call)
+                    elif type(function_call)==list:
+                        function_calls+=function_call
                 except json.JSONDecodeError:
                     # If the content is not valid JSON, skip it.
                     continue
