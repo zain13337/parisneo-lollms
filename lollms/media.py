@@ -364,7 +364,7 @@ class AudioRecorder:
                     if result["text"]!="":
                         # TODO : send the output
                         # self.transcription_signal.new_user_transcription.emit(filename, result["text"])
-                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL, SENDER_TYPES.SENDER_TYPES_USER, "user",result["text"])
+                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL.value, SENDER_TYPES.SENDER_TYPES_USER.value, "user",result["text"])
                         discussion = self.discussion.format_discussion(self.context_size)
                         full_context = '!@>system:' + self.personality.personality_conditioning +"\n" + discussion+"\n!@>lollms:"
                         ASCIIColors.red(" ---------------- Discussion ---------------------")
@@ -381,7 +381,7 @@ class AudioRecorder:
                             else:
                                 lollms_text = self.lc.generate(full_context+"!@>lollms: "+ lollms_text + "\n!@>functions outputs:\n"+ "\n".join(responses) +"!@>lollms:")
                         lollms_text = self.fix_string_for_xtts(lollms_text)
-                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL, SENDER_TYPES.SENDER_TYPES_AI, "lollms",lollms_text)
+                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL.value, SENDER_TYPES.SENDER_TYPES_AI.value, "lollms",lollms_text)
                         ASCIIColors.red(" -------------- LOLLMS answer -------------------")
                         ASCIIColors.yellow(lollms_text)
                         ASCIIColors.red(" -------------------------------------------------")
