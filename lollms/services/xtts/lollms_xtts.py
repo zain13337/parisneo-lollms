@@ -21,6 +21,7 @@ import base64
 import subprocess
 import time
 import json
+import re
 import platform
 import threading
 from dataclasses import dataclass
@@ -294,6 +295,13 @@ class LollmsXTTS(LollmsTTS):
             return {"status":False,"error":f"{ex}"}
 
     def xtts_to_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
+        # Remove HTML tags
+        text = re.sub(r'<.*?>', '', text)
+        # Remove code blocks (assuming they're enclosed in backticks or similar markers)
+        text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+        text = re.sub(r'`.*?`', '', text)
+        # Remove any remaining code-like patterns (this can be adjusted as needed)
+        text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)        
         def tts2_audio_th(thread_uid=None):
             url = f"{self.xtts_base_url}/tts_to_audio"
 
