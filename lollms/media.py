@@ -9,6 +9,7 @@ License: Apache 2.0
 from lollms.utilities import PackageManager
 from lollms.com import LoLLMsCom
 from lollms.utilities import trace_exception, run_async
+from lollms.types import MSG_TYPE, SENDER_TYPES
 from lollms.client_session import Session
 from ascii_colors import ASCIIColors
 import platform
@@ -98,9 +99,12 @@ class AudioRecorder:
                         self, 
                         lc:LollmsApplication, 
                         sio:socketio.Client,  
-                        personality:AIPersonality, threshold=1000, silence_duration=2, sound_threshold_percentage=10, gain=1.0, rate=44100, channels=1, buffer_size=10, model="small.en", snd_device=None, logs_folder="logs", voice=None, block_while_talking=True, context_size=4096):
+                        personality:AIPersonality,
+                        discussion_database:DiscussionsDB,
+                        threshold=1000, silence_duration=2, sound_threshold_percentage=10, gain=1.0, rate=44100, channels=1, buffer_size=10, model="small.en", snd_device=None, logs_folder="logs", voice=None, block_while_talking=True, context_size=4096):
         self.sio = sio
         self.lc = lc
+        self.discussion_database = discussion_database
         self.tts = LollmsTTS(self.lc)
         self.tl = TasksLibrary(self.lc)
         self.fn = FunctionCalling_Library(self.tl)
@@ -172,7 +176,7 @@ class AudioRecorder:
         self.model = model
         self.whisper = whisper.load_model(model)
         ASCIIColors.success("OK")
-        self.discussion = DiscussionsDB.create_discussion("RT_chat")
+        self.discussion = discussion_database.create_discussion("RT_chat")
     
     def get_date_time(self):
         now = datetime.now()
@@ -297,7 +301,8 @@ class AudioRecorder:
 
     def _save_wav(self, frames):
         ASCIIColors.green("<<SEGMENT_RECOVERED>>")
-        self.transcription_signal.update_status.emit("Segment detected and saved")
+        # Todo annouce
+        # self.transcription_signal.update_status.emit("Segment detected and saved")
         filename = f"recording_{self.file_index}.wav"
         self.file_index += 1
 
@@ -345,7 +350,8 @@ class AudioRecorder:
                 self.block_listening = True
             try:
                 if filename:
-                    self.transcription_signal.update_status.emit("Transcribing")
+                    # TODO: send signal
+                    # self.transcription_signal.update_status.emit("Transcribing")
                     ASCIIColors.green("<<TRANSCRIBING>>")
                     result = self.whisper.transcribe(str(Path(self.logs_folder)/filename))
                     transcription_fn = str(Path(self.logs_folder)/filename) + ".txt"
@@ -358,7 +364,7 @@ class AudioRecorder:
                     if result["text"]!="":
                         # TODO : send the output
                         # self.transcription_signal.new_user_transcription.emit(filename, result["text"])
-                        self.discussion.add_message("user",result["text"])
+                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL, SENDER_TYPES.SENDER_TYPES_USER, "user",result["text"])
                         discussion = self.discussion.format_discussion(self.context_size)
                         full_context = '!@>system:' + self.personality.personality_conditioning +"\n" + discussion+"\n!@>lollms:"
                         ASCIIColors.red(" ---------------- Discussion ---------------------")
@@ -375,7 +381,7 @@ class AudioRecorder:
                             else:
                                 lollms_text = self.lc.generate(full_context+"!@>lollms: "+ lollms_text + "\n!@>functions outputs:\n"+ "\n".join(responses) +"!@>lollms:")
                         lollms_text = self.fix_string_for_xtts(lollms_text)
-                        self.discussion.add_message("lollms",lollms_text)
+                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL, SENDER_TYPES.SENDER_TYPES_AI, "lollms",lollms_text)
                         ASCIIColors.red(" -------------- LOLLMS answer -------------------")
                         ASCIIColors.yellow(lollms_text)
                         ASCIIColors.red(" -------------------------------------------------")
