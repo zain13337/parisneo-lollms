@@ -387,7 +387,7 @@ class AudioRecorder:
                         ASCIIColors.red(" -------------------------------------------------")
                         self.lc.info("Talking")
                         ASCIIColors.green("<<TALKING>>")
-                        self.lc.tts.tts_to_audio(lollms_text, voice=self.voice)
+                        self.lc.tts.tts_to_audio(lollms_text, speaker=self.voice)
             except Exception as ex:
                 trace_exception(ex)
             self.block_listening = False
