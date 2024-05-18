@@ -366,7 +366,7 @@ class AudioRecorder:
                         # self.transcription_signal.new_user_transcription.emit(filename, result["text"])
                         self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL.value, SENDER_TYPES.SENDER_TYPES_USER.value, "user",result["text"])
                         discussion = self.discussion.format_discussion(self.context_size)
-                        full_context = '!@>system:' + self.personality.personality_conditioning +"\n" + discussion+"\n!@>lollms:"
+                        full_context = self.personality.personality_conditioning +"\n" + discussion+f"\n!@>{self.personality.name}:"
                         ASCIIColors.red(" ---------------- Discussion ---------------------")
                         ASCIIColors.yellow(full_context)
                         ASCIIColors.red(" -------------------------------------------------")
@@ -377,11 +377,11 @@ class AudioRecorder:
                         if len(function_calls)>0:
                             responses = self.fn.execute_function_calls(function_calls=function_calls)
                             if self.image_shot:
-                                lollms_text = self.lc.generate_with_images(full_context+"!@>lollms: "+ lollms_text + "\n!@>functions outputs:\n"+ "\n".join(responses) +"!@>lollms:", [self.image_shot])
+                                lollms_text = self.lc.generate_with_images(full_context+f"!@>{self.personality.name}: "+ lollms_text + "\n!@>functions outputs:\n"+ "\n".join(responses) +"!@>lollms:", [self.image_shot])
                             else:
-                                lollms_text = self.lc.generate(full_context+"!@>lollms: "+ lollms_text + "\n!@>functions outputs:\n"+ "\n".join(responses) +"!@>lollms:")
+                                lollms_text = self.lc.generate(full_context+f"!@>{self.personality.name}: "+ lollms_text + "\n!@>functions outputs:\n"+ "\n".join(responses) +"!@>lollms:")
                         lollms_text = self.fix_string_for_xtts(lollms_text)
-                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL.value, SENDER_TYPES.SENDER_TYPES_AI.value, "lollms",lollms_text)
+                        self.discussion.add_message(MSG_TYPE.MSG_TYPE_FULL.value, SENDER_TYPES.SENDER_TYPES_AI.value, self.personality.name,lollms_text)
                         ASCIIColors.red(" -------------- LOLLMS answer -------------------")
                         ASCIIColors.yellow(lollms_text)
                         ASCIIColors.red(" -------------------------------------------------")
