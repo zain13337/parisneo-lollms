@@ -120,26 +120,6 @@ class RTCom:
         self.client = client
         self.tts = LollmsTTS(self.lc)
         self.tl = TasksLibrary(self.lc)
-        self.fn = FunctionCalling_Library(self.tl)
-
-        self.fn.register_function(
-                                        "calculator_function", 
-                                        self.calculator_function, 
-                                        "returns the result of a calculation passed through the expression string parameter",
-                                        [{"name": "expression", "type": "str"}]
-                                    )
-        self.fn.register_function(
-                                        "get_date_time", 
-                                        self.get_date_time, 
-                                        "returns the current date and time",
-                                        []
-                                    )
-        self.fn.register_function(
-                                        "take_a_photo", 
-                                        self.take_a_photo, 
-                                        "Takes a photo and returns the status",
-                                        []
-                                    )
 
         self.block_listening = False
         if not voice:
@@ -213,11 +193,17 @@ class RTCom:
         self.recording = True
         self.stop_flag = False
 
-        threading.Thread(target=self._record).start()
-        threading.Thread(target=self._process_files).start()
+        self.recording_thread = threading.Thread(target=self._record)
+        self.transcription_thread = threading.Thread(target=self._process_files)
+        self.recording_thread.start()
+        self.transcription_thread.start()
 
     def stop_recording(self):
+        self.recording = False
         self.stop_flag = True
+        self.recording_thread.join()
+        self.transcription_thread.join()
+        ASCIIColors.green("<<RTCOM off>>")
 
     def _record(self):
         sd.default.device = self.snd_device
@@ -382,6 +368,7 @@ class RTCom:
                         # self.transcription_signal.new_user_transcription.emit(filename, result["text"])
                         # TODO : send the output
                         # self.transcription_signal.update_status.emit("Generating answer")
+                        self.lc.new_block(client_id=self.client.client_id,sender=self.lc.config.user_name, content=current_prompt)
                         ASCIIColors.green("<<RESPONDING>>")
                         self.lc.info("Responding")
                         self.lc.handle_generate_msg(self.client.client_id, {"prompt": current_prompt})
@@ -398,7 +385,7 @@ class RTCom:
                 trace_exception(ex)
             self.block_listening = False
             ASCIIColors.green("<<LISTENING>>")
-            self.lc.info("Listening")
+            self.lc.info(f"Listening.\nYou can talk to {self.personality.name}")
             # TODO : send the output
             #self.transcription_signal.update_status.emit("Listening")
 
