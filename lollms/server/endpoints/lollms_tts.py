@@ -42,6 +42,18 @@ def list_voices():
     ASCIIColors.yellow("Listing voices")
     return {"voices":lollmsElfServer.tts.get_voices()}
 
+@router.get("/list_stt_models")
+def list_stt_models():
+    if lollmsElfServer.config.headless_server_mode:
+        return {"status":False,"error":"Code execution is blocked when in headless mode for obvious security reasons!"}
+
+    if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
+        return {"status":False,"error":"Code execution is blocked when the server is exposed outside for very obvious reasons!"}
+
+    ASCIIColors.yellow("Listing voices")
+    return {"voices":lollmsElfServer.stt.get_models()}
+
+
 @router.post("/set_voice")
 async def set_voice(request: Request):
     """
@@ -70,7 +82,7 @@ async def set_voice(request: Request):
 
 class LollmsAudio2TextRequest(BaseModel):
     wave_file_path: str
-    voice: str = None
+    model: str = None
     fn:str = None
 
 @router.post("/audio2text")

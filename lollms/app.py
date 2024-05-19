@@ -320,7 +320,7 @@ class LollmsApplication(LoLLMsCom):
             self.tts = self.xtts
 
         if self.config.active_stt_service == "openai_whisper":
-            from lollms.services.openai_whisper.lollms_whisper import LollmsOpenAIWhisper
+            from lollms.services.openai_whisper.lollms_openai_whisper import LollmsOpenAIWhisper
             self.stt = LollmsOpenAIWhisper(self, self.config.openai_whisper_model, self.config.openai_whisper_key)
         elif self.config.active_stt_service == "whisper":
             from lollms.services.whisper.lollms_whisper import LollmsWhisper
@@ -413,7 +413,7 @@ class LollmsApplication(LoLLMsCom):
                 self.tts = self.xtts
 
             if self.config.active_stt_service == "openai_whisper":
-                from lollms.services.openai_whisper.lollms_whisper import LollmsOpenAIWhisper
+                from lollms.services.openai_whisper.lollms_openai_whisper import LollmsOpenAIWhisper
                 self.stt = LollmsOpenAIWhisper(self, self.config.openai_whisper_model, self.config.openai_whisper_key)
             elif self.config.active_stt_service == "whisper":
                 from lollms.services.whisper.lollms_whisper import LollmsWhisper
