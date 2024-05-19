@@ -72,7 +72,7 @@ class CameraWindow(QtWidgets.QWidget):
         self.cap.release()
         event.accept()
 
-def take_photo(client, use_ui=False):
+def take_photo(processor, client, use_ui=False):
     if use_ui:
         def run_app():
             app = QtWidgets.QApplication(sys.argv)
@@ -116,10 +116,10 @@ def take_photo(client, use_ui=False):
     return f'<img src="{discussion_path_to_url(fn_view)}" width="80%"></img>'
 
 
-def take_a_photo_function(processor, client):
+def take_a_photo_function(processor, client, use_ui = False):
     return {
-            "function_name": "build_image",
-            "function": partial(take_photo, processor=processor, client=client),
-            "function_description": "Builds and shows an image from a prompt and width and height parameters. A square 1024x1024, a portrait woudl be 1024x1820 or landscape 1820x1024.",
-            "function_parameters": [{"name": "prompt", "type": "str"}, {"name": "width", "type": "int"}, {"name": "height", "type": "int"}]                
+            "function_name": "take_photo",
+            "function": partial(take_photo, processor=processor, client=client, use_ui = use_ui),
+            "function_description": "Uses the webcam to take a photo, displays it so that you can take a look.",
+            "function_parameters": []                
         }

@@ -3443,7 +3443,7 @@ The AI should respond in this format using data from actions_list:
         if len(function_calls)>0:
             outputs = self.execute_function_calls(function_calls,function_definitions)
             out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
-            prompt += out + "!@>"+self.personality.name+":"
+            prompt += out +"\n"+ "!@>"+self.personality.name+":"
             if len(self.personality.image_files)>0:
                 out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions)
             else:

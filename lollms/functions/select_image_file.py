@@ -11,7 +11,7 @@ import sys
 from functools import partial
 
 
-def select_image_file(client):
+def select_image_file(processor, client):
     app = QtWidgets.QApplication(sys.argv)
     options = QtWidgets.QFileDialog.Options()
     options |= QtWidgets.QFileDialog.ReadOnly
