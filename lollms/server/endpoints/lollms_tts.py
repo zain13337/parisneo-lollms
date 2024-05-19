@@ -298,9 +298,9 @@ async def upload_voice_file(file: UploadFile = File(...)):
     return {"message": f"Successfully uploaded {safe_filename}"}
 
 
-@router.get("/xtts_is_ready")
-def xtts_is_ready():
-    if hasattr(lollmsElfServer,'sd') and lollmsElfServer.sd is not None:
-        if lollmsElfServer.sd.ready:
+@router.get("/tts_is_ready")
+def tts_is_ready():
+    if lollmsElfServer.tts:
+        if lollmsElfServer.tts.ready:
             return {"status":True}
     return {"status":False}

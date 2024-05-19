@@ -19,7 +19,7 @@ from pathlib import Path
 from datetime import datetime
 from functools import partial
 from socketio import AsyncServer
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 import subprocess
 import importlib
 import sys, os
@@ -66,6 +66,12 @@ class LollmsApplication(LoLLMsCom):
         self.skills_library             = SkillsLibrary(self.lollms_paths.personal_skills_path/(self.config.skills_lib_database_name+".db"))
 
         self.tasks_library              = TasksLibrary(self)
+
+        self.handle_generate_msg: Callable[[str, Dict], None]               = None
+        self.generate_msg_with_internet: Callable[[str, Dict], None]        = None
+        self.handle_continue_generate_msg_from: Callable[[str, Dict], None] = None
+        
+
         if not free_mode:
             try:
                 if config.auto_update:
