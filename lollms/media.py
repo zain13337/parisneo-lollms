@@ -94,14 +94,27 @@ from datetime import datetime
 
 import math
 
-class AudioRecorder:
+class RTCom:
     def __init__(
                         self, 
                         lc:LollmsApplication, 
                         sio:socketio.Client,  
                         personality:AIPersonality,
                         client:Client,
-                        threshold=1000, silence_duration=2, sound_threshold_percentage=10, gain=1.0, rate=44100, channels=1, buffer_size=10, model="small.en", snd_device=None, logs_folder="logs", voice=None, block_while_talking=True, context_size=4096):
+                        threshold=1000, 
+                        silence_duration=2, 
+                        sound_threshold_percentage=10, 
+                        gain=1.0, 
+                        rate=44100, 
+                        channels=1, 
+                        buffer_size=10, 
+                        model="small.en", 
+                        snd_device=None, 
+                        logs_folder="logs", 
+                        voice=None, 
+                        block_while_talking=True, 
+                        context_size=4096
+                    ):
         self.sio = sio
         self.lc = lc
         self.client = client
@@ -353,6 +366,7 @@ class AudioRecorder:
                     user_description = "\n!@>user information:" + self.lc.config.user_description if self.lc.config.use_user_informations_in_discussion else ""
                     # TODO: send signal
                     # self.transcription_signal.update_status.emit("Transcribing")
+                    self.lc.info("Transcribing")
                     ASCIIColors.green("<<TRANSCRIBING>>")
                     result = self.whisper.transcribe(str(Path(self.logs_folder)/filename))
                     transcription_fn = str(Path(self.logs_folder)/filename) + ".txt"
@@ -369,6 +383,7 @@ class AudioRecorder:
                         # TODO : send the output
                         # self.transcription_signal.update_status.emit("Generating answer")
                         ASCIIColors.green("<<RESPONDING>>")
+                        self.lc.info("Responding")
                         self.lc.handle_generate_msg(self.client.client_id, {"prompt": current_prompt})
                         while self.lc.busy:
                             time.sleep(0.01)
@@ -383,6 +398,7 @@ class AudioRecorder:
                 trace_exception(ex)
             self.block_listening = False
             ASCIIColors.green("<<LISTENING>>")
+            self.lc.info("Listening")
             # TODO : send the output
             #self.transcription_signal.update_status.emit("Listening")
 

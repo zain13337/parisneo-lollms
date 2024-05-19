@@ -71,7 +71,7 @@ class LollmsApplication(LoLLMsCom):
         self.generate_msg_with_internet: Callable[[str, Dict], None]        = None
         self.handle_continue_generate_msg_from: Callable[[str, Dict], None] = None
         
-
+        self.rt_com = None
         if not free_mode:
             try:
                 if config.auto_update:
