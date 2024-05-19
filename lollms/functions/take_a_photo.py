@@ -113,7 +113,9 @@ def take_photo(processor, client, use_ui=False):
     fn = image/f"screen_shot_{index}.png"
     cv2.imwrite(str(fn), frame)
     client.discussion.image_files.append(fn)
-    return f'<img src="{discussion_path_to_url(fn_view)}" width="80%"></img>'
+    processor.full(f'<img src="{discussion_path_to_url(fn_view)}" width="80%"></img>')
+    processor.new_message("")
+    return "Image shot successful"
 
 
 def take_a_photo_function(processor, client, use_ui = False):
