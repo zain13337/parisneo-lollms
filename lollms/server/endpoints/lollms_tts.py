@@ -33,6 +33,9 @@ class Identification(BaseModel):
 
 @router.get("/list_voices")
 def list_voices():
+    if lollmsElfServer.tts is None:
+        return {"status":False,"error":"TTS is not active"}
+
     if lollmsElfServer.config.headless_server_mode:
         return {"status":False,"error":"Code execution is blocked when in headless mode for obvious security reasons!"}
 
