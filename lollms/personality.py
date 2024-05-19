@@ -2408,7 +2408,7 @@ class APScript(StateMachine):
             self.step_end(f" Summary of {doc_name} - Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
-    def build_prompt_from_context_details(self, context_details:dict, custom_entries):
+    def build_prompt_from_context_details(self, context_details:dict, custom_entries=""):
         return self.build_prompt([
                     context_details["conditionning"] if context_details["conditionning"] else "",
                     "!@>documentation:\n"+context_details["documentation"] if context_details["documentation"] else "",
