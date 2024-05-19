@@ -2408,7 +2408,21 @@ class APScript(StateMachine):
             self.step_end(f" Summary of {doc_name} - Processing chunk : {i+1}/{len(chunks)}")
         return "\n".join(summeries)
 
-
+    def build_prompt_from_context_details(self, context_details:dict, custom_entries):
+        return self.build_prompt([
+                    context_details["conditionning"] if context_details["conditionning"] else "",
+                    "!@>documentation:\n"+context_details["documentation"] if context_details["documentation"] else "",
+                    "!@>knowledge:\n"+context_details["knowledge"] if context_details["knowledge"] else "",
+                    context_details["user_description"] if context_details["user_description"] else "",
+                    "!@>positive_boost:\n"+context_details["positive_boost"] if context_details["positive_boost"] else "",
+                    "!@>negative_boost:\n"+context_details["negative_boost"] if context_details["negative_boost"] else "",
+                    "!@>current_language:\n"+context_details["current_language"] if context_details["current_language"] else "",
+                    "!@>fun_mode:\n"+context_details["fun_mode"] if context_details["fun_mode"] else "",
+                    "!@>discussion_window:\n"+context_details["discussion_messages"] if context_details["discussion_messages"] else "",
+                    custom_entries,
+                    "!@>"+context_details["ai_prefix"].replace("!@>","").replace(":","")+":"
+                ], 
+                8)
     def build_prompt(self, prompt_parts:List[str], sacrifice_id:int=-1, context_size:int=None, minimum_spare_context_size:int=None):
         """
         Builds the prompt for code generation.
@@ -3293,6 +3307,7 @@ The AI should respond in this format using data from actions_list:
 
         return generated_text, function_calls
 
+
     def generate_with_function_calls_and_images(self, prompt: str, images:list, functions: List[Dict[str, Any]], max_answer_length: Optional[int] = None) -> List[Dict[str, Any]]:
         """
         Performs text generation with function calls.
@@ -3418,6 +3433,22 @@ The AI should respond in this format using data from actions_list:
                     continue
 
         return function_calls
+
+
+    def interact_with_function_call(self, prompt, function_definitions, prompt_after_execution=True):
+        if len(self.personality.image_files)>0:
+            out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions)
+        else:
+            out, function_calls = self.generate_with_function_calls(prompt, function_definitions)
+        if len(function_calls)>0:
+            outputs = self.execute_function_calls(function_calls,function_definitions)
+            out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
+            prompt += out + "!@>"+self.personality.name+":"
+            if len(self.personality.image_files)>0:
+                out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions)
+            else:
+                out, function_calls = self.generate_with_function_calls(prompt, function_definitions)
+        return out
 
     #Helper method to convert outputs path to url
     def path2url(file):

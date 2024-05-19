@@ -954,6 +954,10 @@ class PackageManager:
             return True
         except ImportError:
             return False
+        except Exception as ex:
+            trace_exception(ex)
+            ASCIIColors.error("Something is wrong with your library.\nIt looks installed, but I am not able to call it.\nTry to reinstall it.")
+            return False
         
     @staticmethod
     def safe_import(module_name, library_name=None):

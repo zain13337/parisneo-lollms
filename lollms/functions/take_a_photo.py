@@ -9,6 +9,7 @@ import cv2
 import time
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
+from functools import partial
 
 class CameraWindow(QtWidgets.QWidget):
     def __init__(self):
@@ -113,3 +114,12 @@ def take_photo(client, use_ui=False):
     cv2.imwrite(str(fn), frame)
     client.discussion.image_files.append(fn)
     return f'<img src="{discussion_path_to_url(fn_view)}" width="80%"></img>'
+
+
+def take_a_photo_function(processor, client):
+    return {
+            "function_name": "build_image",
+            "function": partial(take_photo, processor=processor, client=client),
+            "function_description": "Builds and shows an image from a prompt and width and height parameters. A square 1024x1024, a portrait woudl be 1024x1820 or landscape 1820x1024.",
+            "function_parameters": [{"name": "prompt", "type": "str"}, {"name": "width", "type": "int"}, {"name": "height", "type": "int"}]                
+        }

@@ -354,7 +354,7 @@ class RTCom:
                     # self.transcription_signal.update_status.emit("Transcribing")
                     self.lc.info("Transcribing")
                     ASCIIColors.green("<<TRANSCRIBING>>")
-                    result = self.whisper.transcribe(str(Path(self.logs_folder)/filename))
+                    result = self.lc.tts.transcribe(str(Path(self.logs_folder)/filename))
                     transcription_fn = str(Path(self.logs_folder)/filename) + ".txt"
                     with open(transcription_fn, "w", encoding="utf-8") as f:
                         f.write(result["text"])
