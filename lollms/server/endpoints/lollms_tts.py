@@ -308,9 +308,9 @@ def tts_is_ready():
 
 @router.get("/get_snd_input_devices")
 def get_snd_input_devices():
-    lollmsElfServer.stt.get_devices()
+    return lollmsElfServer.stt.get_devices()
 
 @router.get("/get_snd_output_devices")
 def get_snd_output_devices():
-    lollmsElfServer.tts.get_devices()
+    return lollmsElfServer.tts.get_devices()
 
