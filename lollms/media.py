@@ -354,13 +354,11 @@ class RTCom:
                 self.block_listening = True
             try:
                 if filename:
-                    user_name = self.lc.config.user_name if self.lc.config.use_user_name_in_discussions else "user"
-                    user_description = "\n!@>user information:" + self.lc.config.user_description if self.lc.config.use_user_informations_in_discussion else ""
-                    # TODO: send signal
-                    # self.transcription_signal.update_status.emit("Transcribing")
                     self.lc.info("Transcribing")
                     ASCIIColors.green("<<TRANSCRIBING>>")
-                    transcription = self.lc.stt.transcribe(str(Path(self.logs_folder)/filename))
+                    wav_file_path = str(Path(self.logs_folder)/filename)
+                    ASCIIColors.cyan(f"Logging to : {wav_file_path}")
+                    transcription = self.lc.stt.transcribe(wav_file_path)
                     transcription_fn = str(Path(self.logs_folder)/filename) + ".txt"
                     with open(transcription_fn, "w", encoding="utf-8") as f:
                         f.write(transcription)
@@ -370,10 +368,6 @@ class RTCom:
                         self.transcribed_lock.notify()
                     if transcription!="":
                         current_prompt = transcription
-                        # TODO : send the output
-                        # self.transcription_signal.new_user_transcription.emit(filename, transcription)
-                        # TODO : send the output
-                        # self.transcription_signal.update_status.emit("Generating answer")
                         self.lc.new_block(client_id=self.client.client_id,sender=self.lc.config.user_name, content=current_prompt)
                         ASCIIColors.green("<<RESPONDING>>")
                         self.lc.info("Responding")
