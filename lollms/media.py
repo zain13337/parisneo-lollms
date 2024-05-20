@@ -380,7 +380,7 @@ class RTCom:
                         ASCIIColors.red(" -------------------------------------------------")
                         self.lc.info("Talking")
                         ASCIIColors.green("<<TALKING>>")
-                        self.lc.tts.tts_to_audio(lollms_text, speaker=self.voice)
+                        self.lc.tts.tts_to_audio(lollms_text, speaker=self.voice, file_name_or_path=str(Path(self.logs_folder)/filename)+"_answer.wave")
             except Exception as ex:
                 trace_exception(ex)
             self.block_listening = False
