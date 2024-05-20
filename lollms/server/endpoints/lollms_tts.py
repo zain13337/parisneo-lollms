@@ -126,6 +126,10 @@ async def text2Audio(request: LollmsText2AudioRequest):
         validate_path(request.fn,[str(lollmsElfServer.lollms_paths.personal_outputs_path/"audio_out")])
     else:
         request.fn = lollmsElfServer.lollms_paths.personal_outputs_path/"audio_out"/"tts2audio.wav"
+    
+    # Verify the path exists
+    request.fn.parent.mkdir(exists_ok=True, parents=True)
+
     try:
         if lollmsElfServer.tts is None:
             return {"url": None, "error":f"No TTS service is on"}
