@@ -33,11 +33,12 @@ def move_mouse_to_position(x: int, y: int) -> str:
         return trace_exception(e)
 
 # Here is the metadata function that should have the name in format function_name_function
-def move_mouse_to_position_function(processor, client):
+def move_mouse_to_position_function():
+    screen_width, screen_height = pyautogui.size()
     return {
         "function_name": "move_mouse_to_position", # The function name in string
         "function": move_mouse_to_position, # The function to be called
-        "function_description": "Moves the mouse to a specific position on the screen.", # Description of the function
+        "function_description": f"Moves the mouse to a specific position on the screen. The screen resolution is {screen_width} {screen_height}", # Description of the function
         "function_parameters": [{"name": "x", "type": "int"}, {"name": "y", "type": "int"}] # The set of parameters
     }
 
@@ -56,7 +57,7 @@ def press_mouse_button(button: str) -> str:
         return trace_exception(e)
 
 # Here is the metadata function that should have the name in format function_name_function
-def press_mouse_button_function(processor, client):
+def press_mouse_button_function():
     return {
         "function_name": "press_mouse_button", # The function name in string
         "function": press_mouse_button, # The function to be called
@@ -76,7 +77,7 @@ def type_text(text: str) -> str:
         return trace_exception(e)
 
 # Here is the metadata function that should have the name in format function_name_function
-def type_text_function(processor, client):
+def type_text_function():
     return {
         "function_name": "type_text", # The function name in string
         "function": type_text, # The function to be called
