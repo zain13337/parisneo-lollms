@@ -354,18 +354,18 @@ class RTCom:
                     # self.transcription_signal.update_status.emit("Transcribing")
                     self.lc.info("Transcribing")
                     ASCIIColors.green("<<TRANSCRIBING>>")
-                    result = self.lc.stt.transcribe(str(Path(self.logs_folder)/filename))
+                    transcription = self.lc.stt.transcribe(str(Path(self.logs_folder)/filename))
                     transcription_fn = str(Path(self.logs_folder)/filename) + ".txt"
                     with open(transcription_fn, "w", encoding="utf-8") as f:
-                        f.write(result["text"])
+                        f.write(transcription)
 
                     with self.transcribed_lock:
-                        self.transcribed_files.append((filename, result["text"]))
+                        self.transcribed_files.append((filename, transcription))
                         self.transcribed_lock.notify()
-                    if result["text"]!="":
-                        current_prompt = result["text"]
+                    if transcription!="":
+                        current_prompt = transcription
                         # TODO : send the output
-                        # self.transcription_signal.new_user_transcription.emit(filename, result["text"])
+                        # self.transcription_signal.new_user_transcription.emit(filename, transcription)
                         # TODO : send the output
                         # self.transcription_signal.update_status.emit("Generating answer")
                         self.lc.new_block(client_id=self.client.client_id,sender=self.lc.config.user_name, content=current_prompt)
@@ -567,7 +567,7 @@ class RealTimeTranscription:
                 
                 # If the result is not empty, call the callback
                 if result:
-                    self.callback(result["text"])
+                    self.callback(transcription)
         except KeyboardInterrupt:
             # If the user hits Ctrl+C, stop the stream
             self.stop()

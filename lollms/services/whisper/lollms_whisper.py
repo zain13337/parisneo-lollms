@@ -37,6 +37,6 @@ class LollmsWhisper(LollmsSTT):
     def transcribe(
                 self,
                 wave_path: str|Path
-                ):
+                )->str:
         result = self.whisper.transcribe(str(wave_path))
-        return result
+        return result["text"]

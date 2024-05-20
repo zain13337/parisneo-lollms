@@ -44,8 +44,8 @@ class LollmsSTT:
     def transcribe(
                 self,
                 wav_path: str | Path,
-                prompt=""
-                ):
+                prompt:str=""
+                )->str:
         """
         Transcribes the given audio file to text.
 
