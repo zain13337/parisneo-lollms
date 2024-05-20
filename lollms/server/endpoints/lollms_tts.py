@@ -164,6 +164,9 @@ async def text2Wav(request: LollmsText2AudioRequest):
     else:
         request.fn = lollmsElfServer.lollms_paths.personal_outputs_path/"audio_out"/"tts2audio.wav"
 
+    # Verify the path exists
+    request.fn.parent.mkdir(exist_ok=True, parents=True)
+
     try:
         # Get the JSON data from the POST request.
         if lollmsElfServer.tts.ready:
