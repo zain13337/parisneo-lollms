@@ -7,8 +7,23 @@ This module is part of the Lollms library, designed to provide Text-to-Speech (T
 Author: ParisNeo, a computer geek passionate about AI
 """
 from lollms.app import LollmsApplication
+from lollms.utilities import PackageManager
 from pathlib import Path
-
+from ascii_colors import ASCIIColors
+try:
+    if not PackageManager.check_package_installed("sounddevice"):
+        # os.system("sudo apt-get install portaudio19-dev")
+        PackageManager.install_package("sounddevice")
+        PackageManager.install_package("wave")
+except:
+    # os.system("sudo apt-get install portaudio19-dev -y")
+    PackageManager.install_package("sounddevice")
+    PackageManager.install_package("wave")
+try:
+    import sounddevice as sd
+    import wave
+except:
+    ASCIIColors.error("Couldn't load sound tools")
 class LollmsTTS:
     """
     LollmsTTS is a base class for implementing Text-to-Speech (TTS) functionalities within the LollmsApplication.
@@ -120,3 +135,11 @@ class LollmsTTS:
             list: A list of available voices.
         """
         return self.voices
+    
+    def get_devices(self):
+        devices =  sd.query_devices()
+
+        return {
+            "status": True,
+            "device_names": [device['name'] for device in devices if device["max_output_channels"]>0]
+        }

@@ -109,7 +109,8 @@ class RTCom:
                         channels=1, 
                         buffer_size=10, 
                         model="small.en", 
-                        snd_device=None, 
+                        snd_input_device=None,
+                        snd_output_device=None,
                         logs_folder="logs", 
                         voice=None, 
                         block_while_talking=True, 
@@ -138,11 +139,15 @@ class RTCom:
         self.block_while_talking = block_while_talking
         self.image_shot = None
 
-        if snd_device is None:
+        if snd_input_device is None:
             devices = sd.query_devices()
-            snd_device = [device['name'] for device in devices][0]
+            snd_input_device = [device['name'] for device in devices if device['type'] == 'input'][0]
+        if snd_output_device is None:
+            devices = sd.query_devices()
+            snd_output_device = [device['name'] for device in devices if device['type'] == 'output'][0]
 
-        self.snd_device = snd_device
+        self.snd_input_device = snd_input_device
+        self.snd_output_device = snd_output_device
         self.logs_folder = logs_folder
 
         self.frames = []
@@ -206,8 +211,7 @@ class RTCom:
         ASCIIColors.green("<<RTCOM off>>")
 
     def _record(self):
-        sd.default.device = self.snd_device
-        with sd.InputStream(channels=self.channels, samplerate=self.rate, callback=self.callback, dtype='int16'):
+        with sd.InputStream(channels=self.channels, device=self.snd_input_device, samplerate=self.rate, callback=self.callback, dtype='int16'):
             while not self.stop_flag:
                 time.sleep(0.1)
 

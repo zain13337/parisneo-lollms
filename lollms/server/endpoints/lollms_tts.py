@@ -304,3 +304,13 @@ def tts_is_ready():
         if lollmsElfServer.tts.ready:
             return {"status":True}
     return {"status":False}
+
+
+@router.get("/get_snd_input_devices")
+def get_snd_input_devices():
+    lollmsElfServer.stt.get_devices()
+
+@router.get("/get_snd_output_devices")
+def get_snd_output_devices():
+    lollmsElfServer.tts.get_devices()
+
