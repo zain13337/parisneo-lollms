@@ -54,9 +54,9 @@ def build_image(prompt, antiprompt, width, height, processor:APScript, client:Cl
 
 
 def build_image_function(processor, client):
-        return {
-                "function_name": "build_image",
-                "function": partial(build_image, processor=processor, client=client),
-                "function_description": "Builds and shows an image from a prompt and width and height parameters. A square 1024x1024, a portrait woudl be 1024x1820 or landscape 1820x1024.",
-                "function_parameters": [{"name": "prompt", "type": "str"}, {"name": "antiprompt", "type": "str"}, {"name": "width", "type": "int"}, {"name": "height", "type": "int"}]                
-            }
+    return {
+            "function_name": "build_image",
+            "function": partial(build_image, processor=processor, client=client),
+            "function_description": "Builds and shows an image from a prompt and width and height parameters. A square 1024x1024, a portrait woudl be 1024x1820 or landscape 1820x1024.",
+            "function_parameters": [{"name": "prompt", "type": "str"}, {"name": "antiprompt", "type": "str"}, {"name": "width", "type": "int"}, {"name": "height", "type": "int"}]                
+        }
