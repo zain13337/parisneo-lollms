@@ -62,7 +62,7 @@ class LollmsTTS:
         self.voices = [] # To be filled by the child class
         self.models = [] # To be filled by the child class
 
-    def tts_file(self, text, speaker, file_name_or_path, language="en"):
+    def tts_file(self, text, file_name_or_path, speaker=None, language="en")->str:
         """
         Converts the given text to speech and saves it to a file.
 

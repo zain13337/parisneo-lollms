@@ -106,3 +106,16 @@ class LollmsOpenAITTS(LollmsTTS):
 
         # Example usage
         play_audio(speech_file_path)
+
+    def tts_file(self, text, speaker=None, file_name_or_path:Path|str=None, language="en", use_threading=False):
+        speech_file_path = file_name_or_path
+        response = self.client.audio.speech.create(
+        model=self.model,
+        voice=self.voice,
+        input=text,
+        response_format="wav"
+        
+        )
+
+        response.write_to_file(speech_file_path)
+        return file_name_or_path

@@ -259,7 +259,7 @@ class LollmsXTTS(LollmsTTS):
             print("Request failed with status code:", response.status_code)
             return False
 
-    def tts_file(self, text, speaker, file_name_or_path, language="en"):
+    def tts_file(self, text, file_name_or_path, speaker=None, language="en")->str:
         url = f"{self.xtts_base_url}/tts_file"
 
         # Define the request body
@@ -283,6 +283,8 @@ class LollmsXTTS(LollmsTTS):
             # You can access the response data using response.json()
         else:
             print("Request failed with status code:", response.status_code)
+
+        return file_name_or_path
 
     def tts_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
         voice=self.app.config.xtts_current_voice if speaker is None else speaker
