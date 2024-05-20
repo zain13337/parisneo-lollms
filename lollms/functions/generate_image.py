@@ -29,11 +29,11 @@ def build_image(prompt, antiprompt, width, height, processor:APScript, client:Cl
                             height = height,
                             output_path=client.discussion.discussion_folder
                         )
-        elif processor.personality_config.image_generation_engine in ["dall-e-2", "dall-e-3"]:
+        elif processor.personality.config.active_tti_service=="dall-e":
             if not processor.personality.app.tti:
                 from lollms.services.dalle.lollms_dalle import LollmsDalle
                 processor.step_start("Loading dalle service")
-                processor.personality.app.tti = LollmsDalle(processor.personality.app, processor.personality.config.dall_e_key, processor.personality_config.image_generation_engine)
+                processor.personality.app.tti = LollmsDalle(processor.personality.app, processor.personality.config.dall_e_key, processor.personality.config.dall_e_generation_engine)
                 processor.personality.app.dalle = processor.personality.app.tti
                 processor.step_end("Loading dalle service")
             processor.step_start("Painting")
