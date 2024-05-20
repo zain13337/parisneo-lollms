@@ -220,7 +220,7 @@ class LollmsXTTS(LollmsTTS):
                     if self.voices_folder is not None:
                         print("Generating sample audio.")
                         voice_file =  [v for v in self.voices_folder.iterdir() if v.suffix==".wav"]
-                        self.tts_to_audio("x t t s is ready",voice_file[0].stem)
+                        self.tts_audio("x t t s is ready",voice_file[0].stem)
                     print("Service is available.")
                     if self.app is not None:
                         self.app.success("XTTS Service is now available.")
@@ -259,8 +259,8 @@ class LollmsXTTS(LollmsTTS):
             print("Request failed with status code:", response.status_code)
             return False
 
-    def tts_to_file(self, text, speaker, file_name_or_path, language="en"):
-        url = f"{self.xtts_base_url}/tts_to_file"
+    def tts_file(self, text, speaker, file_name_or_path, language="en"):
+        url = f"{self.xtts_base_url}/tts_file"
 
         # Define the request body
         payload = {
@@ -284,7 +284,7 @@ class LollmsXTTS(LollmsTTS):
         else:
             print("Request failed with status code:", response.status_code)
 
-    def tts_to_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
+    def tts_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
         voice=self.app.config.xtts_current_voice if speaker is None else speaker
         index = find_first_available_file_index(self.output_folder, "voice_sample_",".wav")
         output_fn=f"voice_sample_{index}.wav" if file_name_or_path is None else file_name_or_path
@@ -307,13 +307,13 @@ class LollmsXTTS(LollmsTTS):
             voice_file =  [v for v in voices_folder.iterdir() if v.stem==voice and v.suffix==".wav"]
             if len(voice_file)==0:
                 return {"status":False,"error":"Voice not found"}
-            self.xtts_to_audio(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
+            self.xtts_audio(preprocessed_text, voice_file[0].name, f"{output_fn}", language=language)
 
         except Exception as ex:
             trace_exception(ex)
             return {"status":False,"error":f"{ex}"}
 
-    def xtts_to_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
+    def xtts_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
         # Remove HTML tags
         text = re.sub(r'<.*?>', '', text)
         # Remove code blocks (assuming they're enclosed in backticks or similar markers)
@@ -323,7 +323,7 @@ class LollmsXTTS(LollmsTTS):
         text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)  
         text = text.replace("\\","")      
         def tts2_audio_th(thread_uid=None):
-            url = f"{self.xtts_base_url}/tts_to_audio"
+            url = f"{self.xtts_base_url}/tts_audio"
 
             # Define the request body
             payload = {
