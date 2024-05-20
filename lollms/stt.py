@@ -72,6 +72,13 @@ class LollmsSTT:
         """
         pass
     
+    def stop(self):
+        """
+        Stops the current generation
+        """
+        pass
+    
+
     def get_models(self):
         return self.models
     
@@ -113,6 +120,7 @@ class LollmsSTT:
             LollmsSTT: The LollmsSTT class.
         """
         return LollmsSTT
+
 
     def get_devices(self):
         devices =  sd.query_devices()

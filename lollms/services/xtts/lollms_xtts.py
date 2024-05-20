@@ -53,7 +53,7 @@ class LollmsXTTS(LollmsTTS):
                     use_streaming_mode = True
                 ):
         super().__init__(app)
-        self.generation_threads = []
+        self.generation_threads = {}
         self.voices_folder = voices_folder
         self.ready = False
         if xtts_base_url=="" or xtts_base_url=="http://127.0.0.1:8020":
@@ -260,7 +260,7 @@ class LollmsXTTS(LollmsTTS):
             return False
 
     def tts_file(self, text, file_name_or_path, speaker=None, language="en")->str:
-        url = f"{self.xtts_base_url}/tts_file"
+        url = f"{self.xtts_base_url}/tts_to_file"
 
         # Define the request body
         payload = {
@@ -315,7 +315,7 @@ class LollmsXTTS(LollmsTTS):
             trace_exception(ex)
             return {"status":False,"error":f"{ex}"}
 
-    def xtts_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=False):
+    def xtts_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=True):
         # Remove HTML tags
         text = re.sub(r'<.*?>', '', text)
         # Remove code blocks (assuming they're enclosed in backticks or similar markers)
@@ -325,7 +325,7 @@ class LollmsXTTS(LollmsTTS):
         text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)  
         text = text.replace("\\","")      
         def tts2_audio_th(thread_uid=None):
-            url = f"{self.xtts_base_url}/tts_audio"
+            url = f"{self.xtts_base_url}/tts_to_audio"
 
             # Define the request body
             payload = {
@@ -362,7 +362,7 @@ class LollmsXTTS(LollmsTTS):
                 self.generation_threads.pop(thread_uid, None)
         if use_threading:
             thread_uid =  str(uuid.uuid4())       
-            thread = threading.Thread(target=tts2_audio_th, args=(thread_uid))
+            thread = threading.Thread(target=tts2_audio_th, args=(thread_uid,))
             self.generation_threads[thread_uid]=thread
             thread.start()
             ASCIIColors.green("Generation started")

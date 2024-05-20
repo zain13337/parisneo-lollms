@@ -87,6 +87,11 @@ class LollmsTTS:
         """
         pass
 
+    def stop(self):
+        """
+        Stops the current generation
+        """
+        pass
 
     @staticmethod
     def verify(app: LollmsApplication) -> bool:
