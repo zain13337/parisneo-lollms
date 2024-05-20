@@ -128,7 +128,7 @@ async def text2Audio(request: LollmsText2AudioRequest):
         request.fn = lollmsElfServer.lollms_paths.personal_outputs_path/"audio_out"/"tts2audio.wav"
     
     # Verify the path exists
-    request.fn.parent.mkdir(exists_ok=True, parents=True)
+    request.fn.parent.mkdir(exist_ok=True, parents=True)
 
     try:
         if lollmsElfServer.tts is None:
