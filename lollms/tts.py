@@ -10,6 +10,7 @@ from lollms.app import LollmsApplication
 from lollms.utilities import PackageManager
 from pathlib import Path
 from ascii_colors import ASCIIColors
+import re
 try:
     if not PackageManager.check_package_installed("sounddevice"):
         # os.system("sudo apt-get install portaudio19-dev")
@@ -148,3 +149,15 @@ class LollmsTTS:
             "status": True,
             "device_names": [device['name'] for device in devices if device["max_output_channels"]>0]
         }
+    
+    @staticmethod
+    def clean_text(text):
+        # Remove HTML tags
+        text = re.sub(r'<.*?>', '', text)
+        # Remove code blocks (assuming they're enclosed in backticks or similar markers)
+        text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+        text = re.sub(r'`.*?`', '', text)
+        # Remove any remaining code-like patterns (this can be adjusted as needed)
+        text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)  
+        text = text.replace("\\","")      
+        return text

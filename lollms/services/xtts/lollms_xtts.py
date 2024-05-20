@@ -260,6 +260,7 @@ class LollmsXTTS(LollmsTTS):
             return False
 
     def tts_file(self, text, file_name_or_path, speaker=None, language="en")->str:
+        text = self.clean_text(text)
         url = f"{self.xtts_base_url}/tts_to_file"
 
         # Define the request body
@@ -316,14 +317,7 @@ class LollmsXTTS(LollmsTTS):
             return {"status":False,"error":f"{ex}"}
 
     def xtts_audio(self, text, speaker, file_name_or_path:Path|str=None, language="en", use_threading=True):
-        # Remove HTML tags
-        text = re.sub(r'<.*?>', '', text)
-        # Remove code blocks (assuming they're enclosed in backticks or similar markers)
-        text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
-        text = re.sub(r'`.*?`', '', text)
-        # Remove any remaining code-like patterns (this can be adjusted as needed)
-        text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)  
-        text = text.replace("\\","")      
+        text = self.clean_text(text)
         def tts2_audio_th(thread_uid=None):
             url = f"{self.xtts_base_url}/tts_to_audio"
 

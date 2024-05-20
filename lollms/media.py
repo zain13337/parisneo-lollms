@@ -148,7 +148,9 @@ class RTCom:
 
         self.snd_input_device = snd_input_device
         self.snd_output_device = snd_output_device
-        self.logs_folder = logs_folder
+        self.logs_folder = Path(logs_folder)
+
+        self.logs_folder.mkdir(exist_ok=True, parents=True)
 
         self.frames = []
         self.silence_counter = 0

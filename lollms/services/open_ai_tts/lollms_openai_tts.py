@@ -109,6 +109,7 @@ class LollmsOpenAITTS(LollmsTTS):
 
     def tts_file(self, text, speaker=None, file_name_or_path:Path|str=None, language="en", use_threading=False):
         speech_file_path = file_name_or_path
+        text = self.clean_text(text)
         response = self.client.audio.speech.create(
         model=self.model,
         voice=self.voice,
