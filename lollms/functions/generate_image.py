@@ -12,7 +12,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 from functools import partial
 
-def build_image(prompt, width, height, processor:APScript, client:Client):
+def build_image(prompt, antiprompt, width, height, processor:APScript, client:Client):
     try:
         if processor.personality.config.active_tti_service=="autosd":
             if not processor.personality.app.tti:
@@ -23,7 +23,7 @@ def build_image(prompt, width, height, processor:APScript, client:Client):
                 processor.step_end("Loading ParisNeo's fork of AUTOMATIC1111's stable diffusion service")
             file, infos = processor.personality.app.tti.paint(
                             prompt, 
-                            "",
+                            antiprompt,
                             processor.personality.image_files,
                             width = width,
                             height = height,
@@ -58,5 +58,5 @@ def build_image_function(processor, client):
                 "function_name": "build_image",
                 "function": partial(build_image, processor=processor, client=client),
                 "function_description": "Builds and shows an image from a prompt and width and height parameters. A square 1024x1024, a portrait woudl be 1024x1820 or landscape 1820x1024.",
-                "function_parameters": [{"name": "prompt", "type": "str"}, {"name": "width", "type": "int"}, {"name": "height", "type": "int"}]                
+                "function_parameters": [{"name": "prompt", "type": "str"}, {"name": "antiprompt", "type": "str"}, {"name": "width", "type": "int"}, {"name": "height", "type": "int"}]                
             }

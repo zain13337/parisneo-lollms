@@ -3284,7 +3284,7 @@ The AI should respond in this format using data from actions_list:
 
 
 
-    def generate_with_function_calls(self, prompt: str, functions: List[Dict[str, Any]], max_answer_length: Optional[int] = None) -> List[Dict[str, Any]]:
+    def generate_with_function_calls(self, prompt: str, functions: List[Dict[str, Any]], max_answer_length: Optional[int] = None, callback = None) -> List[Dict[str, Any]]:
         """
         Performs text generation with function calls.
 
@@ -3300,7 +3300,7 @@ The AI should respond in this format using data from actions_list:
         upgraded_prompt = self._upgrade_prompt_with_function_info(prompt, functions)
 
         # Generate the initial text based on the upgraded prompt.
-        generated_text = self.fast_gen(upgraded_prompt, max_answer_length)
+        generated_text = self.fast_gen(upgraded_prompt, max_answer_length, callback=callback)
 
         # Extract the function calls from the generated text.
         function_calls = self.extract_function_calls_as_json(generated_text)
@@ -3308,7 +3308,7 @@ The AI should respond in this format using data from actions_list:
         return generated_text, function_calls
 
 
-    def generate_with_function_calls_and_images(self, prompt: str, images:list, functions: List[Dict[str, Any]], max_answer_length: Optional[int] = None) -> List[Dict[str, Any]]:
+    def generate_with_function_calls_and_images(self, prompt: str, images:list, functions: List[Dict[str, Any]], max_answer_length: Optional[int] = None, callback = None) -> List[Dict[str, Any]]:
         """
         Performs text generation with function calls.
 
@@ -3324,7 +3324,7 @@ The AI should respond in this format using data from actions_list:
         upgraded_prompt = self._upgrade_prompt_with_function_info(prompt, functions)
 
         # Generate the initial text based on the upgraded prompt.
-        generated_text = self.fast_gen_with_images(upgraded_prompt, images, max_answer_length)
+        generated_text = self.fast_gen_with_images(upgraded_prompt, images, max_answer_length, callback=callback)
 
         # Extract the function calls from the generated text.
         function_calls = self.extract_function_calls_as_json(generated_text)
@@ -3435,19 +3435,24 @@ The AI should respond in this format using data from actions_list:
         return function_calls
 
 
-    def interact_with_function_call(self, prompt, function_definitions, prompt_after_execution=True):
+    def interact_with_function_call(self, prompt, function_definitions, prompt_after_execution=True, callback = None):
         if len(self.personality.image_files)>0:
-            out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions)
+            out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions, callback=callback)
         else:
-            out, function_calls = self.generate_with_function_calls(prompt, function_definitions)
+            out, function_calls = self.generate_with_function_calls(prompt, function_definitions, callback=callback)
         if len(function_calls)>0:
             outputs = self.execute_function_calls(function_calls,function_definitions)
             out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
-            prompt += out +"\n"+ "!@>"+self.personality.name+":"
-            if len(self.personality.image_files)>0:
-                out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions)
-            else:
-                out, function_calls = self.generate_with_function_calls(prompt, function_definitions)
+            if prompt_after_execution:
+                prompt += out +"\n"+ "!@>"+self.personality.name+":"
+                if len(self.personality.image_files)>0:
+                    out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions, callback=callback)
+                else:
+                    out, function_calls = self.generate_with_function_calls(prompt, function_definitions, callback=callback)
+                if len(function_calls)>0:
+                    outputs = self.execute_function_calls(function_calls,function_definitions)
+                    out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
+                    prompt += out +"\n"+ "!@>"+self.personality.name+":"
         return out
 
     #Helper method to convert outputs path to url

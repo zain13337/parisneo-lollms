@@ -320,7 +320,8 @@ class LollmsXTTS(LollmsTTS):
         text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
         text = re.sub(r'`.*?`', '', text)
         # Remove any remaining code-like patterns (this can be adjusted as needed)
-        text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)        
+        text = re.sub(r'[\{\}\[\]\(\)<>]', '', text)  
+        text = text.replace("\\","")      
         def tts2_audio_th(thread_uid=None):
             url = f"{self.xtts_base_url}/tts_to_audio"
 
