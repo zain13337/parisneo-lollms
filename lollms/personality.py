@@ -3436,6 +3436,7 @@ The AI should respond in this format using data from actions_list:
 
 
     def interact_with_function_call(self, prompt, function_definitions, prompt_after_execution=True, callback = None, hide_function_call=False):
+        final_output = ""
         if len(self.personality.image_files)>0:
             out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions, callback=callback)
         else:
@@ -3444,6 +3445,7 @@ The AI should respond in this format using data from actions_list:
             if hide_function_call:
                 self.full("") #Hide function call
             outputs = self.execute_function_calls(function_calls,function_definitions)
+            final_output = "\n".join([str(o) for o in outputs])
             out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
             if prompt_after_execution:
                 prompt += out +"\n"+ "!@>"+self.personality.name+":"
@@ -3451,11 +3453,13 @@ The AI should respond in this format using data from actions_list:
                     out, function_calls = self.generate_with_function_calls_and_images(prompt, self.personality.image_files, function_definitions, callback=callback)
                 else:
                     out, function_calls = self.generate_with_function_calls(prompt, function_definitions, callback=callback)
+                final_output += "\n" + out
                 if len(function_calls)>0:
                     outputs = self.execute_function_calls(function_calls,function_definitions)
+                    final_output += "\n" + "\n".join([str(o) for o in outputs])
                     out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
                     prompt += out +"\n"+ "!@>"+self.personality.name+":"
-        return out
+        return final_output
 
     #Helper method to convert outputs path to url
     def path2url(file):
