@@ -3456,9 +3456,11 @@ The AI should respond in this format using data from actions_list:
                 final_output += "\n" + out
                 if len(function_calls)>0:
                     outputs = self.execute_function_calls(function_calls,function_definitions)
-                    final_output += "\n" + "\n".join([str(o) for o in outputs])
+                    final_output += "\n" + "\n".join([str(o) for o in outputs]) 
                     out += "\n!@>function calls results:\n" + "\n".join([str(o) for o in outputs])
                     prompt += out +"\n"+ "!@>"+self.personality.name+":"
+        else:
+            final_output = out
         return final_output
 
     #Helper method to convert outputs path to url
