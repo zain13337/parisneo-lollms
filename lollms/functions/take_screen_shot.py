@@ -49,7 +49,7 @@ class ScreenshotWindow(QtWidgets.QWidget):
         self.close()
 
 
-def take_screenshot(self, client: Client, use_ui: bool = False, use_a_single_photo_at_a_time= True):
+def take_screenshot(client: Client, use_ui: bool = False, use_a_single_photo_at_a_time= True):
     screenshot = pyautogui.screenshot()
     view_image = client.discussion.discussion_folder / "view_images"
     image = client.discussion.discussion_folder / "images"
