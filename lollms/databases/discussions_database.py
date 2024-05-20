@@ -733,10 +733,10 @@ class Discussion:
                 if self.lollms.stt is None:
                     self.lollms.info("Please select an stt engine in the services settings first")
                 self.lollms.info(f"Transcribing ... ")
-                result = self.lollms.stt.transcribe(str(path))
-                transcription_fn = str(path)+".txt"
+                transcription = self.lollms.stt.transcribe(str(path))
+                transcription_fn = self.discussion_text_folder/(path.stem+".txt")
                 with open(transcription_fn, "w", encoding="utf-8") as f:
-                    f.write(result["text"])
+                    f.write(transcription)
                 self.text_files.append(transcription_fn)
                 tasks_library.info(f"Transcription saved to {transcription_fn}")
 
