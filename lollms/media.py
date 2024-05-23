@@ -208,8 +208,6 @@ class RTCom:
     def stop_recording(self):
         self.recording = False
         self.stop_flag = True
-        self.recording_thread.join()
-        self.transcription_thread.join()
         ASCIIColors.green("<<RTCOM off>>")
 
     def _record(self):
