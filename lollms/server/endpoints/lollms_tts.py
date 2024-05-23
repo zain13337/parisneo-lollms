@@ -191,9 +191,9 @@ def install_xtts(data:Identification):
         if lollmsElfServer.config.host!="localhost" and lollmsElfServer.config.host!="127.0.0.1":
             return {"status":False,"error":"Service installation is blocked when the server is exposed outside for very obvious reasons!"}
         
-        from lollms.services.xtts.lollms_xtts import LollmsTTS
+        from lollms.services.xtts.lollms_xtts import LollmsXTTS
         lollmsElfServer.ShowBlockingMessage("Installing xTTS api server\nPlease stand by")
-        LollmsTTS.install(lollmsElfServer)
+        LollmsXTTS.install(lollmsElfServer)
         lollmsElfServer.HideBlockingMessage()
         return {"status":True}
     except Exception as ex:
