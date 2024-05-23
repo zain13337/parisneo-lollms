@@ -171,7 +171,7 @@ class RTCom:
         self.transcribed_files = deque()
         self.buffer_lock = threading.Condition()
         self.transcribed_lock = threading.Condition()
-        ASCIIColors.info("Loading whisper...",end="",flush=True)
+        ASCIIColors.info("Loading whisper...", end="",flush=True)
 
         self.model = model
         self.whisper = whisper.load_model(model)

@@ -405,7 +405,6 @@ class LollmsApplication(LoLLMsCom):
                     trace_exception(ex)
                     self.warning(f"Couldn't load Motion control")
 
-
             if self.config.active_tti_service == "autosd":
                 from lollms.services.sd.lollms_sd import LollmsSD
                 self.tti = LollmsSD(self)
